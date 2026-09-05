@@ -1,0 +1,2148 @@
+<title>Form &amp; Frame Media Walls</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+
+  /* ============ TOKENS ============ */
+  /* Light: warm drafting-paper putty, graphite line, workshop-green ink,
+     oak timber, amber = warm-light semantic only. */
+  :root{
+    --paper:#E6E1D5;
+    --paper-2:#EEEADF;
+    --paper-3:#F4F1E8;
+    --frame:#211F1A;
+    --ink:#1E4D45;
+    --ink-2:#2E6A5E;
+    --oak:#B4823F;
+    --pencil:#7C766A;
+    --pencil-2:#B8B2A2;
+    --glow:#D2892A;
+    --bad:#9E3B2C;
+    --shadow:rgba(33,31,26,.16);
+  }
+  :root:not([data-theme="light"]){
+    @media (prefers-color-scheme:dark){
+      --paper:#16160F;
+      --paper-2:#1E1E16;
+      --paper-3:#26251C;
+      --frame:#E7E2D5;
+      --ink:#63A997;
+      --ink-2:#83C7B4;
+      --oak:#CE9C5F;
+      --pencil:#8C8577;
+      --pencil-2:#3B3A30;
+      --glow:#E7A63F;
+      --bad:#D8705E;
+      --shadow:rgba(0,0,0,.55);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#16160F;
+    --paper-2:#1E1E16;
+    --paper-3:#26251C;
+    --frame:#E7E2D5;
+    --ink:#63A997;
+    --ink-2:#83C7B4;
+    --oak:#CE9C5F;
+    --pencil:#8C8577;
+    --pencil-2:#3B3A30;
+    --glow:#E7A63F;
+    --bad:#D8705E;
+    --shadow:rgba(0,0,0,.55);
+  }
+
+  /* ============ BASE ============ */
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--frame);
+    font:400 16px/1.62 "IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    -webkit-tap-highlight-color:transparent;
+    overscroll-behavior-y:none;
+  }
+  h1,h2,h3{
+    font-family:"Bricolage Grotesque","Arial Narrow",system-ui,sans-serif;
+    font-weight:800;
+    letter-spacing:-.02em;
+    line-height:1.02;
+    text-wrap:balance;
+    margin:0;
+  }
+  p{margin:0;text-wrap:pretty}
+  a{color:inherit;text-decoration:none}
+  :focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:2px}
+  ::selection{background:var(--ink);color:var(--paper-3)}
+  .plate{scroll-margin-top:80px}
+  #top{scroll-margin-top:120px}
+  button,input,select,textarea{font-family:inherit}
+  button{color:inherit}
+
+  .mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+  .eyebrow{
+    font:600 11px/1 "IBM Plex Mono",monospace;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    color:var(--pencil);
+    display:flex;align-items:center;gap:.7em;
+  }
+  .eyebrow::before{content:"";width:26px;height:1px;background:currentColor;display:inline-block}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+  .prose{max-width:58ch}
+
+  /* ============ SHEET FRAME ============ */
+  .sheet{
+    border:1px solid var(--frame);
+    margin:14px;
+    background:
+      linear-gradient(var(--pencil-2) 1px,transparent 1px) 0 0/34px 34px,
+      linear-gradient(90deg,var(--pencil-2) 1px,transparent 1px) 0 0/34px 34px,
+      var(--paper);
+    background-blend-mode:normal;
+  }
+  .sheet > *{position:relative}
+  .sheet::before{
+    content:"";position:absolute;inset:0;background:var(--paper);opacity:.86;pointer-events:none;
+  }
+  .sheet{position:relative}
+
+  /* ============ NAV + TITLE STRIP ============ */
+  .nav{
+    position:sticky;top:0;z-index:20;
+    display:flex;align-items:center;justify-content:space-between;
+    gap:20px;padding:16px 24px;
+    background:var(--paper);
+    background:color-mix(in srgb,var(--paper) 90%,transparent);
+    -webkit-backdrop-filter:blur(8px);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--frame);
+  }
+  .mark{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:19px;letter-spacing:-.03em}
+  .mark b{color:var(--oak);font-weight:800}
+  .navlinks{display:flex;gap:26px;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.16em}
+  .navlinks a{color:var(--pencil);transition:color .12s}
+  .navlinks a:hover{color:var(--frame)}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:.5em;
+    -webkit-appearance:none;appearance:none;border-radius:0;
+    font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;
+    padding:12px 18px;border:1px solid var(--frame);background:var(--ink);color:var(--paper-3);
+    cursor:pointer;transition:transform .12s,box-shadow .12s,background .12s;
+  }
+  .btn:hover{transform:translateY(-1px);box-shadow:3px 3px 0 var(--frame)}
+  .btn:active{transform:translateY(1px);box-shadow:none}
+  .btn.ghost{background:transparent;color:var(--frame)}
+  .btn.ghost:hover{background:var(--paper-3)}
+  .btn[disabled]{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+
+  .titlestrip{
+    display:flex;flex-wrap:wrap;gap:4px 28px;
+    padding:9px 24px;border-bottom:1px solid var(--frame);
+    font:500 10.5px/1 "IBM Plex Mono",monospace;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--pencil);
+  }
+  .titlestrip b{color:var(--frame);font-weight:600}
+
+  /* ============ SECTION SHELL ============ */
+  .plate{padding:72px 0;border-bottom:1px solid var(--frame)}
+  .plate:last-of-type{border-bottom:none}
+  .plate-head{display:flex;flex-direction:column;gap:16px;margin-bottom:34px}
+  .plate-head h2{font-size:clamp(26px,3.6vw,40px)}
+
+  /* ============ HERO ============ */
+  .hero{display:grid;grid-template-columns:1fr 1.02fr;gap:52px;align-items:center}
+  .hero h1{font-size:clamp(34px,5.4vw,62px);margin:18px 0 20px}
+  .hero .prose{color:var(--frame);font-size:17px}
+  .hero-cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
+  .hero-facts{
+    display:flex;gap:22px;flex-wrap:wrap;margin-top:30px;padding-top:22px;
+    border-top:1px solid var(--pencil-2);
+    font:500 11px/1.5 "IBM Plex Mono",monospace;letter-spacing:.05em;color:var(--pencil);
+  }
+  .hero-facts b{display:block;color:var(--frame);font-size:19px;font-weight:600;letter-spacing:0;margin-bottom:3px}
+
+  /* ============ DRAWING FRAME ============ */
+  .drawing{
+    position:relative;border:1px solid var(--frame);background:var(--paper-3);
+    box-shadow:6px 6px 0 var(--shadow);overflow:hidden;touch-action:pan-y;cursor:grab;
+    background-image:
+      linear-gradient(var(--pencil-2) 1px,transparent 1px),
+      linear-gradient(90deg,var(--pencil-2) 1px,transparent 1px);
+    background-size:26px 26px,26px 26px;
+    background-position:center;
+  }
+  .drawing.panning{cursor:grabbing}
+  .drawing-svg{position:relative;z-index:1;width:100%;transform-origin:center center;will-change:transform}
+  .drawing-svg .elev{width:100%;height:auto;display:block}
+  .elev text{font-family:"IBM Plex Mono",monospace}
+
+  /* ============ COMPARE ============ */
+  .compare-frame{
+    position:relative;border:1px solid var(--frame);background:var(--paper-3);
+    box-shadow:6px 6px 0 var(--shadow);overflow:hidden;touch-action:pan-y;
+    aspect-ratio:1200/700;
+  }
+  .compare-frame svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .cmp-prop{position:absolute;inset:0;clip-path:inset(0 0 0 52%)}
+  .cmp-div{position:absolute;top:0;bottom:0;left:52%;width:2px;background:var(--frame);z-index:4;pointer-events:none}
+  .cmp-knob{
+    position:absolute;top:calc(50% - 21px);left:-21px;width:42px;height:42px;border-radius:50%;
+    background:var(--paper-3);border:1px solid var(--frame);color:var(--frame);
+    display:grid;place-items:center;font:600 15px "IBM Plex Mono",monospace;box-shadow:2px 2px 0 var(--shadow);
+  }
+  .cmp-range{
+    position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize;z-index:5;
+  }
+  .cmp-tag{
+    position:absolute;top:12px;z-index:4;
+    font:600 10px/1 "IBM Plex Mono",monospace;letter-spacing:.14em;
+    padding:6px 9px;background:var(--frame);color:var(--paper-3);
+  }
+  .cmp-tag.l{left:12px}
+  .cmp-tag.r{right:12px;background:var(--ink)}
+  .cmp-hint{margin-top:12px;font:500 11px/1 "IBM Plex Mono",monospace;letter-spacing:.09em;color:var(--pencil)}
+
+  /* ============ CONFIGURATOR ============ */
+  .cfg{display:grid;grid-template-columns:300px 1fr;border:1px solid var(--frame);background:var(--paper-3);box-shadow:6px 6px 0 var(--shadow)}
+  .cfg-controls{border-right:1px solid var(--frame);padding:6px 22px 22px}
+  .ctl{padding:17px 0;border-top:1px solid var(--pencil-2)}
+  .ctl:first-child{border-top:none}
+  .ctl > .lbl{
+    display:flex;justify-content:space-between;align-items:baseline;gap:8px;
+    font:600 10.5px/1.3 "IBM Plex Mono",monospace;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--pencil);margin-bottom:11px;
+  }
+  .ctl > .lbl b{color:var(--frame);font-weight:600}
+  select.field{
+    width:100%;padding:10px 28px 10px 11px;border:1px solid var(--pencil-2);background-color:var(--paper);color:var(--frame);
+    font:500 13px "IBM Plex Mono",monospace;
+    -webkit-appearance:none;appearance:none;border-radius:0;
+    background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237C766A'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 11px center;background-size:9px 6px;
+  }
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+    -webkit-appearance:none;appearance:none;border-radius:0;
+    font:600 10.5px/1.1 "IBM Plex Mono",monospace;letter-spacing:.06em;
+    padding:7px 10px;border:1px solid var(--pencil-2);background:var(--paper);color:var(--frame);
+    cursor:pointer;transition:background .12s,color .12s,border-color .12s,opacity .12s;
+  }
+  .chip:hover:not(:disabled){border-color:var(--frame)}
+  .chip:active:not(:disabled){background:var(--paper-2)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper-3);border-color:var(--ink)}
+  .chip:disabled{opacity:.32;cursor:not-allowed}
+  .chip-p{font:500 9px/1 "IBM Plex Mono",monospace;opacity:.78;letter-spacing:0;font-variant-numeric:tabular-nums}
+  .chip[aria-pressed="true"] .chip-p{opacity:.9}
+  .chips[data-disabled="true"]{opacity:.4;pointer-events:none}
+  .tog-p{font:500 9px "IBM Plex Mono",monospace;color:var(--pencil);margin-left:6px}
+  .tog input:disabled{opacity:.35;cursor:not-allowed}
+  select.field option:disabled{color:var(--pencil-2)}
+  .field.num{font-variant-numeric:tabular-nums;margin-top:8px}
+  .dimpair{display:flex;gap:10px;margin-top:8px}
+  .dimpair label{flex:1;font:600 9px/1.3 "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--pencil)}
+  .dimpair .num{margin-top:4px}
+  .swatches{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .sw{width:26px;height:26px;border:1px solid var(--pencil-2);cursor:pointer;padding:0}
+  .sw[aria-pressed="true"]{outline:2px solid var(--frame);outline-offset:2px;border-color:var(--frame)}
+  .pickrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;
+    font:600 10px/1.3 "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--pencil)}
+  .pickrow input[type="color"]{width:46px;height:28px;padding:0;border:1px solid var(--pencil-2);background:var(--paper);cursor:pointer}
+  .hintline{margin-top:9px;font:500 10.5px/1.4 "IBM Plex Mono",monospace;color:var(--pencil)}
+  .hintline b{color:var(--frame);font-weight:600}
+  .btn.sm{padding:9px 12px;font-size:10px;letter-spacing:.1em}
+  .budgetctl{background:var(--paper-2);margin:0 -22px;padding:16px 22px 18px}
+  .budgetbox{margin-top:13px}
+  .range{-webkit-appearance:none;appearance:none;width:100%;height:4px;margin:10px 0 4px;background:var(--pencil-2);border:none;accent-color:var(--ink)}
+  .range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:var(--ink);border:1px solid var(--frame);cursor:pointer}
+  .range::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--ink);border:1px solid var(--frame);cursor:pointer}
+  .budgetrow{display:flex;gap:8px;align-items:stretch;margin-top:2px}
+  .budgetrow .num{flex:1;margin-top:0}
+  .budgetrow .btn.sm{white-space:nowrap}
+  .pmeter{position:relative;height:9px;border:1px solid var(--pencil-2);background:var(--paper-3);margin:0 0 8px}
+  .pm-fill{position:absolute;top:0;bottom:0;background:var(--pencil);transition:left .2s,width .2s}
+  .pmeter.status-in .pm-fill{background:#6B8B45}
+  .pmeter.status-edge .pm-fill{background:#C07C1E}
+  .pmeter.status-over .pm-fill{background:#B4432F}
+  .pm-mark{position:absolute;top:-4px;bottom:-4px;width:3px;background:var(--paper-3);box-shadow:0 0 0 1px rgba(0,0,0,.45)}
+  .pm-txt{display:block;font:500 10.5px/1.45 "IBM Plex Mono",monospace;opacity:1}
+  .cfg-draw.maximised,.drawing.maximised{position:fixed;inset:0;z-index:9999;margin:0;border:none;min-height:0;max-height:none;box-shadow:none;border-radius:0;touch-action:none}
+  .vp-ctl button[data-z="max"]{font-size:15px}
+  .maximised .vp-ctl{top:calc(12px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right))}
+  .maximised .vp-hint{left:calc(12px + env(safe-area-inset-left));bottom:calc(12px + env(safe-area-inset-bottom))}
+  .tog{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer}
+  .tog span{font:500 12.5px/1.4 "IBM Plex Sans",sans-serif}
+  .tog input{-webkit-appearance:none;appearance:none;width:44px;height:24px;border:1px solid var(--frame);background:var(--paper);position:relative;cursor:pointer;flex:none;border-radius:0}
+  .linkbtn{-webkit-appearance:none;appearance:none;border:0;background:none;color:var(--ink-2);font:600 9px/1 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;padding:0}
+  .linkbtn:hover{text-decoration:underline}
+  .tog input::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;background:var(--frame);transition:left .14s}
+  .tog input:checked{background:var(--glow)}
+  .tog input:checked::after{left:22px;background:var(--paper)}
+  .file{width:100%;font:500 11px "IBM Plex Mono",monospace;color:var(--pencil)}
+  .file::file-selector-button{
+    font:600 10px "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;
+    padding:8px 10px;margin-right:10px;border:1px solid var(--frame);background:var(--paper);color:var(--frame);cursor:pointer;
+  }
+  .cfg-stage{display:flex;flex-direction:column}
+  .cfg-draw{position:relative;flex:1;min-height:min(64vh,660px);display:grid;place-items:center;overflow:hidden;touch-action:pan-y;cursor:grab;background:
+      linear-gradient(var(--pencil-2) 1px,transparent 1px),
+      linear-gradient(90deg,var(--pencil-2) 1px,transparent 1px);
+    background-size:26px 26px,26px 26px;background-position:center}
+  @media (min-width:901px){
+    .cfg{align-items:start}
+    .cfg-controls{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow-y:auto}
+  }
+  .cfg-draw.panning{cursor:grabbing}
+  .cfg-draw.has-photo{background-size:cover;background-position:center;background-repeat:no-repeat}
+  .cfg-draw.has-photo::after{content:"";position:absolute;inset:0;background:var(--paper-3);opacity:.5}
+  .cfg-draw-svg{position:relative;z-index:1;width:100%;transform-origin:center center;will-change:transform}
+  .cfg-draw-svg .elev{width:100%;height:auto;display:block}
+  .vp-ctl{position:absolute;right:12px;top:12px;z-index:5;display:flex;gap:3px;align-items:center;
+    background:var(--frame);border:1px solid var(--frame)}
+  .vp-ctl button{-webkit-appearance:none;appearance:none;border-radius:0;font:600 13px/1 "IBM Plex Mono",monospace;background:transparent;color:var(--paper-3);
+    border:1px solid transparent;padding:6px 9px;cursor:pointer;min-width:28px}
+  .vp-ctl button:hover{border-color:var(--paper-3)}
+  .vp-ctl button:active{background:rgba(255,255,255,.12)}
+  .vp-ctl button[data-z="reset"]{font-size:9px;letter-spacing:.12em;text-transform:uppercase}
+  .vp-pct{font:600 10px/1 "IBM Plex Mono",monospace;color:var(--paper-3);min-width:40px;text-align:center;opacity:.85;font-variant-numeric:tabular-nums}
+  .vp-hint{position:absolute;left:12px;bottom:12px;z-index:5;pointer-events:none;transition:opacity .4s;
+    font:500 10px/1 "IBM Plex Mono",monospace;letter-spacing:.06em;color:var(--frame);
+    background:var(--paper-3);
+    background:color-mix(in srgb,var(--paper-3) 90%,transparent);padding:6px 8px}
+  .cfg-price{
+    display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;
+    padding:16px 20px;border-top:1px solid var(--frame);background:var(--frame);color:var(--paper-3);
+  }
+  .cfg-price .money{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:26px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .cfg-price .plabel{font:600 10px/1.4 "IBM Plex Mono",monospace;letter-spacing:.16em;text-transform:uppercase;opacity:.7}
+  .cfg-price .sub{font:500 10.5px/1.4 "IBM Plex Mono",monospace;opacity:.92;max-width:38ch;word-break:break-word}
+  .cfg-price .btn{border-color:var(--paper-3);background:var(--paper-3);color:var(--frame)}
+  .cfg-price .btn:hover{box-shadow:3px 3px 0 var(--paper-3)}
+  .cfg-price .btn.ghost{background:transparent;color:var(--paper-3)}
+  .cfg-price .btn.ghost:hover{background:var(--paper-3);color:var(--frame)}
+
+  .schedule{margin-top:28px;border:1px solid var(--frame);overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .schedule table{width:100%;border-collapse:collapse;font-size:12.5px}
+  .schedule caption{
+    text-align:left;padding:12px 16px;border-bottom:1px solid var(--frame);background:var(--paper-2);
+    font:600 10.5px/1 "IBM Plex Mono",monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--pencil);
+  }
+  .schedule th,.schedule td{padding:10px 16px;text-align:left;border-bottom:1px solid var(--pencil-2);vertical-align:top}
+  .schedule th{font:600 10px "IBM Plex Mono",monospace;letter-spacing:.13em;text-transform:uppercase;color:var(--pencil)}
+  .schedule td:last-child{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
+  .schedule tr:last-child td{border-bottom:none}
+  .cfg-summary{margin-top:14px;font:500 12px/1.5 "IBM Plex Mono",monospace;color:var(--pencil)}
+  .cfg-summary b{color:var(--frame);font-weight:600}
+
+  /* ============ PROCESS ============ */
+  .steps{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--pencil-2);border:1px solid var(--frame)}
+  .step{background:var(--paper-3);padding:20px 18px 24px}
+  .step .n{font:800 30px/1 "Bricolage Grotesque",sans-serif;letter-spacing:-.04em;color:var(--oak)}
+  .step h3{font-size:15px;margin:14px 0 8px}
+  .step p{font-size:12.5px;color:var(--pencil);line-height:1.55}
+
+  /* ============ WORKS ============ */
+  .works{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .work{border:1px solid var(--frame);background:var(--paper-3);box-shadow:4px 4px 0 var(--shadow)}
+  .work .wd{background:
+      linear-gradient(var(--pencil-2) 1px,transparent 1px),
+      linear-gradient(90deg,var(--pencil-2) 1px,transparent 1px);
+    background-size:22px 22px,22px 22px;background-position:center;border-bottom:1px solid var(--frame)}
+  .work .wd .elev{width:100%;height:auto;display:block}
+  .work .wc{padding:13px 16px;display:flex;flex-direction:column;gap:3px}
+  .work .wc b{font:600 11px "IBM Plex Mono",monospace;letter-spacing:.09em}
+  .work .wc span{font:500 10.5px "IBM Plex Mono",monospace;color:var(--pencil);letter-spacing:.04em}
+
+  /* ============ CONTACT ============ */
+  .contact{display:grid;grid-template-columns:1fr 1fr;gap:52px;align-items:start}
+  .contact h2{font-size:clamp(26px,3.6vw,40px);margin-top:16px}
+  .contact .prose{margin-top:16px}
+  .coverage{margin-top:20px;font:500 12px/1.7 "IBM Plex Mono",monospace;color:var(--pencil)}
+  .coverage b{color:var(--frame);font-weight:600}
+  .form{border:1px solid var(--frame);background:var(--paper-3);padding:24px;box-shadow:6px 6px 0 var(--shadow)}
+  .form .row{margin-bottom:16px}
+  .form label{display:block;font:600 10px/1.4 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--pencil);margin-bottom:7px}
+  .form input,.form select,.form textarea{
+    width:100%;padding:11px;border:1px solid var(--pencil-2);background:var(--paper);color:var(--frame);
+    font:400 13.5px "IBM Plex Sans",sans-serif;
+  }
+  .form textarea{min-height:96px;resize:vertical;font-family:"IBM Plex Sans",sans-serif}
+  .form .err{display:none;margin-top:5px;font:500 11px "IBM Plex Mono",monospace;color:var(--bad)}
+  .form .row.invalid .err{display:block}
+  .form .row.invalid input,.form .row.invalid select,.form .row.invalid textarea{border-color:var(--bad)}
+  .form .btn{width:100%;justify-content:center;padding:14px}
+  .logged{display:none;border:1px solid var(--ink);background:var(--paper-2);padding:22px}
+  .logged h3{font-size:18px;color:var(--ink-2)}
+  .logged .ref{font:600 12px "IBM Plex Mono",monospace;letter-spacing:.1em;margin:10px 0 14px;color:var(--frame)}
+  .logged p{font-size:13px;color:var(--pencil);line-height:1.6}
+  .logged .spec{margin-top:14px;padding-top:14px;border-top:1px solid var(--pencil-2);font:500 11.5px/1.6 "IBM Plex Mono",monospace;color:var(--frame)}
+
+  /* ============ FOOTER ============ */
+  .foot{
+    display:flex;flex-wrap:wrap;gap:6px 26px;padding:16px 24px;
+    font:500 10px/1.5 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--pencil);
+  }
+  .foot b{color:var(--frame);font-weight:600}
+
+  /* ============ LED PULSE ============ */
+  .ledglow{animation:pulse 4.5s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.32}50%{opacity:.6}}
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width:900px){
+    .hero{grid-template-columns:1fr;gap:34px}
+    .cfg{grid-template-columns:1fr}
+    .cfg-controls{border-right:none;border-bottom:1px solid var(--frame)}
+    .contact{grid-template-columns:1fr;gap:32px}
+    .steps{grid-template-columns:1fr 1fr}
+    .works{grid-template-columns:1fr}
+    .navlinks{display:none}
+  }
+  @media (max-width:560px){
+    .sheet{margin:6px}
+    .wrap{padding:0 16px}
+    .plate{padding:52px 0}
+    .steps{grid-template-columns:1fr}
+    .plate-head h2,.hero h1,.contact h2{font-size:clamp(24px,7.5vw,32px)}
+    .field,.form input,.form select,.form textarea,input[type="number"]{font-size:16px}
+    .range{height:6px}
+    .range::-webkit-slider-thumb{width:24px;height:24px}
+    .tog input{width:48px;height:26px}
+    .tog input::after{width:20px;height:20px}
+    .tog input:checked::after{left:24px}
+    .chip{padding:9px 12px}
+    .cfg-draw{min-height:clamp(320px,54vh,480px)}
+    .schedule th,.schedule td{padding:9px 12px;font-size:12px}
+    .vp-ctl button{padding:8px 11px;min-width:32px;font-size:14px}
+    .cfg-price{padding:14px 16px}
+    .cfg-price .money{font-size:22px}
+    .cfg-price > div:last-child .btn{flex:1 1 46%}
+    .foot{padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
+    .nav{padding-left:16px;padding-right:16px}
+    .mosaic{grid-template-columns:1fr}
+    .tile:first-child{grid-column:auto;grid-row:auto;height:280px}
+  }
+  @media (hover:none){
+    .btn:hover{transform:none;box-shadow:none}
+    .chip:hover:not(:disabled){border-color:var(--pencil-2)}
+    .navlinks a:hover{color:var(--pencil)}
+  }
+
+  /* ============ DEVICE-PREVIEW SWITCH ============ */
+  .viewbar{
+    position:relative;z-index:40;background:var(--frame);color:var(--paper-3);
+    padding:8px max(16px,env(safe-area-inset-left)) 8px max(16px,env(safe-area-inset-right));
+    padding-top:calc(8px + env(safe-area-inset-top));
+  }
+  .viewbar-in{max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:14px}
+  .viewbar-lbl{font:600 10px/1 "IBM Plex Mono",monospace;letter-spacing:.2em;text-transform:uppercase;opacity:.65}
+  .seg{display:flex;border:1px solid var(--paper-3);flex:none}
+  .seg button{appearance:none;-webkit-appearance:none;border:0;border-radius:0;background:transparent;color:var(--paper-3);
+    cursor:pointer;font:600 10px/1 "IBM Plex Mono",monospace;letter-spacing:.13em;text-transform:uppercase;padding:10px 15px}
+  .seg button+button{border-left:1px solid var(--paper-3)}
+  .seg button:active{opacity:.7}
+  .seg button[aria-pressed="true"]{background:var(--paper-3);color:var(--frame)}
+
+  .deck[data-view="mobile"]{background:var(--paper-2);padding:8px 0 34px}
+  .deck[data-view="mobile"] .sheet{max-width:404px;margin:16px auto;border:1px solid var(--frame);border-radius:22px;overflow:hidden;box-shadow:0 26px 70px var(--shadow)}
+  .deck[data-view="mobile"] .navlinks{display:none}
+  .deck[data-view="mobile"] .nav{padding:14px 16px;position:static}
+  .deck[data-view="mobile"] .cfg-price > div:last-child .btn{flex:1 1 46%}
+  .deck[data-view="mobile"] .nav .btn{padding:11px 12px}
+  .deck[data-view="mobile"] .titlestrip{padding:9px 16px;gap:3px 16px}
+  .deck[data-view="mobile"] .wrap{padding:0 16px}
+  .deck[data-view="mobile"] .plate{padding:42px 0}
+  .deck[data-view="mobile"] .hero{grid-template-columns:1fr;gap:26px}
+  .deck[data-view="mobile"] .hero h1{font-size:30px}
+  .deck[data-view="mobile"] .hero-facts{gap:14px}
+  .deck[data-view="mobile"] .intro{grid-template-columns:1fr;gap:24px}
+  .deck[data-view="mobile"] .compare .lead,.deck[data-view="mobile"] .lead{max-width:none}
+  .deck[data-view="mobile"] .confighead{grid-template-columns:1fr;gap:0}
+  .deck[data-view="mobile"] .cfg{grid-template-columns:1fr}
+  .deck[data-view="mobile"] .cfg-controls{border-right:none;border-bottom:1px solid var(--frame);max-height:none;overflow:visible}
+  .deck[data-view="mobile"] .cfg-draw{min-height:clamp(340px,56vh,500px)}
+  .deck[data-view="mobile"] .contact{grid-template-columns:1fr;gap:30px}
+  .deck[data-view="mobile"] .steps{grid-template-columns:1fr}
+  .deck[data-view="mobile"] .works{grid-template-columns:1fr}
+  .deck[data-view="mobile"] .mosaic{grid-template-columns:1fr}
+  .deck[data-view="mobile"] .tile:first-child{grid-column:auto;grid-row:auto;height:280px}
+  .deck[data-view="mobile"] .field,
+  .deck[data-view="mobile"] .form input,
+  .deck[data-view="mobile"] .form select,
+  .deck[data-view="mobile"] .form textarea,
+  .deck[data-view="mobile"] input[type="number"]{font-size:16px}
+  .deck[data-view="mobile"] .chip{padding:9px 12px}
+  .deck[data-view="mobile"] .plate-head h2{font-size:clamp(24px,8vw,30px)}
+
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    *{animation-duration:.001ms!important;transition-duration:.001ms!important}
+    .ledglow{animation:none;opacity:.42}
+  }
+</style>
+
+<div class="deck" id="deck" data-view="desktop">
+  <div class="viewbar">
+    <div class="viewbar-in">
+      <span class="viewbar-lbl">Preview</span>
+      <div class="seg" id="viewSeg" role="group" aria-label="Preview width">
+        <button type="button" data-view="desktop" aria-pressed="true">Desktop</button>
+        <button type="button" data-view="mobile" aria-pressed="false">Mobile</button>
+      </div>
+    </div>
+  </div>
+  <div class="sheet">
+  <nav class="nav">
+    <a class="mark" href="#top">FORM <b>&amp;</b> FRAME</a>
+    <div class="navlinks">
+      <a href="#drawing">DRAWING</a>
+      <a href="#survey">SURVEY&nbsp;·&nbsp;PROPOSAL</a>
+      <a href="#specify">SPECIFY</a>
+      <a href="#works">WORKS</a>
+    </div>
+    <a class="btn" href="#request">Book a survey</a>
+  </nav>
+
+  <div class="titlestrip">
+    <span><b>Form &amp; Frame Ltd</b></span>
+    <span>Media-wall joinery</span>
+    <span>Slough · Berkshire</span>
+    <span>Drawing set — <b>6 plates</b></span>
+    <span>Issue 2026</span>
+  </div>
+
+  <div id="top"></div>
+
+  <!-- A-01 HERO -->
+  <section class="plate" id="drawing">
+    <div class="wrap hero">
+      <div>
+        <div class="eyebrow">A-01 / Media wall elevation</div>
+        <h1>Not a telly on a bracket.<br>A wall that was drawn.</h1>
+        <p class="prose">Every Form &amp; Frame media wall starts life as a measured elevation — TV recess, linear fire, the joinery either side — worked out to the millimetre before a sheet of MDF is cut. One Slough workshop surveys it, draws it, builds it and fits it.</p>
+        <div class="hero-cta">
+          <a class="btn" href="#specify">Specify yours</a>
+          <a class="btn ghost" href="#request">Book a survey</a>
+        </div>
+        <div class="hero-facts">
+          <span><b>1:20</b>drawing scale, signed off before build</span>
+          <span><b>2 days</b>typical on-site install</span>
+          <span><b>SL0–SL9</b>plus Windsor &amp; Maidenhead</span>
+        </div>
+      </div>
+      <div class="drawing" id="heroDraw">
+        <div class="drawing-svg" id="heroDrawSvg"></div>
+        <div class="vp-ctl" id="heroVpCtl">
+          <button type="button" data-z="out" aria-label="Zoom out">&#8722;</button>
+          <span class="vp-pct">100%</span>
+          <button type="button" data-z="in" aria-label="Zoom in">+</button>
+          <button type="button" data-z="rot" aria-label="Rotate 90 degrees">&#10227;</button>
+          <button type="button" data-z="max" aria-label="Maximise">&#10530;</button>
+          <button type="button" data-z="reset">Fit</button>
+        </div>
+        <div class="vp-hint">Scroll to zoom &middot; drag to pan</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- A-02 SURVEY vs PROPOSAL -->
+  <section class="plate" id="survey">
+    <div class="wrap">
+      <div class="plate-head">
+        <div class="eyebrow">A-02 / Same wall, two states</div>
+        <h2>Drag from what's there to what's drawn.</h2>
+        <p class="prose">A real Burnham job: chimney breast with a bracket TV and trailing cables on the left, the signed-off proposal on the right — recessed screen, 1.0&nbsp;kW linear fire, soft-close cabinets and a concealed warm-white reveal.</p>
+      </div>
+      <div class="compare-frame" id="cmp">
+        <div class="cmp-svg-survey" id="cmpSurvey"></div>
+        <div class="cmp-prop" id="cmpProp"></div>
+        <div class="cmp-div" id="cmpDiv"><span class="cmp-knob" aria-hidden="true">&#8596;</span></div>
+        <span class="cmp-tag l">Survey</span>
+        <span class="cmp-tag r">Proposal · Rev C</span>
+        <input class="cmp-range" id="cmpRange" type="range" min="0" max="100" value="52"
+               aria-label="Reveal the proposal drawing over the survey" aria-valuetext="52% proposal shown">
+      </div>
+      <div class="cmp-hint">Drag the frame, or focus the slider and use &larr; &rarr;.</div>
+    </div>
+  </section>
+
+  <!-- A-03 CONFIGURATOR -->
+  <section class="plate" id="specify">
+    <div class="wrap">
+      <div class="plate-head">
+        <div class="eyebrow">A-03 / Live specification</div>
+        <h2>Build the drawing. Watch the price move.</h2>
+        <p class="prose">Set the wall, choose what sits either side of the screen, pick a finish. The elevation, the schedule of works and the guide price all redraw as you go. Every change bumps the revision letter, just like a real drawing office.</p>
+      </div>
+
+      <div class="cfg">
+        <aside class="cfg-controls">
+          <div class="ctl budgetctl">
+            <label class="tog"><span><b>Do your own budget</b> — design down to a figure</span><input type="checkbox" id="fBudgetMode"></label>
+            <div class="budgetbox" id="budgetBox" hidden>
+              <div class="lbl"><span>Your budget · ex VAT</span><b id="rBudget">£7,500</b></div>
+              <input type="range" class="range" id="fBudget" min="2500" max="20000" step="250" value="7500"
+                     aria-label="Your budget in pounds">
+              <div class="budgetrow">
+                <input type="number" class="field num" id="fBudgetNum" min="2500" max="20000" step="250" value="7500" aria-label="Budget, pounds">
+                <button class="btn sm" type="button" id="bAutoFit">Fit spec to it</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="ctl">
+            <div class="lbl"><span>Wall width</span><b id="rWall">4200 mm</b></div>
+            <select class="field" id="fWall">
+              <option value="3000">3000 mm — 3.0 m</option>
+              <option value="3600">3600 mm — 3.6 m</option>
+              <option value="4200" selected>4200 mm — 4.2 m</option>
+              <option value="5000">5000 mm — 5.0 m</option>
+              <option value="6000">6000 mm — 6.0 m</option>
+              <option value="custom">Custom…</option>
+            </select>
+            <input type="number" class="field num" id="fWallCustom" min="2000" max="7000" step="10" value="4200"
+                   aria-label="Wall width in millimetres" hidden>
+          </div>
+
+          <div class="ctl">
+            <label class="tog"><span><b>Custom measurements</b> — type exact mm instead of presets</span><input type="checkbox" id="fCustomDims"></label>
+          </div>
+
+          <div class="ctl">
+            <div class="lbl"><span>Ceiling height</span><b id="rCeil">2700 mm</b></div>
+            <div class="chips" id="fCeil">
+              <button class="chip" type="button" data-v="2400">2400</button>
+              <button class="chip" type="button" data-v="2700">2700</button>
+              <button class="chip" type="button" data-v="3000">3000</button>
+            </div>
+            <input type="number" class="field num" id="fCeilCustom" min="2100" max="3600" step="10" value="2700" hidden
+                   aria-label="Ceiling height in millimetres">
+          </div>
+
+          <div class="ctl">
+            <div class="lbl"><span>Left of the TV</span><b id="rLeft">Open shelves</b></div>
+            <div class="chips" id="fLeft">
+              <button class="chip" type="button" data-v="none">None</button>
+              <button class="chip" type="button" data-v="shelves">Shelves</button>
+              <button class="chip" type="button" data-v="cabinets">Cabinets</button>
+              <button class="chip" type="button" data-v="drawers">Drawers</button>
+              <button class="chip" type="button" data-v="glass">Glazed</button>
+              <button class="chip" type="button" data-v="mixed">Cab + shelf</button>
+            </div>
+          </div>
+
+          <div class="ctl">
+            <div class="lbl"><span>Right of the TV</span><b id="rRight">Cabinets</b></div>
+            <div class="chips" id="fRight">
+              <button class="chip" type="button" data-v="none">None</button>
+              <button class="chip" type="button" data-v="shelves">Shelves</button>
+              <button class="chip" type="button" data-v="cabinets">Cabinets</button>
+              <button class="chip" type="button" data-v="drawers">Drawers</button>
+              <button class="chip" type="button" data-v="glass">Glazed</button>
+              <button class="chip" type="button" data-v="mixed">Cab + shelf</button>
+            </div>
+          </div>
+
+          <div class="ctl">
+            <div class="lbl"><span>Module width</span><b id="rMod">735 mm / side</b></div>
+            <div class="chips" id="fWidth">
+              <button class="chip" type="button" data-v="narrow">Narrow</button>
+              <button class="chip" type="button" data-v="balanced">Balanced</button>
+              <button class="chip" type="button" data-v="wide">Wide</button>
+            </div>
+            <div class="dimpair" id="fModMM" hidden>
+              <label>Left mm<input type="number" class="field num" id="fLeftMM" min="200" max="2600" step="10" value="735"></label>
+              <label>Right mm<input type="number" class="field num" id="fRightMM" min="200" max="2600" step="10" value="735"></label>
+            </div>
+          </div>
+
+          <div class="ctl" id="fUnitRow" hidden>
+            <div class="lbl"><span>Unit height</span><b id="rUnit">2100 mm</b></div>
+            <input type="number" class="field num" id="fUnitMM" min="1700" max="2600" step="10" value="2100"
+                   aria-label="Unit height in millimetres">
+          </div>
+
+          <div class="ctl">
+            <div class="lbl"><span>Finish</span><b id="rFin">European oak</b></div>
+            <select class="field" id="fFinish">
+              <option value="oak">European oak — rift-sawn</option>
+              <option value="smoked">Smoked oak</option>
+              <option value="walnut">American walnut</option>
+              <option value="ash">Pale ash</option>
+              <option value="charcoal">Charcoal open-pore lacquer</option>
+              <option value="sage">Sage green lacquer</option>
+              <option value="bone">Bone matt lacquer</option>
+              <option value="microcement">Polished microcement</option>
+              <option value="custom">Custom lacquer colour…</option>
+            </select>
+            <div id="fColourBox" hidden>
+              <div class="swatches" id="fColour"></div>
+              <label class="pickrow">Any colour
+                <input type="color" id="fColourPick" value="#2E4C3E" aria-label="Custom lacquer colour">
+              </label>
+              <div class="hintline">Custom colour is a hand-mixed lacquer finish — priced on the Finish menu above.</div>
+            </div>
+          </div>
+
+          <div class="ctl">
+            <div class="lbl"><span>Surface texture</span><b id="rTex">Smooth matt</b></div>
+            <div class="chips" id="fTex">
+              <button class="chip" type="button" data-v="smooth">Smooth</button>
+              <button class="chip" type="button" data-v="grain">Straight grain</button>
+              <button class="chip" type="button" data-v="cross">Cross-cut</button>
+              <button class="chip" type="button" data-v="ribbed">Ribbed</button>
+              <button class="chip" type="button" data-v="linen">Linen</button>
+              <button class="chip" type="button" data-v="stone">Stone vein</button>
+              <button class="chip" type="button" data-v="board">Board-formed</button>
+            </div>
+          </div>
+
+          <div class="ctl" id="fGlassRow">
+            <div class="lbl"><span>Glass type</span><b id="rGlass">Clear float</b></div>
+            <div class="chips" id="fGlass">
+              <button class="chip" type="button" data-v="clear">Clear</button>
+              <button class="chip" type="button" data-v="lowiron">Low-iron</button>
+              <button class="chip" type="button" data-v="bronze">Bronze</button>
+              <button class="chip" type="button" data-v="smoke">Smoke</button>
+              <button class="chip" type="button" data-v="reeded">Reeded</button>
+              <button class="chip" type="button" data-v="fluted">Fluted</button>
+              <button class="chip" type="button" data-v="satin">Satin</button>
+              <button class="chip" type="button" data-v="mirror">Mirror</button>
+              <button class="chip" type="button" data-v="antique">Antiqued</button>
+            </div>
+            <div class="hintline" id="fGlassHint">Set a side module to <b>Glazed</b> to see this.</div>
+          </div>
+
+          <div class="ctl">
+            <div class="lbl"><span>Door &amp; drawer front</span><b id="rFront">Flat / slab</b></div>
+            <div class="chips" id="fFront">
+              <button class="chip" type="button" data-v="flat">Flat</button>
+              <button class="chip" type="button" data-v="fluted">Fluted</button>
+              <button class="chip" type="button" data-v="shaker">Shaker</button>
+              <button class="chip" type="button" data-v="vgroove">V-groove</button>
+            </div>
+          </div>
+
+          <div class="ctl">
+            <div class="lbl"><span>Handles</span><b id="rHandle">Handleless</b></div>
+            <select class="field" id="fHandle">
+              <option value="push">Handleless — push to open</option>
+              <option value="edge">Edge pull</option>
+              <option value="brass">Knurled brass knob</option>
+              <option value="leather">Leather tab</option>
+            </select>
+          </div>
+
+          <div class="ctl">
+            <div class="lbl"><span>TV size</span><b id="rTv">65&quot;</b></div>
+            <div class="chips" id="fTv">
+              <button class="chip" type="button" data-v="55">55&quot;</button>
+              <button class="chip" type="button" data-v="65">65&quot;</button>
+              <button class="chip" type="button" data-v="75">75&quot;</button>
+              <button class="chip" type="button" data-v="85">85&quot;</button>
+            </div>
+          </div>
+
+          <div class="ctl">
+            <div class="lbl"><span>Fire</span><b id="rFire">Linear 1.0 kW</b></div>
+            <select class="field" id="fFire">
+              <option value="none">No fire</option>
+              <option value="lin1">Linear electric — 1.0 kW</option>
+              <option value="lin2">Linear electric — 2.0 kW</option>
+              <option value="stove">Inset stove</option>
+            </select>
+          </div>
+
+          <div class="ctl">
+            <div class="lbl"><span>Light type</span><b id="rLed">Perimeter reveal</b></div>
+            <select class="field" id="fLed">
+              <option value="none">None</option>
+              <option value="perim">Perimeter reveal</option>
+              <option value="shelf">Shelf wash</option>
+              <option value="plinth">Floating plinth glow</option>
+              <option value="halo">Halo / bias light behind TV</option>
+              <option value="cove">Cove up-light</option>
+              <option value="spots">Recessed downlights</option>
+              <option value="accent">RGB accent strip</option>
+            </select>
+            <div class="chips" id="fLedK" style="margin-top:8px">
+              <button class="chip" type="button" data-v="2700">2700K warm</button>
+              <button class="chip" type="button" data-v="3000">3000K</button>
+              <button class="chip" type="button" data-v="4000">4000K neutral</button>
+            </div>
+            <label class="pickrow" id="fLedRGBRow" hidden>Accent colour
+              <input type="color" id="fLedRGB" value="#8A63FF" aria-label="RGB accent colour">
+            </label>
+          </div>
+
+          <div class="ctl">
+            <label class="tog"><span>Floating media shelf under the TV</span><input type="checkbox" id="fShelf"></label>
+            <select class="field" id="fShelfMat" style="margin-top:9px" hidden aria-label="Media shelf material">
+              <option value="match">Shelf — matching finish</option>
+              <option value="oak">Shelf — solid oak</option>
+              <option value="metal">Shelf — blackened steel</option>
+            </select>
+          </div>
+
+          <div class="ctl">
+            <label class="tog"><span>Top bridging cabinets across the wall</span><input type="checkbox" id="fBridge"></label>
+          </div>
+          <div class="ctl">
+            <label class="tog"><span>Concealed AV / router cupboard</span><input type="checkbox" id="fAvcup" checked></label>
+          </div>
+
+          <div class="ctl">
+            <div class="lbl"><span>Overlay on your room photo</span><button type="button" class="linkbtn" id="fPhotoClear" hidden>Remove</button></div>
+            <input class="file" type="file" id="fPhoto" accept="image/*">
+            <div class="hintline" id="fPhotoMsg" role="alert" hidden></div>
+          </div>
+        </aside>
+
+        <div class="cfg-stage">
+          <div class="cfg-draw" id="cfgDraw">
+            <div class="cfg-draw-svg" id="cfgDrawSvg"></div>
+            <div class="vp-ctl" id="cfgVpCtl">
+              <button type="button" data-z="out" aria-label="Zoom out">&#8722;</button>
+              <span class="vp-pct">100%</span>
+              <button type="button" data-z="in" aria-label="Zoom in">+</button>
+              <button type="button" data-z="rot" aria-label="Rotate 90 degrees">&#10227;</button>
+              <button type="button" data-z="max" aria-label="Maximise">&#10530;</button>
+              <button type="button" data-z="reset">Fit</button>
+            </div>
+            <div class="vp-hint">Scroll to zoom &middot; drag to pan &middot; pinch on touch</div>
+          </div>
+          <div class="cfg-price">
+            <div>
+              <div class="plabel">Guide price · ex VAT</div>
+              <div class="money" id="rPrice">£0</div>
+            </div>
+            <div class="sub" id="rPriceSub">Guide only. A fixed quote follows the on-site survey.</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn" type="button" id="bSave">Save spec</button>
+              <button class="btn" type="button" id="bSend">Send with survey</button>
+              <button class="btn ghost" type="button" id="bReset">Reset parameters</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cfg-summary" id="rSummary"></div>
+
+      <div class="schedule">
+        <table>
+          <caption>Schedule of works — indicative</caption>
+          <thead><tr><th>Item</th><th>Specification</th><th>Qty</th></tr></thead>
+          <tbody id="rSchedule"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- A-04 PROCESS -->
+  <section class="plate" id="process">
+    <div class="wrap">
+      <div class="plate-head">
+        <div class="eyebrow">A-04 / How a wall gets built</div>
+        <h2>Five steps, one team, no subcontractors.</h2>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="n">01</div><h3>Survey</h3><p>Laser measure, check the wall for square, mark power, aerial and any pipework to move.</p></div>
+        <div class="step"><div class="n">02</div><h3>Drawing</h3><p>A scaled elevation with the full spec. You sign it off before anything is ordered.</p></div>
+        <div class="step"><div class="n">03</div><h3>Workshop</h3><p>Carcasses and veneered faces built off-site in Slough, dry-assembled and checked.</p></div>
+        <div class="step"><div class="n">04</div><h3>Install</h3><p>Two days on site. Dust sheets, tidy cuts, cable runs brushed and hidden.</p></div>
+        <div class="step"><div class="n">05</div><h3>Handover</h3><p>Snag the doors, level the shelves, pair the fire remote, walk you through it.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- A-05 WORKS -->
+  <section class="plate" id="works">
+    <div class="wrap">
+      <div class="plate-head">
+        <div class="eyebrow">A-05 / Completed works</div>
+        <h2>Recent drawings, off the wall and into rooms.</h2>
+      </div>
+      <div class="works" id="rWorks"></div>
+    </div>
+  </section>
+
+  <!-- A-06 CONTACT -->
+  <section class="plate" id="request">
+    <div class="wrap contact">
+      <div>
+        <div class="eyebrow">A-06 / Request a survey</div>
+        <h2>Bring the room.<br>We'll bring the drawing.</h2>
+        <p class="prose">Send a photo, a rough sketch or just the wall width. We'll call within one working day to book a free measured survey.</p>
+        <div class="coverage">
+          <b>Coverage.</b> Slough <b>SL1–SL3</b>, Langley <b>SL3</b>, Iver <b>SL0</b>, Burnham <b>SL1/SL2</b>, Windsor <b>SL4</b>, Maidenhead <b>SL6</b>, and streets between.
+        </div>
+      </div>
+
+      <div>
+        <form class="form" id="form" novalidate>
+          <div class="row">
+            <label for="cName">Your name</label>
+            <input id="cName" name="name" autocomplete="name">
+            <div class="err">Please tell us who to ask for.</div>
+          </div>
+          <div class="row">
+            <label for="cContact">Phone or email</label>
+            <input id="cContact" name="contact" autocomplete="email">
+            <div class="err">We need one way to reach you.</div>
+          </div>
+          <div class="row">
+            <label for="cPost">Postcode</label>
+            <input id="cPost" name="postcode" autocomplete="postal-code" placeholder="e.g. SL1 3XE">
+            <div class="err">A postcode helps us check the diary for your area.</div>
+          </div>
+          <div class="row">
+            <label for="cWidth">Wall width, roughly</label>
+            <select id="cWidth" name="width">
+              <option value="">Choose one</option>
+              <option>Under 3.5 m</option>
+              <option>3.5 – 4.5 m</option>
+              <option>Over 4.5 m</option>
+              <option>Not sure — please measure</option>
+            </select>
+            <div class="err">Pick the closest option.</div>
+          </div>
+          <div class="row">
+            <label for="cMsg">What goes either side of the TV?</label>
+            <textarea id="cMsg" name="message" placeholder="Books and a couple of closed cupboards for the console clutter..."></textarea>
+            <div class="err">A line or two is plenty.</div>
+          </div>
+          <button class="btn" type="submit">Request a survey</button>
+        </form>
+
+        <div class="logged" id="logged">
+          <h3>Survey request logged.</h3>
+          <div class="ref" id="loggedRef">REF FF-000000-00</div>
+          <p>We'll call within one working day to book a free measured survey. Nothing is ordered until you've signed off a drawing.</p>
+          <div class="spec" id="loggedSpec"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span><b>Form &amp; Frame Ltd</b></span>
+    <span>Unit 4, Buckingham Ave, Slough SL1</span>
+    <span>Drawings &copy; 2026</span>
+    <span>Sheet 1 / 1</span>
+  </footer>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var MODFRAC = { narrow:0.24, balanced:0.34, wide:0.44 };
+  /* drawn px width of the wall for a given real width in mm */
+  function wallPxFor(mm){ return Math.round(720 + (mm - 3000) * (360 / 3000)); } /* 3000->720, 6000->1080 */
+  function realWall(S){ return (S.customDims || S.wall === "custom") ? clampInt(S.wallCustom, 2000, 7000) : Number(S.wall); }
+  function realCeil(S){ return S.customDims ? clampInt(S.ceilCustom, 2100, 3600) : (CEILMM[S.ceil] || 2700); }
+  function realUnit(S){ return S.customDims ? clampInt(S.unitMM, 1600, 2700) : 2100; }
+  function clampInt(v, lo, hi){ v = Math.round(Number(v) || 0); return Math.max(lo, Math.min(hi, v)); }
+
+  var FIN = {
+    oak:        { name:"European oak",       face:"#D8B487", edge:"#9C7040", grain:"#BC8C52" },
+    smoked:     { name:"Smoked oak",         face:"#A07E56", edge:"#5E452C", grain:"#7E6141" },
+    walnut:     { name:"American walnut",    face:"#6F4B34", edge:"#372014", grain:"#553824" },
+    ash:        { name:"Pale ash",           face:"#DDCBA8", edge:"#A9946A", grain:"#C6B387" },
+    charcoal:   { name:"Charcoal lacquer",   face:"#43443C", edge:"#17180F", grain:"#33342C" },
+    sage:       { name:"Sage green lacquer", face:"#7C886A", edge:"#454E38", grain:"#6A755A" },
+    bone:       { name:"Bone matt lacquer",  face:"#D9D2C0", edge:"#8C8571", grain:"#C6BEA9" },
+    microcement:{ name:"Polished microcement", face:"#C9C3B2", edge:"#6E6A5B", grain:"#B6AF9C" },
+    custom:     { name:"Custom lacquer",     face:"#5F7A63", edge:"#39473b", grain:"#516853" }
+  };
+  var LACQUERS = [
+    ["#2E4C3E","Fir green"], ["#1F3A4D","Deep petrol"], ["#6E2F2A","Oxblood"], ["#2B2F45","Ink navy"],
+    ["#7A6A2E","Ochre"], ["#4A5240","Olive"], ["#8C5A44","Sienna"], ["#5B6572","Slate blue"],
+    ["#B9A98C","Mushroom"], ["#23241F","Near black"], ["#E6E0CE","Chalk white"], ["#3C5148","Eucalyptus"]
+  ];
+  var FRONT   = { flat:"Flat / slab", fluted:"Fluted", shaker:"Shaker frame", vgroove:"V-groove" };
+  var HANDLE  = { push:"Handleless / push", edge:"Edge pull", brass:"Knurled brass", leather:"Leather tab" };
+  var MODNAME = { none:"Clean panels", shelves:"Open shelves", cabinets:"Cabinets", drawers:"Drawer bank", glass:"Glazed display", mixed:"Cabinet + shelves" };
+  var TVMM    = { "55":1245, "65":1450, "75":1680, "85":1930 };
+  var FIRENAME= { none:"No fire", lin1:"Linear fire 1.0 kW", lin2:"Linear fire 2.0 kW", stove:"Inset stove" };
+  var TEXNAME = { smooth:"Smooth matt", grain:"Straight grain", cross:"Cross-cut grain", ribbed:"Ribbed / reeded", linen:"Linen weave", stone:"Stone veining", board:"Board-formed" };
+  var LIGHTNAME = { none:"No lighting", perim:"Perimeter reveal", shelf:"Shelf wash", plinth:"Floating plinth", halo:"Halo behind TV", cove:"Cove up-light", spots:"Downlights", accent:"RGB accent" };
+  var LEDNAME = LIGHTNAME;
+  var GLASSNAME = { clear:"Clear float", lowiron:"Low-iron", bronze:"Bronze tint", smoke:"Smoke grey", reeded:"Reeded", fluted:"Fluted", satin:"Satin etched", mirror:"Mirror", antique:"Antiqued mirror" };
+  var CEILMM  = { "2400":2400, "2700":2700, "3000":3000 };
+
+  /* colour maths */
+  function hx(h){ h = String(h).replace("#",""); if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+    return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)]; }
+  function toHex(c){ return "#" + c.map(function(v){ v = Math.max(0, Math.min(255, Math.round(v))); return (v < 16 ? "0" : "") + v.toString(16); }).join(""); }
+  function shade(h, f){ var c = hx(h); return toHex(c.map(function(v){ return f < 0 ? v * (1 + f) : v + (255 - v) * f; })); }
+  function sr(n){ var x = Math.sin(n * 97.13) * 43758.5453; return x - Math.floor(x); }
+
+  /* ---------- drawing primitives ---------- */
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+
+  function dimH(x1,x2,y,label){
+    var a=7, m=(x1+x2)/2;
+    return '<g class="dg">'
+      + '<line x1="'+x1+'" y1="'+(y-11)+'" x2="'+x1+'" y2="'+(y+6)+'"/>'
+      + '<line x1="'+x2+'" y1="'+(y-11)+'" x2="'+x2+'" y2="'+(y+6)+'"/>'
+      + '<line x1="'+x1+'" y1="'+y+'" x2="'+x2+'" y2="'+y+'"/>'
+      + '<path d="M'+x1+' '+y+' l'+a+' -'+(a*0.6)+' v'+(a*1.2)+' z"/>'
+      + '<path d="M'+x2+' '+y+' l-'+a+' -'+(a*0.6)+' v'+(a*1.2)+' z"/>'
+      + '<rect x="'+(m-30)+'" y="'+(y-19)+'" width="60" height="15" class="dgbg"/>'
+      + '<text x="'+m+'" y="'+(y-7)+'" text-anchor="middle" class="dt">'+esc(label)+'</text>'
+      + '</g>';
+  }
+  function dimV(y1,y2,x,label){
+    var a=7, m=(y1+y2)/2;
+    return '<g class="dg">'
+      + '<line x1="'+(x-6)+'" y1="'+y1+'" x2="'+(x+11)+'" y2="'+y1+'"/>'
+      + '<line x1="'+(x-6)+'" y1="'+y2+'" x2="'+(x+11)+'" y2="'+y2+'"/>'
+      + '<line x1="'+x+'" y1="'+y1+'" x2="'+x+'" y2="'+y2+'"/>'
+      + '<path d="M'+x+' '+y1+' l-'+(a*0.6)+' '+a+' h'+(a*1.2)+' z"/>'
+      + '<path d="M'+x+' '+y2+' l-'+(a*0.6)+' -'+a+' h'+(a*1.2)+' z"/>'
+      + '<text x="'+x+'" y="'+m+'" text-anchor="middle" transform="rotate(-90 '+x+' '+m+')" class="dt">'+esc(label)+'</text>'
+      + '</g>';
+  }
+  function leader(tx,ty,lx,ly,text,anchor){
+    anchor = anchor||"start";
+    return '<g class="lg">'
+      + '<circle cx="'+tx+'" cy="'+ty+'" r="3"/>'
+      + '<path d="M'+tx+' '+ty+' L'+lx+' '+ly+'"/>'
+      + '<text x="'+lx+(anchor==="start"?4:-4)+'" y="'+(ly-6)+'" text-anchor="'+anchor+'" class="lt">'+esc(text)+'</text>'
+      + '</g>';
+  }
+
+  /* ---------- the elevation ---------- */
+  function ledColour(S){
+    if (S.ledType === "none") return null;
+    if (S.ledType === "accent") return S.ledRGB || "#8A63FF";
+    return S.ledK === "4000" ? "#EAE0C6" : S.ledK === "3000" ? "#E8C078" : "#E0A03C";
+  }
+  function finOf(S){
+    if (S.finish === "custom"){
+      var b = S.colour || FIN.custom.face;
+      return { name:"Custom lacquer", face:b, edge:shade(b, -0.46), grain:shade(b, -0.18), key:"custom" };
+    }
+    var f = FIN[S.finish] || FIN.oak;
+    return { name:f.name, face:f.face, edge:f.edge, grain:f.grain, key:S.finish };
+  }
+  function texDefs(S, fin, uid){
+    var t = S.texture || "smooth", gc = fin.grain, ec = fin.edge, d = "";
+    if (t === "grain"){
+      d = '<pattern id="' + uid + '" width="30" height="130" patternUnits="userSpaceOnUse">'
+        + '<path d="M5 0 Q9 32 5 65 Q1 98 5 130" fill="none" stroke="'+gc+'" stroke-width="1.1"/>'
+        + '<path d="M17 0 Q13 40 17 84 Q21 120 17 130" fill="none" stroke="'+gc+'" stroke-width="1"/>'
+        + '<path d="M26 0 Q24 50 26 100 Q28 130 26 130" fill="none" stroke="'+ec+'" stroke-width="0.8" opacity=".5"/></pattern>';
+    } else if (t === "cross"){
+      d = '<pattern id="' + uid + '" width="150" height="26" patternUnits="userSpaceOnUse">'
+        + '<path d="M0 6 Q40 2 80 6 T150 6" fill="none" stroke="'+gc+'" stroke-width="1"/>'
+        + '<path d="M0 17 Q50 22 100 17 T150 17" fill="none" stroke="'+ec+'" stroke-width="0.8" opacity=".55"/></pattern>';
+    } else if (t === "ribbed"){
+      d = '<pattern id="' + uid + '" width="16" height="20" patternUnits="userSpaceOnUse">'
+        + '<line x1="4" y1="0" x2="4" y2="20" stroke="'+ec+'" stroke-width="2"/>'
+        + '<line x1="4" y1="0" x2="4" y2="20" stroke="#ffffff" stroke-opacity=".14" stroke-width="1" transform="translate(3 0)"/></pattern>';
+    } else if (t === "linen"){
+      d = '<pattern id="' + uid + '" width="12" height="12" patternUnits="userSpaceOnUse">'
+        + '<path d="M0 3 H12 M0 9 H12" stroke="'+gc+'" stroke-width="0.9"/>'
+        + '<path d="M3 0 V12 M9 0 V12" stroke="'+ec+'" stroke-width="0.7" opacity=".6"/></pattern>';
+    } else if (t === "stone"){
+      d = '<pattern id="' + uid + '" width="180" height="90" patternUnits="userSpaceOnUse">'
+        + '<path d="M0 20 Q60 8 120 22 T180 18" fill="none" stroke="'+ec+'" stroke-width="1.3" opacity=".7"/>'
+        + '<path d="M0 52 Q50 44 110 56 T180 50" fill="none" stroke="'+gc+'" stroke-width="1"/>'
+        + '<path d="M0 74 Q70 66 140 78 T180 72" fill="none" stroke="'+ec+'" stroke-width="0.9" opacity=".5"/></pattern>';
+    } else if (t === "board"){
+      d = '<pattern id="' + uid + '" width="60" height="220" patternUnits="userSpaceOnUse">'
+        + '<line x1="0" y1="0" x2="0" y2="220" stroke="'+ec+'" stroke-width="1.4"/>'
+        + '<line x1="0" y1="110" x2="60" y2="110" stroke="'+ec+'" stroke-width="1" opacity=".5"/>'
+        + '<circle cx="30" cy="60" r="1.3" fill="'+ec+'" opacity=".5"/><circle cx="14" cy="150" r="1" fill="'+ec+'" opacity=".4"/></pattern>';
+    }
+    return d ? '<defs>' + d + '</defs>' : "";
+  }
+  function texOpacity(t){ return t === "ribbed" ? 0.5 : t === "stone" ? 0.4 : t === "board" ? 0.45 : 0.28; }
+  var ELEV_N = 0;
+
+  function elevation(S, o){
+    o = o || {};
+    var dims = o.dims !== false, leaders = o.leaders !== false, tb = o.tb !== false;
+    var overlay = !!o.overlay, mini = !!o.mini;
+    var cx = 600, mm = realWall(S), wallPx = wallPxFor(mm);
+    var yTop = 150, floorY = 548;
+    var x0 = cx - wallPx/2, x1 = cx + wallPx/2;
+    var mmPerPx = mm / wallPx;
+    var ceilMM = realCeil(S);
+    var ceilY = yTop - Math.max(-6, Math.min(48, Math.round((ceilMM - 2400) / 600 * 30)));
+    var unitMM = realUnit(S);
+    var yUnitTop = Math.max(ceilY + 16, Math.round(floorY - unitMM * 0.175));
+    var fin = finOf(S);
+    var frontName = FRONT[S.front] || "Flat / slab";
+    var ledCol = ledColour(S);
+    var uid = "ftx" + (++ELEV_N);
+    var texId = (S.texture && S.texture !== "smooth") ? "url(#" + uid + ")" : null;
+    var fireGlow = "#D2892A";
+
+    var frac = MODFRAC[S.width];
+    var lPx = S.left === "none" ? 0 : (wallPx / 2) * frac;
+    var rPx = S.right === "none" ? 0 : (wallPx / 2) * frac;
+    var lMM = Math.round(lPx * mmPerPx), rMM = Math.round(rPx * mmPerPx);
+    var centrePx = wallPx - lPx - rPx, centreMM = Math.round(centrePx * mmPerPx);
+    var jL = x0 + lPx, jR = x1 - rPx;
+
+    var tvW = Math.max(140, Math.min(centrePx - 80, TVMM[S.tv] / mmPerPx));
+    var tvH = tvW * 9 / 16;
+    var tvCy = floorY - (S.shelf ? 250 : 224);
+    var tvY = tvCy - tvH / 2;
+
+    var bridgeH = S.bridge ? Math.max(26, (yUnitTop - ceilY) - 4) : 0;
+    var yBridgeTop = yUnitTop - bridgeH;
+
+    var g = "";
+
+    function frontDetail(x, y, w, h){
+      if (S.front === "flat" || w < 20 || h < 20) return "";
+      var s = "", i;
+      if (S.front === "fluted"){
+        for (i = x + 8; i < x + w - 4; i += 9) s += '<line x1="'+i+'" y1="'+(y+4)+'" x2="'+i+'" y2="'+(y+h-4)+'" stroke="'+fin.edge+'" stroke-width="1" opacity=".5"/>';
+      } else if (S.front === "shaker"){
+        s += '<rect x="'+(x+7)+'" y="'+(y+7)+'" width="'+(w-14)+'" height="'+(h-14)+'" fill="none" stroke="'+fin.edge+'" stroke-width="1.4"/>';
+      } else if (S.front === "vgroove"){
+        for (i = x + w/3; i < x + w - 5; i += w/3) s += '<line x1="'+i+'" y1="'+(y+3)+'" x2="'+i+'" y2="'+(y+h-3)+'" stroke="'+fin.edge+'" stroke-width="1.6" opacity=".65"/>';
+      }
+      return s;
+    }
+    function handleMark(x, y, w, h, horiz){
+      var mx = x + w/2;
+      if (S.handle === "push") return "";
+      if (S.handle === "edge") return '<line x1="'+(x+w*0.22)+'" y1="'+(y+4)+'" x2="'+(x+w*0.78)+'" y2="'+(y+4)+'" stroke="'+fin.edge+'" stroke-width="3"/>';
+      if (S.handle === "brass") return '<circle cx="'+(horiz ? mx : x + w - 12)+'" cy="'+(horiz ? y + 8 : y + h/2)+'" r="4" fill="#C9A24B" stroke="#8a6a26" stroke-width="1"/>';
+      if (S.handle === "leather") return '<rect x="'+(mx-3)+'" y="'+(y+3)+'" width="6" height="15" rx="2" fill="#6b4a2f"/>';
+      return "";
+    }
+    function drawSide(a, b, type, side){
+      if (b - a < 8) return "";
+      var edge = side === "left" ? b : a;
+      var s = '<line x1="'+edge+'" y1="'+yUnitTop+'" x2="'+edge+'" y2="'+floorY+'" stroke="'+fin.edge+'" stroke-width="1.4"/>';
+      var ia = a + 10, ib = b - 10, top = yUnitTop + 12, bot = floorY - 18, h = bot - top, i;
+      if (type === "shelves"){
+        for (i = 0; i <= 4; i++){ var sy = top + h*i/4; s += '<line x1="'+ia+'" y1="'+sy+'" x2="'+ib+'" y2="'+sy+'" stroke="'+fin.edge+'" stroke-width="3"/>'; }
+        if (S.ledType === "shelf" && ledCol) for (i = 1; i <= 4; i++){ var wy = top + h*i/4; s += '<line x1="'+ia+'" y1="'+(wy-3)+'" x2="'+ib+'" y2="'+(wy-3)+'" stroke="'+ledCol+'" stroke-width="3" opacity=".7"/>'; }
+      } else if (type === "cabinets"){
+        var doors = h > 210 ? 2 : 1, dh = h / doors;
+        for (i = 0; i < doors; i++){ var dy = top + i*dh;
+          s += '<rect x="'+ia+'" y="'+(dy+3)+'" width="'+(ib-ia)+'" height="'+(dh-6)+'" fill="none" stroke="'+fin.edge+'" stroke-width="2"/>';
+          s += frontDetail(ia, dy+3, ib-ia, dh-6) + handleMark(ia, dy+3, ib-ia, dh-6, false);
+        }
+      } else if (type === "drawers"){
+        var n = 4, dh2 = h / n;
+        for (i = 0; i < n; i++){ var ky = top + i*dh2;
+          s += '<rect x="'+ia+'" y="'+(ky+2)+'" width="'+(ib-ia)+'" height="'+(dh2-4)+'" fill="none" stroke="'+fin.edge+'" stroke-width="2"/>';
+          s += frontDetail(ia, ky+2, ib-ia, dh2-4) + handleMark(ia, ky+2, ib-ia, dh2-4, true);
+        }
+      } else if (type === "glass"){
+        var gt = S.glass || "clear";
+        var gm = { clear:["#EAF1F0",0.16], lowiron:["#EAF6F2",0.08], bronze:["#7A5A34",0.26], smoke:["#3A3E42",0.32],
+                   reeded:["#E7EEF0",0.14], fluted:["#E7EEF0",0.14], satin:["#F3F1EA",0.5], mirror:["#C6D0D0",0.55], antique:["#B7AE97",0.5] }[gt] || ["#EAF1F0",0.16];
+        s += '<rect x="'+ia+'" y="'+top+'" width="'+(ib-ia)+'" height="'+h+'" fill="'+gm[0]+'" fill-opacity="'+gm[1]+'" stroke="'+fin.edge+'" stroke-width="2"/>';
+        for (i = 1; i < 4; i++){ var gy = top + h*i/4; s += '<line x1="'+ia+'" y1="'+gy+'" x2="'+ib+'" y2="'+gy+'" stroke="'+fin.edge+'" stroke-width="1.2" opacity=".7"/>'; }
+        if (gt === "reeded" || gt === "fluted"){ var stp = gt === "reeded" ? 7 : 14;
+          for (var vg = ia + stp; vg < ib - 1; vg += stp) s += '<line x1="'+vg+'" y1="'+top+'" x2="'+vg+'" y2="'+(top+h)+'" stroke="#ffffff" stroke-opacity=".22" stroke-width="'+(gt === "reeded" ? 2 : 4)+'"/>';
+        }
+        if (gt === "mirror" || gt === "antique"){
+          s += '<path d="M'+ia+' '+(top+h*0.72)+' L'+(ia+(ib-ia)*0.55)+' '+(top+8)+'" stroke="#ffffff" stroke-opacity=".33" stroke-width="7"/>';
+          s += '<path d="M'+(ia+(ib-ia)*0.32)+' '+(top+h)+' L'+ib+' '+(top+h*0.42)+'" stroke="#ffffff" stroke-opacity=".16" stroke-width="4"/>';
+        }
+        if (gt === "antique"){ for (var an = 0; an < 14; an++) s += '<circle cx="'+(ia + sr(an+1)*(ib-ia))+'" cy="'+(top + sr(an+7)*h)+'" r="'+(1 + sr(an+3)*3)+'" fill="#5b5545" opacity=".26"/>'; }
+        if (ledCol) s += '<line x1="'+ia+'" y1="'+(bot+3)+'" x2="'+ib+'" y2="'+(bot+3)+'" stroke="'+ledCol+'" stroke-width="4"/>';
+      } else if (type === "mixed"){
+        var split = top + h*0.55;
+        s += '<rect x="'+ia+'" y="'+(split+3)+'" width="'+(ib-ia)+'" height="'+(bot-split-3)+'" fill="none" stroke="'+fin.edge+'" stroke-width="2"/>';
+        s += frontDetail(ia, split+3, ib-ia, bot-split-3) + handleMark(ia, split+3, ib-ia, bot-split-3, false);
+        for (i = 0; i <= 2; i++){ var my2 = top + (split-top)*i/2; s += '<line x1="'+ia+'" y1="'+my2+'" x2="'+ib+'" y2="'+my2+'" stroke="'+fin.edge+'" stroke-width="3"/>'; }
+      }
+      return s;
+    }
+
+    /* ceiling, room, floor */
+    g += '<line x1="'+(x0-70)+'" y1="'+ceilY+'" x2="'+(x1+70)+'" y2="'+ceilY+'" class="ceil"/>';
+    if (!overlay) g += '<rect x="'+(x0-46)+'" y="'+ceilY+'" width="'+(wallPx+92)+'" height="'+(floorY-ceilY)+'" class="room"/>';
+    g += '<line x1="'+(x0-70)+'" y1="'+floorY+'" x2="'+(x1+70)+'" y2="'+floorY+'" class="floor"/>';
+    g += '<rect x="'+(x0-70)+'" y="'+floorY+'" width="'+(wallPx+140)+'" height="12" class="skirt"/>';
+
+    /* wall panel + texture + grain + carcass joints */
+    g += '<rect x="'+x0+'" y="'+yUnitTop+'" width="'+wallPx+'" height="'+(floorY-yUnitTop)+'" fill="'+fin.face+'" fill-opacity="'+(overlay ? 0.34 : 1)+'" stroke="'+fin.edge+'" stroke-width="1.4"/>';
+    if (texId) g += '<rect x="'+x0+'" y="'+yUnitTop+'" width="'+wallPx+'" height="'+(floorY-yUnitTop)+'" fill="'+texId+'" opacity="'+texOpacity(S.texture)+'"/>';
+    for (var gi = 1; gi < 9; gi++){ var gx = x0 + wallPx*gi/9; g += '<line x1="'+gx+'" y1="'+(yUnitTop+6)+'" x2="'+gx+'" y2="'+(floorY-6)+'" stroke="'+fin.grain+'" stroke-width="0.8" opacity=".26"/>'; }
+    var carcN = Math.max(2, Math.round(wallPx / 320));
+    for (var ci = 1; ci < carcN; ci++){ var cxx = x0 + wallPx*ci/carcN; g += '<line x1="'+cxx+'" y1="'+yUnitTop+'" x2="'+cxx+'" y2="'+floorY+'" stroke="'+fin.edge+'" stroke-width="0.8" opacity=".4"/>'; }
+
+    /* bridge cabinets */
+    if (bridgeH > 0){
+      g += '<rect x="'+x0+'" y="'+yBridgeTop+'" width="'+wallPx+'" height="'+bridgeH+'" fill="'+fin.face+'" stroke="'+fin.edge+'" stroke-width="1.4"/>';
+      var bn = Math.max(3, Math.round(wallPx / 210)), bw = wallPx / bn;
+      for (var bi = 0; bi < bn; bi++){ var bx = x0 + bw*bi;
+        g += '<rect x="'+(bx+3)+'" y="'+(yBridgeTop+3)+'" width="'+(bw-6)+'" height="'+(bridgeH-6)+'" fill="none" stroke="'+fin.edge+'" stroke-width="1.6"/>';
+        g += frontDetail(bx+3, yBridgeTop+3, bw-6, bridgeH-6) + handleMark(bx+3, yBridgeTop+3, bw-6, bridgeH-6, true);
+      }
+    }
+
+    /* sides + centre */
+    g += drawSide(x0, jL, S.left, "left");
+    g += drawSide(jR, x1, S.right, "right");
+    if (S.left === "none" && S.right === "none"){
+      g += '<line x1="'+(x0+wallPx/3)+'" y1="'+yUnitTop+'" x2="'+(x0+wallPx/3)+'" y2="'+floorY+'" stroke="'+fin.edge+'" stroke-width="1"/>';
+      g += '<line x1="'+(x0+2*wallPx/3)+'" y1="'+yUnitTop+'" x2="'+(x0+2*wallPx/3)+'" y2="'+floorY+'" stroke="'+fin.edge+'" stroke-width="1"/>';
+    }
+
+    /* plinth shadow gap (unless it is a lit floating plinth) */
+    if (!(S.ledType === "plinth" && ledCol)){
+      g += '<rect x="'+x0+'" y="'+(floorY-13)+'" width="'+wallPx+'" height="13" fill="'+fin.edge+'" opacity=".55"/>';
+    }
+
+    /* concealed lighting — type-specific */
+    if (ledCol){
+      if (S.ledType === "perim"){
+        g += '<rect class="ledglow" x="'+(x0+7)+'" y="'+(yUnitTop+7)+'" width="'+(wallPx-14)+'" height="'+(floorY-yUnitTop-14)+'" fill="none" stroke="'+ledCol+'" stroke-width="11" style="filter:blur(9px)"/>';
+      } else if (S.ledType === "plinth"){
+        g += '<rect x="'+x0+'" y="'+(floorY-16)+'" width="'+wallPx+'" height="10" fill="'+fin.edge+'" opacity=".4"/>';
+        g += '<rect class="ledglow" x="'+(x0-6)+'" y="'+(floorY-4)+'" width="'+(wallPx+12)+'" height="16" fill="'+ledCol+'" style="filter:blur(8px)"/>';
+        g += '<rect x="'+x0+'" y="'+(floorY-6)+'" width="'+wallPx+'" height="5" fill="'+ledCol+'"/>';
+      } else if (S.ledType === "halo"){
+        g += '<rect class="ledglow" x="'+(cx-tvW/2-24)+'" y="'+(tvY-24)+'" width="'+(tvW+48)+'" height="'+(tvH+48)+'" fill="none" stroke="'+ledCol+'" stroke-width="30" style="filter:blur(20px)" opacity=".55"/>';
+      } else if (S.ledType === "cove"){
+        g += '<rect x="'+x0+'" y="'+(yUnitTop-3)+'" width="'+wallPx+'" height="7" fill="'+ledCol+'"/>';
+        g += '<rect class="ledglow" x="'+(x0-12)+'" y="'+(yUnitTop-24)+'" width="'+(wallPx+24)+'" height="28" fill="'+ledCol+'" style="filter:blur(16px)" opacity=".5"/>';
+      } else if (S.ledType === "spots"){
+        var ns = Math.max(3, Math.round(wallPx / 240));
+        for (var spi = 0; spi < ns; spi++){ var sxp = x0 + wallPx*(spi + 0.5)/ns;
+          g += '<path d="M'+sxp+' '+(yUnitTop+3)+' L'+(sxp-30)+' '+(floorY-44)+' L'+(sxp+30)+' '+(floorY-44)+' Z" fill="'+ledCol+'" opacity=".15"/>';
+          g += '<circle cx="'+sxp+'" cy="'+(yUnitTop+3)+'" r="3.2" fill="'+ledCol+'"/>';
+        }
+      } else if (S.ledType === "accent"){
+        g += '<rect x="'+(x0+5)+'" y="'+(yUnitTop+5)+'" width="'+(wallPx-10)+'" height="'+(floorY-yUnitTop-10)+'" fill="none" stroke="'+ledCol+'" stroke-width="4"/>';
+        g += '<rect class="ledglow" x="'+(x0+5)+'" y="'+(yUnitTop+5)+'" width="'+(wallPx-10)+'" height="'+(floorY-yUnitTop-10)+'" fill="none" stroke="'+ledCol+'" stroke-width="13" style="filter:blur(11px)" opacity=".55"/>';
+      }
+    }
+
+    /* floating media shelf */
+    if (S.shelf){
+      var shCol = S.shelfMat === "oak" ? "#D8B487" : S.shelfMat === "metal" ? "#24251F" : fin.face;
+      var shX = cx - tvW/2 - 46, shW = tvW + 92, shY = floorY - 150;
+      g += '<rect x="'+shX+'" y="'+shY+'" width="'+shW+'" height="11" fill="'+shCol+'" stroke="'+fin.edge+'" stroke-width="1.2"/>';
+      g += '<rect class="ledglow" x="'+shX+'" y="'+(shY+11)+'" width="'+shW+'" height="8" fill="'+(ledCol||fireGlow)+'" style="filter:blur(6px)" opacity=".5"/>';
+    }
+
+    /* TV */
+    g += '<rect x="'+(cx-tvW/2-9)+'" y="'+(tvY-9)+'" width="'+(tvW+18)+'" height="'+(tvH+18)+'" fill="'+fin.edge+'" opacity=".38"/>';
+    g += '<rect x="'+(cx-tvW/2)+'" y="'+tvY+'" width="'+tvW+'" height="'+tvH+'" fill="#141712" stroke="var(--frame)" stroke-width="1.5"/>';
+    g += '<line x1="'+(cx-tvW/2+10)+'" y1="'+(tvY+12)+'" x2="'+(cx-tvW/2+tvW*0.42)+'" y2="'+(tvY+12)+'" stroke="#3b4038" stroke-width="2"/>';
+
+    /* fire */
+    if (S.fireType !== "none"){
+      if (S.fireType === "stove"){
+        var sw = 148, sx = cx - sw/2, sh = 150, sy = floorY - 20 - sh;
+        g += '<rect x="'+sx+'" y="'+sy+'" width="'+sw+'" height="'+sh+'" fill="#0B0B09" stroke="#000" stroke-width="2"/>';
+        g += '<path d="M'+(sx+18)+' '+(sy+sh-16)+' q'+(sw/2-18)+' -58 '+(sw-36)+' 0" fill="none" stroke="'+fireGlow+'" stroke-width="4"/>';
+        g += '<rect class="ledglow" x="'+(sx+14)+'" y="'+(sy+sh-42)+'" width="'+(sw-28)+'" height="26" fill="'+fireGlow+'" style="filter:blur(7px)"/>';
+      } else {
+        var fw = Math.min(centrePx * (S.fireType === "lin2" ? 0.66 : 0.52), S.fireType === "lin2" ? 360 : 280);
+        var fh = S.fireType === "lin2" ? 26 : 18, fx = cx - fw/2, fy0 = floorY - (S.shelf ? 128 : 96);
+        g += '<rect x="'+fx+'" y="'+fy0+'" width="'+fw+'" height="'+fh+'" fill="#0B0B09"/>';
+        g += '<rect x="'+fx+'" y="'+(fy0-4)+'" width="'+fw+'" height="4" fill="'+fireGlow+'"/>';
+        g += '<rect class="ledglow" x="'+fx+'" y="'+(fy0-11)+'" width="'+fw+'" height="15" fill="'+fireGlow+'" style="filter:blur(7px)"/>';
+      }
+    }
+
+    /* scale figure */
+    var figH = (floorY - yUnitTop) * (1800 / 2100), fgx = x1 + 40, fgy = floorY;
+    g += '<g class="fig"><circle cx="'+fgx+'" cy="'+(fgy-figH)+'" r="9"/>'
+       + '<path d="M'+fgx+' '+(fgy-figH+9)+' V'+(fgy-figH*0.42)+' M'+(fgx-13)+' '+(fgy-figH*0.72)+' H'+(fgx+13)
+       + ' M'+fgx+' '+(fgy-figH*0.42)+' l-12 '+(figH*0.42)+' M'+fgx+' '+(fgy-figH*0.42)+' l12 '+(figH*0.42)+'"/>'
+       + '<text x="'+fgx+'" y="'+(fgy+22)+'" text-anchor="middle" class="lt">1.8 m</text></g>';
+
+    /* dimensions */
+    if (dims){
+      g += dimH(x0, x1, ceilY - 26, mm);
+      var by = floorY + 42, segs = [];
+      if (lPx > 4) segs.push([x0, jL, lMM]);
+      segs.push([jL, jR, centreMM]);
+      if (rPx > 4) segs.push([jR, x1, rMM]);
+      if (segs.length === 1) segs = [[x0, x1, mm]];
+      segs.forEach(function(s){ g += dimH(s[0], s[1], by, s[2]); });
+      g += dimV(floorY, tvCy, x1 + 40, String(Math.round((floorY - tvCy) * mmPerPx / 10) * 10));
+      g += dimV(floorY, (bridgeH > 0 ? yBridgeTop : yUnitTop), x0 - 40, (bridgeH > 0 ? String(ceilMM) : String(unitMM)));
+    }
+
+    /* leader notes */
+    if (leaders){
+      var notes = [];
+      notes.push([cx, tvY + 8, x0 + wallPx*0.14, ceilY + 6, S.tv + '" TV — recessed, vented', "start"]);
+      if (S.fireType !== "none") notes.push([cx, floorY - (S.shelf ? 118 : 82), x1 - 8, floorY - 152, FIRENAME[S.fireType], "end"]);
+      if (S.ledType !== "none") notes.push([x1 - 12, yUnitTop + 44, x1 + 30, yUnitTop + 84, LIGHTNAME[S.ledType] + (S.ledType === "accent" ? "" : " · " + S.ledK + "K"), "start"]);
+      var fnote = (S.finish === "microcement" ? "Microcement, 18 mm MDF"
+                 : fin.name + (S.texture && S.texture !== "smooth" ? " · " + TEXNAME[S.texture].toLowerCase() : "") + " · " + frontName.toLowerCase());
+      notes.push([x0 + (lPx > 4 ? lPx*0.5 : wallPx*0.14), floorY - 60, x0 - 34, floorY - 118, fnote, "end"]);
+      if (lPx > 4) notes.push([x0 + lPx*0.5, yUnitTop + 26, x0 - 34, yUnitTop + 2, MODNAME[S.left], "end"]);
+      if (rPx > 4) notes.push([x1 - rPx*0.5, yUnitTop + 26, x1 + 30, yUnitTop + 2, MODNAME[S.right], "start"]);
+      if (bridgeH > 0) notes.push([cx + wallPx*0.22, yBridgeTop + bridgeH/2, x1 + 30, yBridgeTop - 8, "Bridging cabinets", "start"]);
+      if (S.shelf) notes.push([cx - tvW/2 - 30, floorY - 150, x0 - 34, floorY - 176, "Floating media shelf", "end"]);
+      notes.forEach(function(n){ g += leader(n[0], n[1], n[2], n[3], n[4], n[5]); });
+    }
+
+    /* title block */
+    if (tb){
+      var fw1 = fin.name.split(" ")[0].toUpperCase();
+      g += '<g class="tblk" transform="translate(838 596)">'
+        + '<rect x="0" y="0" width="352" height="86" class="tbbox"/>'
+        + '<line x1="0" y1="29" x2="352" y2="29"/><line x1="0" y1="57" x2="352" y2="57"/><line x1="226" y1="0" x2="226" y2="86"/>'
+        + '<text x="10" y="19">FORM &amp; FRAME · SLOUGH</text><text x="236" y="19">DWG FF-'+String(Math.round(mm/100))+'</text>'
+        + '<text x="10" y="47">MEDIA WALL — ELEVATION</text><text x="236" y="47">SCALE 1:20</text>'
+        + '<text x="10" y="76">W '+mm+' · '+fw1+' · '+frontName.toUpperCase()+'</text><text x="236" y="76">REV '+S.rev+'</text>'
+        + '</g>';
+    }
+
+    var vb = mini ? "60 100 1100 476" : "0 0 1200 720";
+    return '<svg class="elev" viewBox="'+vb+'" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" role="img" '
+      + 'aria-label="Measured elevation of a '+mm+' millimetre media wall — '+esc(MODNAME[S.left])+' left, '+esc(MODNAME[S.right])+' right, '+esc(fin.name)+' finish">'
+      + styleDefs() + texDefs(S, fin, uid) + g + '</svg>';
+  }
+
+  function styleDefs(){
+    return '<style>'
+      + '.elev .room{fill:var(--paper-2);stroke:none}'
+      + '.elev .ceil{stroke:var(--pencil);stroke-width:1;stroke-dasharray:2 4}'
+      + '.elev .floor{stroke:var(--frame);stroke-width:2}'
+      + '.elev .skirt{fill:var(--pencil-2);opacity:.5}'
+      + '.elev .dg line{stroke:var(--pencil);stroke-width:1}'
+      + '.elev .dg path{fill:var(--pencil)}'
+      + '.elev .dgbg{fill:var(--paper-3);opacity:.9}'
+      + '.elev .dt{fill:var(--pencil);font-size:13px;font-weight:600;letter-spacing:.04em}'
+      + '.elev .lg circle{fill:var(--ink)}'
+      + '.elev .lg path{stroke:var(--ink);stroke-width:1;fill:none}'
+      + '.elev .lt{fill:var(--frame);font-size:12px;font-weight:500;letter-spacing:.02em}'
+      + '.elev .fig{stroke:var(--pencil);stroke-width:1.4;fill:none;opacity:.6}'
+      + '.elev .fig circle{fill:none}'
+      + '.elev .tblk .tbbox{fill:var(--paper-3);stroke:var(--frame);stroke-width:1.5}'
+      + '.elev .tblk line{stroke:var(--frame);stroke-width:1}'
+      + '.elev .tblk text{fill:var(--frame);font-size:11px;font-weight:600;letter-spacing:.04em}'
+      + '</style>';
+  }
+
+  /* ---------- survey drawing (static, pencil) ---------- */
+  function surveySVG(){
+    var floorY = 548, cx = 600, x0 = 130, x1 = 1070;
+    var g = "";
+    g += '<rect x="'+(x0-40)+'" y="150" width="'+(x1-x0+80)+'" height="'+(floorY-150)+'" class="room"/>';
+    g += '<line x1="'+(x0-60)+'" y1="'+floorY+'" x2="'+(x1+60)+'" y2="'+floorY+'" class="floor"/>';
+    g += '<rect x="'+(x0-60)+'" y="'+floorY+'" width="'+(x1-x0+120)+'" height="12" class="skirt"/>';
+    /* chimney breast */
+    g += '<rect x="'+(cx-165)+'" y="168" width="330" height="'+(floorY-168)+'" fill="none" stroke="var(--pencil)" stroke-width="1.6"/>';
+    for (var h=0; h<9; h++){
+      var hy = 190 + h*40;
+      g += '<line x1="'+(cx-165)+'" y1="'+hy+'" x2="'+(cx-125)+'" y2="'+(hy-32)+'" stroke="var(--pencil)" stroke-width="1" opacity=".45"/>';
+    }
+    g += leader(cx+165, 210, cx+235, 176, "Existing chimney breast", "start");
+    g += leader(cx+165, 250, cx+235, 268, "Projection 340", "start");
+    /* bracket TV, tilted */
+    g += '<g transform="rotate(-4 '+cx+' 330)">'
+       + '<rect x="'+(cx-92)+'" y="286" width="184" height="104" fill="#15150F" stroke="#000" stroke-width="2"/>'
+       + '<line x1="'+cx+'" y1="390" x2="'+cx+'" y2="430" stroke="var(--pencil)" stroke-width="2"/></g>';
+    /* trailing cable */
+    g += '<path d="M'+(cx-8)+' 392 q-30 40 -46 70 q-14 30 -40 78" stroke="var(--pencil)" stroke-width="1.6" fill="none" stroke-dasharray="5 4"/>';
+    g += '<rect x="'+(cx-104)+'" y="'+(floorY-16)+'" width="20" height="16" fill="none" stroke="var(--pencil)" stroke-width="1.6"/>';
+    g += leader(cx+40, 340, cx+250, 360, "Surface TV + visible cabling", "start");
+    /* radiator left */
+    g += '<rect x="'+(x0+40)+'" y="440" width="150" height="90" fill="none" stroke="var(--pencil)" stroke-width="1.6"/>';
+    for (var r=0; r<9; r++){
+      g += '<line x1="'+(x0+52+r*16)+'" y1="444" x2="'+(x0+52+r*16)+'" y2="526" stroke="var(--pencil)" stroke-width="1.4"/>';
+    }
+    g += leader(x0+115, 440, x0+30, 400, "Radiator — relocate", "end");
+    g += dimH(x0, x1, 118, "≈ 4200 — TO BE SURVEYED");
+    g += '<text x="'+x0+'" y="'+(floorY+44)+'" class="lt">SURVEY · NOT TO SCALE</text>';
+    return '<svg class="elev" viewBox="0 0 1200 720" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Survey sketch of the existing wall: chimney breast with a bracket-mounted TV and trailing cables">'
+      + styleDefs() + g + '</svg>';
+  }
+
+  /* ---------- geometry, schedule, price ---------- */
+  function modMMof(S, side){
+    if (S[side] === "none") return 0;
+    if (S.customDims){
+      var raw = side === "left" ? S.leftMM : S.rightMM;
+      return clampInt(raw, 200, Math.round(realWall(S) * 0.45));
+    }
+    return Math.round(realWall(S) / 2 * MODFRAC[S.width]);
+  }
+  function geom(S){
+    var mm = realWall(S), lMM = modMMof(S, "left"), rMM = modMMof(S, "right");
+    return { mm:mm, lMM:lMM, rMM:rMM, centreMM: Math.max(300, mm - lMM - rMM) };
+  }
+  function hasDoors(S){
+    return ["cabinets","drawers","mixed"].indexOf(S.left) > -1 || ["cabinets","drawers","mixed"].indexOf(S.right) > -1;
+  }
+
+  var MOD_UNIT_PRICE = { none:0, shelves:820, cabinets:1520, drawers:1780, glass:2050, mixed:1650 };
+  var FIN_MULT   = { oak:1, smoked:1.06, walnut:1.3, ash:1.05, charcoal:1.14, sage:1.16, bone:1.16, microcement:1.22, custom:1.18 };
+  var FRONT_ADD  = { flat:0, fluted:520, shaker:340, vgroove:260 };
+  var HANDLE_ADD = { push:180, edge:120, brass:90, leather:140 };
+  var FIRE_PRICE = { none:0, lin1:1150, lin2:1620, stove:2400 };
+  var LED_PRICE  = { none:0, perim:520, shelf:680, plinth:600, halo:460, cove:560, spots:740, accent:640 };
+  var TEX_ADD    = { smooth:0, grain:120, cross:160, ribbed:420, linen:280, stone:680, board:520 };
+  var GLASS_ADD  = { clear:0, lowiron:180, bronze:220, smoke:220, reeded:360, fluted:400, satin:280, mirror:520, antique:660 };
+  var SHELF_ADD  = { match:240, oak:360, metal:420 };
+
+  function schedule(S){
+    var G = geom(S), rows = [];
+    var carc = 1 + (S.left !== "none" ? 1 : 0) + (S.right !== "none" ? 1 : 0) + (S.bridge ? 1 : 0);
+    rows.push(["Carcasses", "18 mm MR MDF · " + realUnit(S) + " mm tall", carc + " no."]);
+    var faceM2 = (G.centreMM/1000*2.1 + (G.lMM + G.rMM)/1000*2.1 + (S.bridge ? G.mm/1000*0.42 : 0)).toFixed(1);
+    var texNote = (S.texture && S.texture !== "smooth") ? TEXNAME[S.texture].toLowerCase() : (FRONT[S.front] || "flat").toLowerCase() + " fronts";
+    rows.push([ S.finish === "microcement" ? "Sprayed microcement" : "Veneered / lacquered faces",
+                finOf(S).name + " · " + texNote, faceM2 + " m²"]);
+    [["left","Left"], ["right","Right"]].forEach(function(p){
+      var t = S[p[0]]; if (t === "none") return;
+      var mmv = p[0] === "left" ? G.lMM : G.rMM;
+      if (t === "shelves")       rows.push([p[1] + " — open shelves", "20 mm, lipped front", "5 no. · " + (5*mmv/1000).toFixed(1) + " m"]);
+      else if (t === "cabinets") rows.push([p[1] + " — cabinets", "Soft-close, " + HANDLE[S.handle].toLowerCase(), "2 doors · 4 hinges"]);
+      else if (t === "drawers")  rows.push([p[1] + " — drawer bank", "Blum runners, 40 kg", "4 no."]);
+      else if (t === "glass")    rows.push([p[1] + " — glazed display", GLASSNAME[S.glass] + ", 6 mm toughened", "1 no."]);
+      else if (t === "mixed")    rows.push([p[1] + " — cabinet + shelves", "Cupboard base, 3 open shelves", "1 + 3"]);
+    });
+    if (S.bridge) rows.push(["Bridging cabinets", "Full-width, up to ceiling", Math.max(3, Math.round(G.mm/210)) + " doors"]);
+    rows.push(["TV recess", "Vented, brushed cable entry", S.tv + '" · ' + G.centreMM + " mm bay"]);
+    if (S.shelf) rows.push(["Floating media shelf", ({match:"Matching finish", oak:"Solid oak", metal:"Blackened steel"})[S.shelfMat], (TVMM[S.tv] + 180) + " mm"]);
+    rows.push(["Concealed lighting", S.ledType === "none" ? "—" : LIGHTNAME[S.ledType] + ", " + (S.ledType === "accent" ? "RGB" : S.ledK + "K") + " dimmable",
+               S.ledType === "none" ? "—" : (2*2.1 + G.mm/1000).toFixed(1) + " m"]);
+    rows.push(["Fire", FIRENAME[S.fireType], S.fireType === "none" ? "—" : "1 no."]);
+    rows.push(["AV / router cupboard", S.avcup ? "Ventilated, hinged access panel" : "—", S.avcup ? "1 no." : "—"]);
+    rows.push(["Cable management", "50 mm conduit + brush plates", (S.fireType !== "none" ? 4.5 : 3.2).toFixed(1) + " m"]);
+    return rows;
+  }
+
+  function priceRange(S){
+    var G = geom(S);
+    var mods = MOD_UNIT_PRICE[S.left] + MOD_UNIT_PRICE[S.right];
+    var sidesPresent = (S.left !== "none" ? 1 : 0) + (S.right !== "none" ? 1 : 0);
+    var wid;
+    if (S.customDims){
+      var balMM = realWall(S) / 2 * 0.34;
+      wid = (((S.left !== "none" ? G.lMM - balMM : 0) + (S.right !== "none" ? G.rMM - balMM : 0)) / 100) * 40;
+    } else {
+      wid = {narrow:-150, balanced:0, wide:600}[S.width] * sidesPresent / 2;
+    }
+    var wallAdj  = (G.mm - 4200) / 100 * 42;
+    var ceilAdj  = Math.max(0, (realCeil(S) - 2700) / 100 * 55);
+    var unitAdj  = Math.max(0, (realUnit(S) - 2100) / 100 * 45);
+    var tvAdj    = {"55":-120, "65":0, "75":260, "85":620}[S.tv];
+    var frontAdj = hasDoors(S) ? FRONT_ADD[S.front] : 0;
+    var handleAdj = (hasDoors(S) || S.bridge) ? HANDLE_ADD[S.handle] : 0;
+    var mult = FIN_MULT[S.finish] || 1;
+    var texAdj = (TEX_ADD[S.texture] || 0) * (0.7 + (G.mm / 4200) * 0.3);
+    var glassSides = (S.left === "glass" ? 1 : 0) + (S.right === "glass" ? 1 : 0);
+    var glassAdj = (GLASS_ADD[S.glass] || 0) * glassSides;
+    var core = (2950 + mods + wid + wallAdj + ceilAdj + unitAdj + tvAdj + frontAdj + texAdj) * mult;
+    var sub = core + handleAdj + FIRE_PRICE[S.fireType] + (LED_PRICE[S.ledType] || 0) + glassAdj
+      + (S.shelf ? SHELF_ADD[S.shelfMat] : 0)
+      + (S.bridge ? 900 + G.mm/1000*140 : 0)
+      + (S.avcup ? 260 : 0);
+    sub = Math.max(1800, sub);
+    return [Math.round(sub*0.94/50)*50, Math.round(sub*1.12/50)*50];
+  }
+  function priceMid(S){ var p = priceRange(S); return (p[0] + p[1]) / 2; }
+  function gbp(n){ return "£" + Math.round(n).toLocaleString("en-GB"); }
+
+  function specSentence(S){
+    var G = geom(S), pr = priceRange(S);
+    var parts = [G.mm + " mm wall, " + realCeil(S) + " mm ceiling" + (S.customDims ? ", " + realUnit(S) + " mm unit" : "")];
+    if (S.left === "none" && S.right === "none") parts.push("clean panelled feature wall");
+    else parts.push(MODNAME[S.left].toLowerCase() + " left (" + G.lMM + " mm), " + MODNAME[S.right].toLowerCase() + " right (" + G.rMM + " mm), " + G.centreMM + " mm centre bay");
+    parts.push(finOf(S).name.toLowerCase() + ", "
+      + (S.texture && S.texture !== "smooth" ? TEXNAME[S.texture].toLowerCase() + ", " : "")
+      + (FRONT[S.front] || "flat").toLowerCase() + " fronts, " + HANDLE[S.handle].toLowerCase());
+    if (S.left === "glass" || S.right === "glass") parts.push(GLASSNAME[S.glass].toLowerCase() + " glass");
+    parts.push(S.tv + '" TV');
+    if (S.fireType !== "none") parts.push(FIRENAME[S.fireType].toLowerCase());
+    if (S.ledType !== "none")  parts.push(LIGHTNAME[S.ledType].toLowerCase() + (S.ledType === "accent" ? " (RGB)" : " " + S.ledK + "K"));
+    if (S.shelf)  parts.push("floating media shelf");
+    if (S.bridge) parts.push("bridging cabinets");
+    if (S.avcup)  parts.push("concealed AV cupboard");
+    return "Media wall — " + parts.join("; ") + ". Guide " + gbp(pr[0]) + "–" + gbp(pr[1]) + " + VAT (spec REV " + S.rev + ").";
+  }
+
+  /* ---------- state ---------- */
+  function nextRev(r){
+    if (r.length === 1){ return r === "Z" ? "AA" : String.fromCharCode(r.charCodeAt(0)+1); }
+    var a = r.charCodeAt(0), b = r.charCodeAt(1);
+    if (b === 90){ return String.fromCharCode(a+1) + "A"; }
+    return r[0] + String.fromCharCode(b+1);
+  }
+  var S = {
+    wall:"4200", wallCustom:4200, ceil:"2700",
+    left:"shelves", right:"cabinets", width:"balanced",
+    finish:"oak", colour:"#2E4C3E", texture:"smooth", front:"flat", handle:"push",
+    tv:"65", fireType:"lin1", ledType:"perim", ledK:"2700", ledRGB:"#8A63FF",
+    glass:"clear",
+    shelf:false, shelfMat:"match", bridge:false, avcup:true,
+    customDims:false, ceilCustom:2700, leftMM:735, rightMM:735, unitMM:2100,
+    budgetMode:false, budget:7500, rev:"C"
+  };
+  var DEFAULTS = JSON.parse(JSON.stringify(S));
+  var BUDGET_MAX = 20000;
+  try {
+    var saved = JSON.parse(localStorage.getItem("ff_spec") || "null");
+    if (saved && typeof saved === "object"){
+      Object.keys(S).forEach(function(k){ if (k in saved) S[k] = saved[k]; });
+    }
+  } catch(e){}
+  /* migrate any legacy single-module spec */
+  if (S.module){ S.left = S.left || S.module; S.right = S.right || S.module; delete S.module; }
+  if (!MODNAME[S.left]) S.left = "shelves";
+  if (!MODNAME[S.right]) S.right = "cabinets";
+  if (!FIN[S.finish]) S.finish = "oak";
+  if (!TEXNAME[S.texture]) S.texture = "smooth";
+  if (!GLASSNAME[S.glass]) S.glass = "clear";
+  if (!LIGHTNAME[S.ledType]) S.ledType = "perim";
+
+  /* ---------- elements ---------- */
+  var $ = function(id){ return document.getElementById(id); };
+  var cfgDraw = $("cfgDraw"), rSchedule = $("rSchedule"), rSummary = $("rSummary"),
+      bSave = $("bSave"), bSend = $("bSend"), bAutoFit = $("bAutoFit"), bReset = $("bReset");
+
+  /* option -> state field registries, used for in-button pricing + budget gating */
+  var CHIP_PRICE = [
+    { id:"fCeil", f:"ceil" }, { id:"fLeft", f:"left" }, { id:"fRight", f:"right" }, { id:"fWidth", f:"width" },
+    { id:"fTex", f:"texture" }, { id:"fGlass", f:"glass" }, { id:"fFront", f:"front" }, { id:"fTv", f:"tv" }, { id:"fLedK", f:"ledK" }
+  ];
+  var SEL_PRICE = [
+    { id:"fFinish", f:"finish" }, { id:"fHandle", f:"handle" }, { id:"fFire", f:"fireType" },
+    { id:"fLed", f:"ledType" }, { id:"fShelfMat", f:"shelfMat" }
+  ];
+  var TOG_PRICE = [ { id:"fShelf", f:"shelf" }, { id:"fBridge", f:"bridge" }, { id:"fAvcup", f:"avcup" } ];
+
+  function withField(f, v){ var t = {}; for (var k in S) t[k] = S[k]; t[f] = v; return t; }
+  function fmtDelta(d){ d = Math.round(d / 10) * 10; return d === 0 ? "£0" : (d > 0 ? "+£" : "−£") + Math.abs(d).toLocaleString("en-GB"); }
+  /* only block an option when it would push the price over budget AND cost more than
+     the current spec — you can always step DOWN toward your budget */
+  function optionBlocked(t, curMid){ return S.budgetMode && priceRange(t)[0] > S.budget && priceMid(t) > curMid; }
+  function priceSpan(el){
+    var s = el.querySelector(".chip-p");
+    if (!s){ s = document.createElement("span"); s.className = "chip-p"; el.appendChild(s); }
+    return s;
+  }
+  function setVal(id, v){ var el = $(id); if (el && document.activeElement !== el) el.value = v; }
+
+  function refreshOptionPrices(){
+    var curMid = priceMid(S);
+
+    CHIP_PRICE.forEach(function(grp){
+      var host = $(grp.id); if (!host) return;
+      Array.prototype.forEach.call(host.children, function(b){
+        var v = b.dataset.v, isCur = v === String(S[grp.f]);
+        var t = withField(grp.f, v);
+        priceSpan(b).textContent = isCur ? "£0" : fmtDelta(priceMid(t) - curMid);
+        var over = !isCur && optionBlocked(t, curMid);
+        b.disabled = over;
+        b.setAttribute("aria-disabled", String(over));
+      });
+    });
+
+    SEL_PRICE.forEach(function(grp){
+      var sel = $(grp.id); if (!sel) return;
+      Array.prototype.forEach.call(sel.options, function(op){
+        if (op.dataset.base == null) op.dataset.base = op.textContent;
+        var v = op.value, isCur = v === String(S[grp.f]), t = withField(grp.f, v);
+        op.textContent = isCur ? op.dataset.base : op.dataset.base + "  ·  " + fmtDelta(priceMid(t) - curMid);
+        op.disabled = !isCur && optionBlocked(t, curMid);
+      });
+    });
+
+    TOG_PRICE.forEach(function(grp){
+      var inp = $(grp.id); if (!inp) return;
+      var lab = inp.closest(".tog"); if (!lab) return;
+      var host = lab.querySelector("span");
+      var span = lab.querySelector(".tog-p");
+      if (!span && host){ span = document.createElement("span"); span.className = "tog-p"; host.appendChild(span); }
+      var flip = withField(grp.f, !S[grp.f]);
+      if (span) span.textContent = fmtDelta(priceMid(flip) - curMid);
+      inp.disabled = !S[grp.f] && optionBlocked(flip, curMid);
+    });
+
+    var wsel = $("fWall");
+    if (wsel) Array.prototype.forEach.call(wsel.options, function(op){
+      if (op.value === "custom") return;
+      if (op.dataset.base == null) op.dataset.base = op.textContent;
+      var isCur = op.value === String(S.wall) && !S.customDims;
+      var t = withField("wall", op.value); t.customDims = false;
+      op.textContent = isCur ? op.dataset.base : op.dataset.base + "  ·  " + fmtDelta(priceMid(t) - curMid);
+      op.disabled = !isCur && optionBlocked(t, curMid);
+    });
+  }
+
+  function setChips(id, val){
+    Array.prototype.forEach.call($(id).children, function(b){
+      b.setAttribute("aria-pressed", String(b.dataset.v === String(val)));
+    });
+  }
+  function buildSwatches(){
+    $("fColour").innerHTML = LACQUERS.map(function(p){
+      return '<button type="button" class="sw" data-c="' + p[0] + '" title="' + p[1] + '" aria-label="' + p[1] + '" style="background:' + p[0] + '"></button>';
+    }).join("");
+  }
+  function markSwatch(){
+    Array.prototype.forEach.call($("fColour").children, function(b){
+      b.setAttribute("aria-pressed", String(b.dataset.c.toLowerCase() === String(S.colour).toLowerCase()));
+    });
+  }
+
+  function syncControls(){
+    $("fBudgetMode").checked = S.budgetMode;
+    $("budgetBox").hidden = !S.budgetMode;
+    setVal("fBudget", S.budget);
+    setVal("fBudgetNum", S.budget);
+    $("rBudget").textContent = gbp(S.budget);
+
+    var cd = S.customDims;
+    $("fCustomDims").checked = cd;
+    $("fWall").value = S.wall;
+    $("fWallCustom").hidden = !(cd || S.wall === "custom");
+    setVal("fWallCustom", S.wallCustom);
+    $("fCeil").hidden = cd;
+    $("fCeilCustom").hidden = !cd;
+    setVal("fCeilCustom", S.ceilCustom);
+    $("fWidth").hidden = cd;
+    $("fModMM").hidden = !cd;
+    setVal("fLeftMM", S.leftMM);
+    setVal("fRightMM", S.rightMM);
+    $("fUnitRow").hidden = !cd;
+    setVal("fUnitMM", S.unitMM);
+    setChips("fCeil", S.ceil);
+    setChips("fLeft", S.left);
+    setChips("fRight", S.right);
+    setChips("fWidth", S.width);
+    $("fWidth").setAttribute("data-disabled", String(S.left === "none" && S.right === "none"));
+    $("fFinish").value = S.finish;
+    var isCustom = S.finish === "custom";
+    $("fColourBox").hidden = !isCustom;
+    if (/^#[0-9a-fA-F]{6}$/.test(S.colour)) setVal("fColourPick", S.colour);
+    markSwatch();
+    setChips("fTex", S.texture);
+    var anyGlass = S.left === "glass" || S.right === "glass";
+    $("fGlass").setAttribute("data-disabled", String(!anyGlass));
+    $("fGlassHint").hidden = anyGlass;
+    setChips("fGlass", S.glass);
+    setChips("fFront", S.front);
+    $("fHandle").value = S.handle;
+    setChips("fTv", S.tv);
+    $("fFire").value = S.fireType;
+    $("fLed").value = S.ledType;
+    $("fLedK").hidden = (S.ledType === "none" || S.ledType === "accent");
+    setChips("fLedK", S.ledK);
+    $("fLedRGBRow").hidden = S.ledType !== "accent";
+    if (/^#[0-9a-fA-F]{6}$/.test(S.ledRGB)) setVal("fLedRGB", S.ledRGB);
+    $("fShelf").checked = S.shelf;
+    $("fShelfMat").hidden = !S.shelf;
+    $("fShelfMat").value = S.shelfMat;
+    $("fBridge").checked = S.bridge;
+    $("fAvcup").checked = S.avcup;
+
+    var G = geom(S);
+    $("rWall").textContent = realWall(S) + " mm";
+    $("rCeil").textContent = realCeil(S) + " mm";
+    $("rUnit").textContent = realUnit(S) + " mm";
+    $("rLeft").textContent = MODNAME[S.left];
+    $("rRight").textContent = MODNAME[S.right];
+    $("rMod").textContent = (S.left === "none" && S.right === "none") ? "—"
+      : (G.lMM === G.rMM ? G.lMM + " mm / side" : G.lMM + " / " + G.rMM + " mm");
+    $("rFin").textContent = finOf(S).name;
+    $("rTex").textContent = TEXNAME[S.texture];
+    $("rGlass").textContent = GLASSNAME[S.glass];
+    $("rFront").textContent = FRONT[S.front];
+    $("rHandle").textContent = HANDLE[S.handle].split(" ")[0];
+    $("rTv").textContent = S.tv + '"';
+    $("rFire").textContent = FIRENAME[S.fireType];
+    $("rLed").textContent = LEDNAME[S.ledType];
+  }
+
+  function renderPrice(pr){
+    var plabel = document.querySelector(".cfg-price .plabel");
+    if (S.budgetMode){
+      var mid = (pr[0] + pr[1]) / 2, b = S.budget, lo = 2500, hi = 20000;
+      var status = pr[1] <= b ? "in" : (pr[0] <= b ? "edge" : "over");
+      function pc(v){ return Math.max(0, Math.min(100, (v - lo) / (hi - lo) * 100)); }
+      plabel.textContent = "Your budget vs the guide";
+      $("rPrice").textContent = gbp(b);
+      var meter = '<div class="pmeter status-' + status + '">'
+        + '<div class="pm-fill" style="left:' + pc(pr[0]) + '%;width:' + Math.max(1.5, pc(pr[1]) - pc(pr[0])) + '%"></div>'
+        + '<div class="pm-mark" style="left:' + pc(b) + '%"></div></div>';
+      var txt = status === "in"
+        ? "Guide " + gbp(pr[0]) + "–" + gbp(pr[1]) + " · about " + gbp(Math.abs(mid - b)) + " under. Room to upgrade."
+        : status === "edge"
+        ? "Guide " + gbp(pr[0]) + "–" + gbp(pr[1]) + " · straddling your figure. Close."
+        : "Guide " + gbp(pr[0]) + "–" + gbp(pr[1]) + " · about " + gbp(mid - b) + " over. Try narrower modules, oak, or fewer extras.";
+      $("rPriceSub").innerHTML = meter + '<span class="pm-txt">' + esc(txt) + "</span>";
+    } else {
+      plabel.textContent = "Guide price · ex VAT";
+      $("rPrice").textContent = gbp(pr[0]) + "–" + gbp(pr[1]);
+      $("rPriceSub").textContent = "Revision " + S.rev + " · guide only. A fixed quote follows the on-site survey.";
+    }
+  }
+
+  function render(){
+    $("cfgDrawSvg").innerHTML = elevation(S, { overlay: cfgDraw.classList.contains("has-photo") });
+    if (typeof cfgViewer !== "undefined" && cfgViewer) cfgViewer.apply();
+    rSchedule.innerHTML = schedule(S).map(function(r){
+      return "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td><td>" + esc(r[2]) + "</td></tr>";
+    }).join("");
+    renderPrice(priceRange(S));
+    refreshOptionPrices();
+    rSummary.innerHTML = "Current drawing — <b>" + esc(specSentence(S)) + "</b>";
+    bSave.textContent = "Save spec";
+    try { localStorage.setItem("ff_spec", JSON.stringify(S)); } catch(e){}
+  }
+
+  /* lightweight update for budget-slider drags — no SVG / schedule rebuild */
+  function renderBudget(fromNumField){
+    $("rBudget").textContent = gbp(S.budget);
+    setVal("fBudget", S.budget);
+    if (!fromNumField) setVal("fBudgetNum", S.budget);
+    renderPrice(priceRange(S));
+    refreshOptionPrices();
+    try { localStorage.setItem("ff_spec", JSON.stringify(S)); } catch(e){}
+  }
+
+  function nudgeRev(){ S.rev = nextRev(S.rev); }
+  function change(fn){ fn(); nudgeRev(); syncControls(); render(); }
+  function view(fn){ fn(); syncControls(); render(); }
+
+  function onChips(id, key, after){
+    $(id).addEventListener("click", function(e){
+      var b = e.target.closest("button"); if (!b) return;
+      if ($(id).getAttribute("data-disabled") === "true") return;
+      change(function(){ S[key] = b.dataset.v; if (after) after(); });
+    });
+  }
+  function onSelect(id, key, after){
+    $(id).addEventListener("change", function(){ change(function(){ S[key] = $(id).value; if (after) after(); }); });
+  }
+  function onToggle(id, key, after){
+    $(id).addEventListener("change", function(){ change(function(){ S[key] = $(id).checked; if (after) after(); }); });
+  }
+
+  function seedCustom(){
+    var base = Object.assign({}, S, { customDims:false });
+    var bal = Math.round(realWall(base) / 2 * 0.34);
+    S.wallCustom = realWall(base);
+    S.ceilCustom = CEILMM[S.ceil] || 2700;
+    S.leftMM = modMMof(base, "left") || bal;
+    S.rightMM = modMMof(base, "right") || bal;
+    if (!S.unitMM) S.unitMM = 2100;
+  }
+  onSelect("fWall", "wall", function(){ if (S.wall === "custom" && (!S.wallCustom || S.wallCustom < 2000)) S.wallCustom = 4200; });
+  $("fCustomDims").addEventListener("change", function(){
+    change(function(){
+      S.customDims = $("fCustomDims").checked;
+      if (S.customDims){ seedCustom(); S.wall = "custom"; }
+      else {
+        /* back to presets: snap the wall to the nearest preset width */
+        var opts = [3000, 3600, 4200, 5000, 6000], w = realWall(S);
+        S.wall = String(opts.reduce(function(a, b){ return Math.abs(b - w) < Math.abs(a - w) ? b : a; }));
+      }
+    });
+  });
+  $("fWallCustom").addEventListener("input", function(){ change(function(){ S.wallCustom = clampInt($("fWallCustom").value, 2000, 7000); }); });
+  $("fCeilCustom").addEventListener("input", function(){ change(function(){ S.ceilCustom = clampInt($("fCeilCustom").value, 2100, 3600); }); });
+  $("fLeftMM").addEventListener("input", function(){ change(function(){ S.leftMM = clampInt($("fLeftMM").value, 200, 2600); }); });
+  $("fRightMM").addEventListener("input", function(){ change(function(){ S.rightMM = clampInt($("fRightMM").value, 200, 2600); }); });
+  $("fUnitMM").addEventListener("input", function(){ change(function(){ S.unitMM = clampInt($("fUnitMM").value, 1700, 2600); }); });
+  onChips("fCeil", "ceil");
+  onChips("fLeft", "left");
+  onChips("fRight", "right");
+  onChips("fWidth", "width");
+  onSelect("fFinish", "finish", function(){ if (S.finish === "custom" && !/^#[0-9a-fA-F]{6}$/.test(S.colour)) S.colour = "#2E4C3E"; });
+  $("fColour").addEventListener("click", function(e){
+    var b = e.target.closest("button"); if (!b) return;
+    change(function(){ S.colour = b.dataset.c; S.finish = "custom"; });
+  });
+  $("fColourPick").addEventListener("input", function(){ change(function(){ S.colour = $("fColourPick").value; S.finish = "custom"; }); });
+  onChips("fTex", "texture");
+  onChips("fGlass", "glass");
+  $("fLedRGB").addEventListener("input", function(){ change(function(){ S.ledRGB = $("fLedRGB").value; S.ledType = "accent"; }); });
+  onChips("fFront", "front");
+  onSelect("fHandle", "handle");
+  onChips("fTv", "tv");
+  onSelect("fFire", "fireType");
+  onSelect("fLed", "ledType");
+  onChips("fLedK", "ledK");
+  onToggle("fShelf", "shelf");
+  onSelect("fShelfMat", "shelfMat");
+  onToggle("fBridge", "bridge");
+  onToggle("fAvcup", "avcup");
+
+  $("fBudgetMode").addEventListener("change", function(){ view(function(){ S.budgetMode = $("fBudgetMode").checked; }); });
+  $("fBudget").addEventListener("input", function(){ S.budget = clampInt($("fBudget").value, 2500, 20000); renderBudget(false); });
+  $("fBudgetNum").addEventListener("input", function(){ S.budget = clampInt($("fBudgetNum").value, 2500, 20000); renderBudget(true); });
+  $("fBudgetNum").addEventListener("change", function(){ S.budget = clampInt($("fBudgetNum").value, 2500, 20000); renderBudget(false); });
+  bAutoFit.addEventListener("click", function(){
+    if (!S.budgetMode) S.budgetMode = true;
+    change(autoFit);
+    bAutoFit.textContent = "Fitted ✓";
+    setTimeout(function(){ bAutoFit.textContent = "Fit spec to it"; }, 1400);
+  });
+
+  /* ---------- fit spec to budget ---------- */
+  var DOWN = [
+    function(){ if (S.finish === "walnut"){ S.finish = "smoked"; return 1; }
+                if (["smoked","charcoal","sage","bone","microcement"].indexOf(S.finish) > -1){ S.finish = "oak"; return 1; } },
+    function(){ if (S.front !== "flat"){ S.front = "flat"; return 1; } },
+    function(){ if (["ribbed","stone","board","linen","cross","grain"].indexOf(S.texture) > -1){ S.texture = "smooth"; return 1; } },
+    function(){ var go = ["antique","mirror","fluted","reeded","smoke","bronze","satin","lowiron","clear"];
+                var gi = go.indexOf(S.glass);
+                if ((S.left === "glass" || S.right === "glass") && gi > -1 && gi < go.length - 1){ S.glass = go[gi + 1]; return 1; } },
+    function(){ if (S.bridge){ S.bridge = false; return 1; } },
+    function(){ if (S.shelf){ S.shelf = false; return 1; } },
+    function(){ if (S.ledType === "shelf" || S.ledType === "plinth"){ S.ledType = "perim"; return 1; }
+                if (S.ledType === "perim"){ S.ledType = "none"; return 1; } },
+    function(){ if (S.fireType === "stove"){ S.fireType = "lin2"; return 1; }
+                if (S.fireType === "lin2"){ S.fireType = "lin1"; return 1; }
+                if (S.fireType === "lin1"){ S.fireType = "none"; return 1; } },
+    function(){ if (S.customDims){ var ch = 0;
+                  if (S.left !== "none" && S.leftMM > 380){ S.leftMM = Math.max(380, S.leftMM - 100); ch = 1; }
+                  if (S.right !== "none" && S.rightMM > 380){ S.rightMM = Math.max(380, S.rightMM - 100); ch = 1; }
+                  if (ch) return 1; } },
+    function(){ if (S.width === "wide"){ S.width = "balanced"; return 1; }
+                if (S.width === "balanced"){ S.width = "narrow"; return 1; } },
+    function(){ var order = ["glass","drawers","mixed","cabinets","shelves","none"];
+                var ri = order.indexOf(S.right); if (ri > -1 && ri < order.length - 1){ S.right = order[ri + 1]; return 1; }
+                var li = order.indexOf(S.left);  if (li > -1 && li < order.length - 1){ S.left = order[li + 1]; return 1; } },
+    function(){ var t = ["85","75","65","55"]; var i = t.indexOf(S.tv); if (i > -1 && i < t.length - 1){ S.tv = t[i + 1]; return 1; } },
+    function(){ if (S.avcup){ S.avcup = false; return 1; } }
+  ];
+  var UP = [
+    function(){ if (!S.avcup){ S.avcup = true; return 1; } },
+    function(){ if (S.ledType === "none"){ S.ledType = "perim"; return 1; } },
+    function(){ if (S.fireType === "none"){ S.fireType = "lin1"; return 1; } },
+    function(){ if (S.left === "none"){ S.left = "shelves"; return 1; } if (S.right === "none"){ S.right = "shelves"; return 1; } },
+    function(){ if (S.finish === "oak"){ S.finish = "smoked"; return 1; } },
+    function(){ if (S.texture === "smooth"){ S.texture = "grain"; return 1; } },
+    function(){ if (S.width === "narrow"){ S.width = "balanced"; return 1; } },
+    function(){ if (S.customDims){ var c2 = 0;
+                  if (S.left !== "none" && S.leftMM < 950){ S.leftMM += 100; c2 = 1; }
+                  if (S.right !== "none" && S.rightMM < 950){ S.rightMM += 100; c2 = 1; }
+                  if (c2) return 1; } },
+    function(){ if (!S.shelf){ S.shelf = true; return 1; } }
+  ];
+  function autoFit(){
+    var guard = 0, i;
+    while (priceMid(S) > S.budget && guard++ < 40){
+      var moved = 0;
+      for (i = 0; i < DOWN.length; i++){ if (DOWN[i]()){ moved = 1; break; } }
+      if (!moved) break;
+    }
+    guard = 0;
+    while (priceMid(S) < S.budget * 0.9 && guard++ < 40){
+      var pre = JSON.stringify(S), m2 = 0;
+      for (i = 0; i < UP.length; i++){ if (UP[i]()){ m2 = 1; break; } }
+      if (!m2) break;
+      if (priceMid(S) > S.budget){ var o = JSON.parse(pre); Object.keys(o).forEach(function(k){ S[k] = o[k]; }); break; }
+    }
+  }
+
+  function clearPhoto(){
+    cfgDraw.classList.remove("has-photo");
+    cfgDraw.style.backgroundImage = "";
+    $("fPhoto").value = "";
+    $("fPhotoClear").hidden = true;
+    $("fPhotoMsg").hidden = true;
+  }
+  $("fPhoto").addEventListener("change", function(e){
+    var file = e.target.files && e.target.files[0];
+    if (!file){ clearPhoto(); render(); return; }
+    if (!/^image\//.test(file.type)){
+      $("fPhotoMsg").textContent = "That file is not an image — please choose a JPG or PNG.";
+      $("fPhotoMsg").hidden = false; $("fPhoto").value = ""; return;
+    }
+    if (file.size > 12 * 1024 * 1024){
+      $("fPhotoMsg").textContent = "That image is over 12 MB — please choose a smaller one.";
+      $("fPhotoMsg").hidden = false; $("fPhoto").value = ""; return;
+    }
+    var fr = new FileReader();
+    fr.onload = function(ev){
+      cfgDraw.classList.add("has-photo");
+      cfgDraw.style.backgroundImage = "url(" + ev.target.result + ")";
+      $("fPhotoClear").hidden = false;
+      $("fPhotoMsg").hidden = true;
+      render();
+    };
+    fr.onerror = function(){
+      $("fPhotoMsg").textContent = "That image could not be read — try another file.";
+      $("fPhotoMsg").hidden = false;
+    };
+    fr.readAsDataURL(file);
+  });
+  $("fPhotoClear").addEventListener("click", function(){ clearPhoto(); render(); });
+
+  bSave.addEventListener("click", function(){
+    try { localStorage.setItem("ff_spec", JSON.stringify(S)); } catch(e){}
+    bSave.textContent = "Saved ✓";
+    setTimeout(function(){ bSave.textContent = "Save spec"; }, 1400);
+  });
+  bSend.addEventListener("click", function(){
+    var msg = $("cMsg");
+    msg.value = specSentence(S);
+    document.getElementById("request").scrollIntoView({ behavior: "smooth", block: "start" });
+    bSend.textContent = "Added to message ✓";
+    setTimeout(function(){ bSend.textContent = "Send with survey"; }, 1600);
+    var coarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+    if (!coarse) setTimeout(function(){ msg.focus(); }, 500);
+  });
+  bReset.addEventListener("click", function(){
+    var keepMode = S.budgetMode;
+    Object.keys(DEFAULTS).forEach(function(k){ S[k] = DEFAULTS[k]; });
+    S.budgetMode = keepMode;      /* keep the slider on screen if the user had it */
+    S.budget = BUDGET_MAX;        /* slider to max -> every option re-enabled */
+    S.rev = nextRev(S.rev);
+    clearPhoto();
+    syncControls();
+    render();
+    bReset.textContent = "Parameters reset ✓";
+    setTimeout(function(){ bReset.textContent = "Reset parameters"; }, 1400);
+  });
+
+  /* ---------- zoom / pan / rotate / maximise viewer ---------- */
+  function makeViewer(host, svgHost, ctl){
+    var st = { k:1, x:0, y:0, deg:0 }, MINK = 0.4, MAXK = 12;
+    var pct = ctl.querySelector(".vp-pct"), hint = host.querySelector(".vp-hint");
+    var pointers = new Map(), lastDist = 0, panning = false, hinted = false, atFit = true;
+
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+    function apply(){
+      svgHost.style.transform = "translate(" + st.x + "px," + st.y + "px) scale(" + st.k + ") rotate(" + st.deg + "deg)";
+      if (pct) pct.textContent = Math.round(st.k * 100) + "%";
+    }
+    function centre(){ var r = host.getBoundingClientRect(); return { x:r.left + r.width/2, y:r.top + r.height/2 }; }
+    function natSize(){
+      var svg = svgHost.firstChild;
+      var vb = svg && svg.getAttribute && svg.getAttribute("viewBox");
+      var w = svgHost.clientWidth || 1200;
+      if (vb){ var p = vb.split(/\s+/); return { w:w, h:w * (parseFloat(p[3]) / parseFloat(p[2])) }; }
+      return { w:w, h:w * 0.6 };
+    }
+    function fit(){
+      st.deg = 0; st.x = 0; st.y = 0;
+      var hb = host.getBoundingClientRect(), n = natSize();
+      st.k = clamp(Math.min(hb.width / n.w, hb.height / n.h) * 0.985, MINK, MAXK);
+      atFit = true; apply();
+    }
+    function zoomAt(factor, clientX, clientY){
+      var c = centre(), px = clientX - c.x, py = clientY - c.y;
+      var nk = clamp(st.k * factor, MINK, MAXK);
+      var lx = (px - st.x) / st.k, ly = (py - st.y) / st.k;
+      st.x = px - lx * nk; st.y = py - ly * nk; st.k = nk;
+      atFit = false; apply();
+    }
+    function rot(){ st.deg = (st.deg + 90) % 360; st.x = 0; st.y = 0; atFit = false; apply(); }
+    function toggleMax(){
+      var on = host.classList.toggle("maximised");
+      try { document.documentElement.style.overflow = on ? "hidden" : ""; } catch(e){}
+      requestAnimationFrame(fit);
+    }
+    function fadeHint(){ if (hint && !hinted){ hinted = true; hint.style.opacity = "0"; } }
+    function pdist(){ var p = Array.from(pointers.values()); return Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y); }
+    function pmid(){ var p = Array.from(pointers.values()); return { x:(p[0].x + p[1].x)/2, y:(p[0].y + p[1].y)/2 }; }
+
+    host.addEventListener("wheel", function(e){
+      e.preventDefault(); fadeHint();
+      zoomAt(e.deltaY < 0 ? 1.15 : 0.87, e.clientX, e.clientY);
+    }, { passive:false });
+
+    host.addEventListener("pointerdown", function(e){
+      if (e.target.closest(".vp-ctl")) return;
+      /* on touch, let the page scroll through the drawing unless it's maximised */
+      if (e.pointerType === "touch" && !host.classList.contains("maximised")) return;
+      fadeHint();
+      host.setPointerCapture(e.pointerId);
+      pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+      if (pointers.size === 1){ panning = true; host.classList.add("panning"); }
+      else if (pointers.size === 2){ panning = false; lastDist = pdist(); }
+    });
+    host.addEventListener("pointermove", function(e){
+      if (!pointers.has(e.pointerId)) return;
+      var prev = pointers.get(e.pointerId);
+      pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+      if (pointers.size === 2){
+        var d = pdist();
+        if (lastDist){ var m = pmid(); zoomAt(d / lastDist, m.x, m.y); }
+        lastDist = d;
+      } else if (panning){
+        st.x += e.clientX - prev.x; st.y += e.clientY - prev.y; atFit = false; apply();
+      }
+    });
+    function endPtr(e){
+      pointers.delete(e.pointerId);
+      if (pointers.size < 2) lastDist = 0;
+      if (pointers.size === 0){ panning = false; host.classList.remove("panning"); }
+    }
+    host.addEventListener("pointerup", endPtr);
+    host.addEventListener("pointercancel", endPtr);
+
+    ctl.addEventListener("click", function(e){
+      var b = e.target.closest("button"); if (!b) return;
+      var c = centre(), z = b.dataset.z;
+      if (z === "in")  zoomAt(1.3, c.x, c.y);
+      else if (z === "out") zoomAt(0.77, c.x, c.y);
+      else if (z === "rot") rot();
+      else if (z === "max") toggleMax();
+      else if (z === "reset") fit();
+    });
+
+    host.setAttribute("tabindex", "0");
+    host.addEventListener("keydown", function(e){
+      var c = centre();
+      if (e.key === "+" || e.key === "="){ zoomAt(1.3, c.x, c.y); e.preventDefault(); }
+      else if (e.key === "-" || e.key === "_"){ zoomAt(0.77, c.x, c.y); e.preventDefault(); }
+      else if (e.key === "0"){ fit(); e.preventDefault(); }
+      else if (e.key === "r" || e.key === "R"){ rot(); }
+      else if (e.key === "f" || e.key === "F"){ toggleMax(); }
+      else if (e.key === "Escape" && host.classList.contains("maximised")){ toggleMax(); }
+    });
+
+    var coarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+    if (hint) hint.textContent = coarse ? "Tap ⤢ for full-screen zoom & pan" : "Scroll to zoom · drag to pan · ⤢ full screen";
+
+    var rt;
+    window.addEventListener("resize", function(){ clearTimeout(rt); rt = setTimeout(function(){ if (atFit) fit(); }, 150); });
+    setTimeout(function(){ if (hint && !hinted) hint.style.opacity = "0"; }, 6000);
+    requestAnimationFrame(function(){ requestAnimationFrame(fit); });
+
+    return { apply: function(){ if (atFit) fit(); else apply(); }, fit: fit };
+  }
+  var cfgViewer = makeViewer($("cfgDraw"), $("cfgDrawSvg"), $("cfgVpCtl"));
+
+  /* ---------- compare slider ---------- */
+  var CMP_S = {
+    wall:"4200", wallCustom:4200, ceil:"2700", left:"cabinets", right:"mixed", width:"balanced",
+    finish:"walnut", front:"fluted", handle:"brass", tv:"65", fireType:"lin1", ledType:"perim", ledK:"2700",
+    shelf:true, shelfMat:"oak", bridge:true, avcup:true, rev:"C"
+  };
+  var cmp = $("cmp"), cmpRange = $("cmpRange"), cmpProp = $("cmpProp"), cmpDiv = $("cmpDiv");
+  $("cmpSurvey").innerHTML = surveySVG();
+  cmpProp.innerHTML = elevation(CMP_S, { dims:true, leaders:true, tb:true });
+  function setSplit(v){
+    v = Math.max(0, Math.min(100, v));
+    cmpProp.style.clipPath = "inset(0 0 0 " + v + "%)";
+    cmpDiv.style.left = v + "%";
+    cmpRange.setAttribute("aria-valuetext", Math.round(v) + "% proposal shown");
+  }
+  cmpRange.addEventListener("input", function(){ setSplit(Number(cmpRange.value)); });
+  function pointerSplit(e){
+    var r = cmp.getBoundingClientRect();
+    var v = ((e.clientX - r.left) / r.width) * 100;
+    cmpRange.value = String(Math.round(v));
+    setSplit(v);
+  }
+  var dragging = false;
+  cmp.addEventListener("pointerdown", function(e){
+    dragging = true; cmp.setPointerCapture(e.pointerId);
+    /* on touch, wait for an actual drag so a tap that starts a page scroll doesn't jump the slider */
+    if (e.pointerType !== "touch") pointerSplit(e);
+  });
+  cmp.addEventListener("pointermove", function(e){ if (dragging) pointerSplit(e); });
+  ["pointerup","pointercancel"].forEach(function(t){ cmp.addEventListener(t, function(){ dragging = false; }); });
+  setSplit(52);
+
+  /* ---------- hero ---------- */
+  $("heroDrawSvg").innerHTML = elevation(
+    Object.assign({}, CMP_S, { bridge:false, right:"shelves" }),
+    { dims:true, leaders:true, tb:true }
+  );
+  var heroViewer = makeViewer($("heroDraw"), $("heroDrawSvg"), $("heroVpCtl"));
+
+  /* ---------- desktop / mobile preview switch ---------- */
+  (function(){
+    var deck = $("deck"), seg = $("viewSeg");
+    function setView(v){
+      v = (v === "mobile") ? "mobile" : "desktop";
+      deck.setAttribute("data-view", v);
+      Array.prototype.forEach.call(seg.children, function(b){ b.setAttribute("aria-pressed", String(b.dataset.view === v)); });
+      try { localStorage.setItem("ff_view", v); } catch(e){}
+      setTimeout(function(){
+        try { cfgViewer.fit(); } catch(e){}
+        try { heroViewer.fit(); } catch(e){}
+      }, 80);
+    }
+    seg.addEventListener("click", function(e){
+      var b = e.target.closest("button[data-view]"); if (!b) return;
+      setView(b.dataset.view);
+      window.scrollTo({ top: 0, behavior: "auto" });
+    });
+    try {
+      var pv = localStorage.getItem("ff_view");
+      if (pv === "mobile" || pv === "desktop") setView(pv);
+    } catch(e){}
+  })();
+
+  /* ---------- works plates ---------- */
+  var PLATES = [
+    { s:{ wall:"4200", ceil:"2700", left:"cabinets", right:"mixed", width:"balanced", finish:"walnut", front:"fluted", handle:"brass", tv:"65", fireType:"lin1", ledType:"perim", ledK:"2700", shelf:true, shelfMat:"oak", bridge:true, avcup:true },
+      a:"Langley · SL3", b:'4.2 m · fluted walnut · bridged to ceiling · 2025' },
+    { s:{ wall:"3600", ceil:"2400", left:"shelves", right:"shelves", width:"wide", finish:"oak", front:"flat", handle:"push", tv:"55", fireType:"none", ledType:"shelf", ledK:"3000", shelf:false, shelfMat:"match", bridge:false, avcup:true },
+      a:"Windsor · SL4", b:'3.6 m · oak · library both sides · 2025' },
+    { s:{ wall:"5000", ceil:"3000", left:"glass", right:"drawers", width:"balanced", finish:"charcoal", front:"vgroove", handle:"edge", tv:"85", fireType:"lin2", ledType:"plinth", ledK:"2700", shelf:true, shelfMat:"metal", bridge:false, avcup:true },
+      a:"Iver · SL0", b:'5.0 m · charcoal · 85" screen, 2 kW fire · 2024' },
+    { s:{ wall:"4200", ceil:"2700", left:"none", right:"none", width:"balanced", finish:"microcement", front:"flat", handle:"push", tv:"65", fireType:"stove", ledType:"perim", ledK:"2700", shelf:false, shelfMat:"match", bridge:false, avcup:false },
+      a:"Burnham · SL1", b:'4.2 m · microcement · inset stove · 2025' }
+  ];
+  $("rWorks").innerHTML = PLATES.map(function(p){
+    var st = Object.assign({ rev:"C" }, p.s);
+    return '<article class="work"><div class="wd">'
+      + elevation(st, { dims:false, leaders:false, tb:false, mini:true })
+      + '</div><div class="wc"><b>' + esc(p.a) + '</b><span>' + esc(p.b) + '</span></div></article>';
+  }).join("");
+
+  /* ---------- contact form ---------- */
+  var form = $("form"), logged = $("logged");
+  var required = ["cName","cContact","cPost","cWidth"];
+  form.addEventListener("submit", function(e){
+    e.preventDefault();
+    var firstBad = null;
+    required.forEach(function(id){
+      var el = $(id), row = el.closest(".row");
+      var bad = !el.value.trim();
+      row.classList.toggle("invalid", bad);
+      el.setAttribute("aria-invalid", bad ? "true" : "false");
+      if (bad && !firstBad) firstBad = el;
+    });
+    if (firstBad){ firstBad.focus(); return; }
+    var d = new Date();
+    var ref = "REF FF-" + String(d.getFullYear()).slice(2)
+      + String(d.getMonth()+1).padStart(2,"0") + String(d.getDate()).padStart(2,"0")
+      + "-" + String(Math.floor(Math.random()*90)+10);
+    $("loggedRef").textContent = ref;
+    $("loggedSpec").textContent = ($("cMsg").value.trim() || specSentence(S));
+    try {
+      localStorage.setItem("ff_enquiry", JSON.stringify({
+        ref: ref, name: $("cName").value, contact: $("cContact").value,
+        postcode: $("cPost").value, width: $("cWidth").value, message: $("cMsg").value,
+        spec: S, at: d.toISOString()
+      }));
+    } catch(err){}
+    form.style.display = "none";
+    logged.style.display = "block";
+    logged.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+  form.addEventListener("input", function(e){
+    var row = e.target.closest(".row");
+    if (row && row.classList.contains("invalid") && e.target.value.trim()){
+      row.classList.remove("invalid");
+      e.target.setAttribute("aria-invalid", "false");
+    }
+  });
+
+  buildSwatches();
+  syncControls();
+  render();
+})();
+</script>
