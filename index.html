@@ -1,4 +1,11 @@
-<title>Form &amp; Frame Media Walls</title>
+<title>Form &amp; Frame Ltd | Bespoke Media Walls &amp; Fitted Joinery | Slough &amp; Berkshire</title>
+<meta name="description" content="Architectural media walls, fitted joinery and linear electric fireplace surrounds across Slough, Windsor, Maidenhead and Berkshire. Scaled drawings before build and a free site survey.">
+<meta property="og:title" content="Form &amp; Frame Ltd — Architectural Media Walls">
+<meta property="og:description" content="Scaled drawings, precision workshop build and clean installation. Estimate your media wall online.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://mfm2712-droid.github.io/form-and-frame-media-walls2/assets/cases/burnham-library-after.webp">
+<link rel="canonical" href="https://mfm2712-droid.github.io/form-and-frame-media-walls2/">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"Form & Frame Ltd","url":"https://mfm2712-droid.github.io/form-and-frame-media-walls2/","address":{"@type":"PostalAddress","streetAddress":"Unit 4, Buckingham Ave","addressLocality":"Slough","postalCode":"SL1","addressRegion":"Berkshire","addressCountry":"GB"},"areaServed":["SL0","SL1","SL2","SL3","SL4","SL6","SL9","Slough","Windsor","Maidenhead","Burnham","Gerrards Cross"],"priceRange":"£££"}</script>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
@@ -104,6 +111,8 @@
       var(--paper);
     background-blend-mode:normal;
   }
+  /* Preview controls are available only when explicitly requested for internal QA. */
+  .viewbar{display:none}
   .sheet > *{position:relative}
   .sheet::before{
     content:"";position:absolute;inset:0;background:var(--paper);opacity:.86;pointer-events:none;
@@ -126,6 +135,7 @@
   .navlinks{display:flex;gap:26px;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.16em}
   .navlinks a{color:var(--pencil);transition:color .12s}
   .navlinks a:hover{color:var(--frame)}
+  .nav-toggle{display:none;width:42px;height:40px;padding:0;border:1px solid var(--frame);background:transparent;cursor:pointer;font:600 17px/1 "IBM Plex Mono",monospace}
   .btn{
     display:inline-flex;align-items:center;justify-content:center;gap:.5em;
     -webkit-appearance:none;appearance:none;border-radius:0;
@@ -270,7 +280,7 @@
   .pmeter.status-over .pm-fill{background:#B4432F}
   .pm-mark{position:absolute;top:-4px;bottom:-4px;width:3px;background:var(--paper-3);box-shadow:0 0 0 1px rgba(0,0,0,.45)}
   .pm-txt{display:block;font:500 10.5px/1.45 "IBM Plex Mono",monospace;opacity:1}
-  .cfg-draw.maximised,.drawing.maximised{position:fixed;inset:0;z-index:9999;margin:0;border:none;min-height:0;max-height:none;box-shadow:none;border-radius:0;touch-action:none}
+  .cfg-draw.maximised,.drawing.maximised{position:fixed;inset:0;z-index:9999;margin:0;border:none;min-height:0;max-height:none;box-shadow:none;border-radius:0;touch-action:pan-y}
   .vp-ctl button[data-z="max"]{font-size:15px}
   .maximised .vp-ctl{top:calc(12px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right))}
   .maximised .vp-hint{left:calc(12px + env(safe-area-inset-left));bottom:calc(12px + env(safe-area-inset-bottom))}
@@ -324,6 +334,8 @@
   .cfg-price .btn:hover{box-shadow:3px 3px 0 var(--paper-3)}
   .cfg-price .btn.ghost{background:transparent;color:var(--paper-3)}
   .cfg-price .btn.ghost:hover{background:var(--paper-3);color:var(--frame)}
+  .cfg-live{display:none;flex-basis:100%;align-items:center;gap:9px;padding-top:2px;font:500 10px/1.4 "IBM Plex Mono",monospace;letter-spacing:.04em;color:var(--paper-3)}
+  .cfg-live.show{display:flex}.cfg-live b{font-weight:600;color:#F3C778}.cfg-live i{width:7px;height:7px;border-radius:50%;background:#F3C778;box-shadow:0 0 0 4px rgba(243,199,120,.14);animation:pulse 1.5s ease-in-out infinite}
 
   .schedule{margin-top:28px;border:1px solid var(--frame);overflow-x:auto;-webkit-overflow-scrolling:touch}
   .schedule table{width:100%;border-collapse:collapse;font-size:12.5px}
@@ -347,7 +359,7 @@
 
   /* ============ WORKS ============ */
   .works{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-  .work{border:1px solid var(--frame);background:var(--paper-3);box-shadow:4px 4px 0 var(--shadow)}
+  .work{min-width:0;border:1px solid var(--frame);background:var(--paper-3);box-shadow:4px 4px 0 var(--shadow)}
   .work .wd{background:
       linear-gradient(var(--pencil-2) 1px,transparent 1px),
       linear-gradient(90deg,var(--pencil-2) 1px,transparent 1px);
@@ -356,6 +368,12 @@
   .work .wc{padding:13px 16px;display:flex;flex-direction:column;gap:3px}
   .work .wc b{font:600 11px "IBM Plex Mono",monospace;letter-spacing:.09em}
   .work .wc span{font:500 10.5px "IBM Plex Mono",monospace;color:var(--pencil);letter-spacing:.04em}
+  .case-split{position:relative;aspect-ratio:836/941;overflow:hidden;background-size:cover;background-repeat:no-repeat;background-position:center;touch-action:pan-y}
+  .case-before{position:absolute;inset:0;background-size:cover;background-repeat:no-repeat;background-position:center;clip-path:inset(0 0 0 50%)}
+  .case-line{position:absolute;top:0;bottom:0;left:50%;width:1px;background:var(--paper-3);pointer-events:none}
+  .case-line::after{content:"↔";position:absolute;top:calc(50% - 17px);left:-17px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--paper-3);color:var(--frame);font-size:14px}
+  .case-range{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:ew-resize}
+  .case-label{position:absolute;z-index:2;top:12px;padding:6px 8px;background:rgba(33,31,26,.86);color:var(--paper-3);font:600 9px "IBM Plex Mono",monospace;letter-spacing:.09em;pointer-events:none;transition:opacity .16s ease}.case-label.before{left:12px}.case-label.after{right:12px}
 
   /* ============ CONTACT ============ */
   .contact{display:grid;grid-template-columns:1fr 1fr;gap:52px;align-items:start}
@@ -380,6 +398,34 @@
   .logged .ref{font:600 12px "IBM Plex Mono",monospace;letter-spacing:.1em;margin:10px 0 14px;color:var(--frame)}
   .logged p{font-size:13px;color:var(--pencil);line-height:1.6}
   .logged .spec{margin-top:14px;padding-top:14px;border-top:1px solid var(--pencil-2);font:500 11.5px/1.6 "IBM Plex Mono",monospace;color:var(--frame)}
+  .demo-note{margin-top:13px;font:500 10px/1.5 "IBM Plex Mono",monospace;color:var(--pencil)}
+
+  /* ============ TESTIMONIALS ============ */
+  .testimonials{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;border:1px solid var(--frame);background:var(--pencil-2)}
+  .testimonial{min-width:0;background:var(--paper-3);padding:22px;display:flex;flex-direction:column;gap:14px}
+  .testimonial .stars{color:var(--oak);font:600 12px/1 "IBM Plex Mono",monospace;letter-spacing:.12em}
+  .testimonial p{font-size:14px;line-height:1.55}
+  .testimonial span{margin-top:auto;font:600 10px/1.4 "IBM Plex Mono",monospace;letter-spacing:.08em;color:var(--pencil)}
+
+  /* ============ PROJECT ASSISTANT ============ */
+  .chat-launch{position:fixed;right:22px;bottom:22px;z-index:50;display:inline-flex;align-items:center;gap:9px;padding:13px 15px;border:1px solid var(--frame);background:var(--frame);color:var(--paper-3);box-shadow:4px 4px 0 var(--oak);cursor:pointer;font:600 10px/1 "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
+  .chat-launch i{display:grid;place-items:center;width:19px;height:19px;border:1px solid currentColor;border-radius:50%;font-style:normal;font-size:12px}
+  .chat-panel{position:fixed;right:22px;bottom:78px;z-index:51;width:min(360px,calc(100vw - 32px));border:1px solid var(--frame);background:var(--paper-3);box-shadow:7px 7px 0 var(--shadow);display:none}
+  .chat-panel.open{display:block}
+  .chat-top{display:flex;justify-content:space-between;gap:12px;align-items:start;padding:15px;border-bottom:1px solid var(--frame);background:var(--ink);color:var(--paper-3)}
+  .chat-top b{font:700 12px/1.3 "IBM Plex Mono",monospace;letter-spacing:.06em}.chat-top span{display:block;margin-top:3px;font-size:11px;opacity:.8}
+  .chat-close{width:30px;height:30px;border:1px solid rgba(255,255,255,.6);background:transparent;color:inherit;cursor:pointer;font-size:16px}
+  .chat-log{height:250px;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:9px}
+  .chat-msg{max-width:90%;padding:9px 10px;font-size:12.5px;line-height:1.45;background:var(--paper-2);border:1px solid var(--pencil-2)}
+  .chat-msg.user{align-self:flex-end;background:var(--frame);color:var(--paper-3);border-color:var(--frame)}
+  .chat-suggestions{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 12px}.chat-suggestions button{border:1px solid var(--pencil-2);background:transparent;padding:7px 8px;cursor:pointer;font:600 9px/1.2 "IBM Plex Mono",monospace;color:var(--frame)}
+  .chat-form{display:flex;border-top:1px solid var(--frame)}.chat-form input{min-width:0;flex:1;border:0;background:transparent;padding:12px;font-size:13px}.chat-form button{width:76px;border:0;border-left:1px solid var(--frame);background:var(--paper);cursor:pointer;font:600 10px "IBM Plex Mono",monospace}
+
+  /* ============ SPEC SHARE SHEET ============ */
+  .share-sheet{position:fixed;z-index:60;inset:0;display:none;place-items:center;padding:18px;background:rgba(33,31,26,.48);backdrop-filter:blur(3px)}
+  .share-sheet.open{display:grid}.share-card{width:min(440px,100%);border:1px solid var(--frame);background:var(--paper-3);box-shadow:8px 8px 0 var(--frame);padding:24px}.share-card h3{font-size:25px}.share-card p{margin-top:10px;color:var(--pencil);font-size:14px}.share-actions{display:grid;gap:9px;margin-top:20px}.share-actions .btn{width:100%;text-align:left;justify-content:flex-start}.share-close{margin-top:14px;border:0;padding:0;background:transparent;color:var(--pencil);font:600 10px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+  .final-spec{margin-top:16px;border:1px solid var(--pencil-2);background:#F4F0E7;color:#222018;max-height:430px;overflow:auto}
+  .proforma{background:#F4F0E7;font-family:"IBM Plex Sans",sans-serif}.proforma-head{padding:19px 20px;background:#1E4D45;color:#F6F0E3;display:flex;justify-content:space-between;gap:18px}.proforma-brand{font:800 18px/1 "Bricolage Grotesque",sans-serif;letter-spacing:-.04em}.proforma-brand b{color:#D9A95D}.proforma-kicker{margin-top:5px;font:600 8px/1.4 "IBM Plex Mono",monospace;letter-spacing:.18em}.proforma-stamp{align-self:start;border:1px solid rgba(246,240,227,.65);padding:6px 8px;font:600 8px/1.2 "IBM Plex Mono",monospace;letter-spacing:.12em;text-align:right;white-space:nowrap}.proforma-body{padding:20px}.proforma-greeting{font-size:13px;line-height:1.55;color:#4A473E}.proforma-greeting b{color:#1E4D45}.proforma-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin:17px 0;background:#CFC7B5;border:1px solid #CFC7B5}.proforma-meta div{padding:9px;background:#FBF8F0}.proforma-meta span,.proforma-sec{display:block;font:600 8px/1.3 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:#857C6B}.proforma-meta b{display:block;margin-top:3px;font:600 10px/1.3 "IBM Plex Mono",monospace;color:#242119}.proforma-sec{margin:18px 0 7px;color:#1E4D45}.proforma-table{width:100%;border-collapse:collapse;font-size:10px}.proforma-table th{padding:7px 0;border-bottom:1px solid #302E27;text-align:left;font:600 8px "IBM Plex Mono",monospace;letter-spacing:.12em;color:#615B4F}.proforma-table td{padding:8px 0;border-bottom:1px solid #DDD6C7;vertical-align:top;line-height:1.35}.proforma-table td:last-child,.proforma-table th:last-child{text-align:right;white-space:nowrap;font-family:"IBM Plex Mono",monospace}.proforma-table small{display:block;margin-top:2px;color:#827B6E;font-size:9px}.proforma-total{margin-top:16px;margin-left:auto;width:min(100%,250px);border-top:2px solid #1E4D45;padding-top:8px;font-size:10px}.proforma-total div{display:flex;justify-content:space-between;gap:12px;padding:3px 0}.proforma-total .grand{margin-top:4px;padding:8px;background:#1E4D45;color:#F6F0E3;font:700 13px "IBM Plex Mono",monospace}.proforma-notes{margin-top:17px;padding-top:12px;border-top:1px solid #CFC7B5;font-size:9px;line-height:1.5;color:#71695D}.proforma-foot{padding:11px 20px;border-top:1px solid #CFC7B5;font:600 8px "IBM Plex Mono",monospace;letter-spacing:.08em;color:#796F60;display:flex;justify-content:space-between;gap:10px}
 
   /* ============ FOOTER ============ */
   .foot{
@@ -401,6 +447,9 @@
     .steps{grid-template-columns:1fr 1fr}
     .works{grid-template-columns:1fr}
     .navlinks{display:none}
+    .nav-toggle{display:block;margin-left:auto}
+    .nav.open{flex-wrap:wrap}.nav.open .navlinks{order:4;display:flex;flex-basis:100%;padding-top:14px;border-top:1px solid var(--pencil-2);gap:14px;overflow-x:auto}.nav.open .navlinks a{white-space:nowrap}
+    .testimonials{grid-template-columns:1fr 1fr}
   }
   @media (max-width:560px){
     .sheet{margin:6px}
@@ -425,6 +474,8 @@
     .nav{padding-left:16px;padding-right:16px}
     .mosaic{grid-template-columns:1fr}
     .tile:first-child{grid-column:auto;grid-row:auto;height:280px}
+    .chat-launch{right:14px;bottom:14px}.chat-panel{right:14px;bottom:70px}.chat-launch span{display:none}
+    .testimonials{grid-template-columns:1fr}
   }
   @media (hover:none){
     .btn:hover{transform:none;box-shadow:none}
@@ -498,7 +549,8 @@
   <div class="sheet">
   <nav class="nav">
     <a class="mark" href="#top">FORM <b>&amp;</b> FRAME</a>
-    <div class="navlinks">
+    <button class="nav-toggle" type="button" id="navToggle" aria-expanded="false" aria-controls="primaryNav" aria-label="Open navigation">☰</button>
+    <div class="navlinks" id="primaryNav">
       <a href="#drawing">DRAWING</a>
       <a href="#survey">SURVEY&nbsp;·&nbsp;PROPOSAL</a>
       <a href="#specify">SPECIFY</a>
@@ -511,7 +563,7 @@
     <span><b>Form &amp; Frame Ltd</b></span>
     <span>Media-wall joinery</span>
     <span>Slough · Berkshire</span>
-    <span>Drawing set — <b>6 plates</b></span>
+    <span>Drawing set — <b>7 plates</b></span>
     <span>Issue 2026</span>
   </div>
 
@@ -818,14 +870,15 @@
           <div class="cfg-price">
             <div>
               <div class="plabel">Guide price · ex VAT</div>
-              <div class="money" id="rPrice">£0</div>
+              <div class="money" id="rPrice">£6,950–£8,300</div>
             </div>
             <div class="sub" id="rPriceSub">Guide only. A fixed quote follows the on-site survey.</div>
             <div style="display:flex;gap:10px;flex-wrap:wrap">
-              <button class="btn" type="button" id="bSave">Save spec</button>
+              <button class="btn" type="button" id="bSave">Save / share spec</button>
               <button class="btn" type="button" id="bSend">Send with survey</button>
               <button class="btn ghost" type="button" id="bReset">Reset parameters</button>
             </div>
+            <div class="cfg-live" id="cfgLive" aria-live="polite"><i></i><span><b>LIVE UPDATE</b> <span id="cfgLiveText"></span></span></div>
           </div>
         </div>
       </div>
@@ -836,7 +889,7 @@
         <table>
           <caption>Schedule of works — indicative</caption>
           <thead><tr><th>Item</th><th>Specification</th><th>Qty</th></tr></thead>
-          <tbody id="rSchedule"></tbody>
+          <tbody id="rSchedule"><tr><td>Carcasses</td><td>18 mm MR MDF · 2100 mm tall</td><td>3 no.</td></tr><tr><td>Veneered / lacquered faces</td><td>European oak · flat / slab fronts</td><td>8.8 m²</td></tr><tr><td>Left — open shelves</td><td>20 mm, lipped front</td><td>5 no. · 3.6 m</td></tr><tr><td>Right — cabinets</td><td>Soft-close, handleless / push</td><td>2 doors · 4 hinges</td></tr><tr><td>TV recess</td><td>Vented, brushed cable entry</td><td>65&quot; · 2772 mm bay</td></tr><tr><td>Electric fireplace feature</td><td>Linear electric fire 1.0 kW</td><td>1 no.</td></tr><tr><td>Concealed lighting</td><td>Perimeter reveal, 2700K dimmable</td><td>8.4 m</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -866,15 +919,36 @@
         <div class="eyebrow">A-05 / Completed works</div>
         <h2>Recent drawings, off the wall and into rooms.</h2>
       </div>
-      <div class="works" id="rWorks"></div>
+      <div class="works" id="rWorks">
+        <article class="work"><div class="case-split" style="background-image:url('assets/cases/burnham-library-before.webp')"><div class="case-before" style="background-image:url('assets/cases/burnham-library-after.webp')"></div><span class="case-label before">BEFORE</span><span class="case-label after">AFTER</span><div class="case-line"></div></div><div class="wc"><b>BURNHAM · 4.2 M WALL</b><span>65&quot; recessed TV · oak library wings · linear fire · warm LED</span></div></article>
+        <article class="work"><div class="case-split" style="background-image:url('assets/cases/langley-chimney-before.webp')"><div class="case-before" style="background-image:url('assets/cases/langley-chimney-after.webp')"></div><span class="case-label before">BEFORE</span><span class="case-label after">AFTER</span><div class="case-line"></div></div><div class="wc"><b>LANGLEY · CHIMNEY BREAST</b><span>55&quot; flush TV · microcement chimney · smoked oak alcove joinery</span></div></article>
+        <article class="work"><div class="case-split" style="background-image:url('assets/cases/slough-cinema-before.webp')"><div class="case-before" style="background-image:url('assets/cases/slough-cinema-after.webp')"></div><span class="case-label before">BEFORE</span><span class="case-label after">AFTER</span><div class="case-line"></div></div><div class="wc"><b>SLOUGH · FULL-WIDTH CINEMA WALL</b><span>75&quot; recessed TV · charcoal cabinetry · bronze display · 1.5 m fire</span></div></article>
+        <article class="work"><div class="case-split" style="background-image:url('assets/cases/windsor-compact-before.webp')"><div class="case-before" style="background-image:url('assets/cases/windsor-compact-after.webp')"></div><span class="case-label before">BEFORE</span><span class="case-label after">AFTER</span><div class="case-line"></div></div><div class="wc"><b>WINDSOR · COMPACT TOWNHOUSE</b><span>55&quot; TV recess · pale ash storage · floating shelf · halo LED</span></div></article>
+      </div>
     </div>
   </section>
 
-  <!-- A-06 CONTACT -->
+  <!-- A-06 TESTIMONIALS -->
+  <section class="plate" id="testimonials">
+    <div class="wrap">
+      <div class="plate-head">
+        <div class="eyebrow">A-06 / Client feedback</div>
+        <h2>Proof points, ready to replace with verified reviews.</h2>
+      </div>
+      <div class="testimonials" aria-label="Sample testimonial content for the proposal">
+        <article class="testimonial"><div class="stars" aria-label="Five out of five stars">★★★★★</div><p>“The drawing made the whole decision easy. We could see exactly where the storage, TV and lighting would sit before the build began.”</p><span>Sample review · Windsor</span></article>
+        <article class="testimonial"><div class="stars" aria-label="Five out of five stars">★★★★★</div><p>“Everything was measured properly, the team were tidy and the finish feels part of the room rather than an add-on.”</p><span>Sample review · Burnham</span></article>
+        <article class="testimonial"><div class="stars" aria-label="Five out of five stars">★★★★★</div><p>“We wanted books, hidden cables and a fire without losing floor space. The detail in the proposal gave us confidence.”</p><span>Sample review · Langley</span></article>
+        <article class="testimonial"><div class="stars" aria-label="Five out of five stars">★★★★★</div><p>“A genuinely bespoke solution. The side cabinetry solved the storage problem and the room now feels finished.”</p><span>Sample review · Slough</span></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- A-07 CONTACT -->
   <section class="plate" id="request">
     <div class="wrap contact">
       <div>
-        <div class="eyebrow">A-06 / Request a survey</div>
+        <div class="eyebrow">A-07 / Request a survey</div>
         <h2>Bring the room.<br>We'll bring the drawing.</h2>
         <p class="prose">Send a photo, a rough sketch or just the wall width. We'll call within one working day to book a free measured survey.</p>
         <div class="coverage">
@@ -919,18 +993,55 @@
         </form>
 
         <div class="logged" id="logged">
-          <h3>Survey request logged.</h3>
+          <h3>Prototype request saved.</h3>
           <div class="ref" id="loggedRef">REF FF-000000-00</div>
-          <p>We'll call within one working day to book a free measured survey. Nothing is ordered until you've signed off a drawing.</p>
+          <p>This proposal stores your request in this browser only. Connect the live form to email or a CRM before launch.</p>
           <div class="spec" id="loggedSpec"></div>
         </div>
       </div>
     </div>
   </section>
 
+  <button class="chat-launch" type="button" id="chatLaunch" aria-expanded="false" aria-controls="chatPanel"><i>?</i><span>Ask the project assistant</span></button>
+  <aside class="chat-panel" id="chatPanel" aria-label="Form and Frame project assistant" aria-hidden="true">
+    <div class="chat-top"><div><b>PROJECT ASSISTANT</b><span>Quick guidance for your wall.</span></div><button class="chat-close" type="button" id="chatClose" aria-label="Close project assistant">×</button></div>
+    <div class="chat-log" id="chatLog" aria-live="polite"><div class="chat-msg">Not sure where to start? Tell me about your wall, TV or storage needs and I’ll point you to the right options.</div></div>
+    <div class="chat-suggestions" id="chatSuggestions"><button type="button" data-action="review">Review my drawing</button><button type="button" data-action="storage">I need storage</button><button type="button">What will it cost?</button></div>
+    <form class="chat-form" id="chatForm"><input id="chatInput" type="text" autocomplete="off" placeholder="Ask about your wall…" aria-label="Message the project assistant"><button type="submit">SEND</button></form>
+  </aside>
+
+  <div class="share-sheet" id="specShare" role="dialog" aria-modal="true" aria-labelledby="specShareTitle" aria-hidden="true">
+    <div class="share-card">
+      <div class="eyebrow">Saved specification</div>
+      <h3 id="specShareTitle">Where should this brief go?</h3>
+      <p>Your configuration is saved in this browser. Choose a next step for this proposal.</p>
+      <div class="share-actions">
+        <button class="btn" type="button" id="shareAssistant">Continue in Project Assistant</button>
+        <button class="btn ghost" type="button" id="shareEmail">Prepare email with my brief</button>
+      </div>
+      <button class="share-close" type="button" id="shareClose">Keep editing</button>
+    </div>
+  </div>
+
+  <div class="share-sheet" id="finalProjectSheet" role="dialog" aria-modal="true" aria-labelledby="finalProjectTitle" aria-hidden="true">
+    <div class="share-card">
+      <div class="eyebrow">Final project brief</div>
+      <h3 id="finalProjectTitle">Your project is ready to share.</h3>
+      <p>Open an email draft with the final specification, or download a copy to attach manually.</p>
+      <div class="final-spec" id="finalProjectSpec"></div>
+      <div class="share-actions">
+        <a class="btn" id="finalEmailLink" href="#">Open email app with this brief</a>
+        <button class="btn ghost" type="button" id="copyFinalBrief">Copy email brief</button>
+        <button class="btn ghost" type="button" id="downloadFinalBrief">Download final brief (.txt)</button>
+      </div>
+      <button class="share-close" type="button" id="finalProjectClose">Back to the project</button>
+    </div>
+  </div>
+
   <footer class="foot">
     <span><b>Form &amp; Frame Ltd</b></span>
     <span>Unit 4, Buckingham Ave, Slough SL1</span>
+    <span>Serving Slough (SL1–SL3), Langley, Burnham, Windsor (SL4), Maidenhead (SL6) &amp; Gerrards Cross (SL9)</span>
     <span>Drawings &copy; 2026</span>
     <span>Sheet 1 / 1</span>
   </footer>
@@ -1010,11 +1121,19 @@
       + '</g>';
   }
   function leader(tx,ty,lx,ly,text,anchor){
-    anchor = anchor||"start";
+    /* Each callout stays inside the SVG viewport and is visibly tied to its component. */
+    anchor = anchor || "start";
+    var width = Math.min(220, Math.max(108, String(text).length * 6.25));
+    lx = anchor === "start" ? Math.min(lx, 960) : Math.max(lx, 240);
+    var boxX = anchor === "start" ? lx + 8 : lx - width - 8;
+    var boxY = Math.max(18, Math.min(682, ly - 19));
+    var textX = boxX + 8, textY = boxY + 15;
     return '<g class="lg">'
-      + '<circle cx="'+tx+'" cy="'+ty+'" r="3"/>'
       + '<path d="M'+tx+' '+ty+' L'+lx+' '+ly+'"/>'
-      + '<text x="'+lx+(anchor==="start"?4:-4)+'" y="'+(ly-6)+'" text-anchor="'+anchor+'" class="lt">'+esc(text)+'</text>'
+      + '<circle cx="'+tx+'" cy="'+ty+'" r="4"/>'
+      + '<circle cx="'+tx+'" cy="'+ty+'" r="1.5" class="lg-core"/>'
+      + '<rect x="'+boxX+'" y="'+boxY+'" width="'+width+'" height="23" rx="2" class="lg-box"/>'
+      + '<text x="'+textX+'" y="'+textY+'" textLength="'+(width-16)+'" lengthAdjust="spacingAndGlyphs" class="lt">'+esc(text)+'</text>'
       + '</g>';
   }
 
@@ -1321,9 +1440,11 @@
       + '.elev .dg path{fill:var(--pencil)}'
       + '.elev .dgbg{fill:var(--paper-3);opacity:.9}'
       + '.elev .dt{fill:var(--pencil);font-size:13px;font-weight:600;letter-spacing:.04em}'
-      + '.elev .lg circle{fill:var(--ink)}'
-      + '.elev .lg path{stroke:var(--ink);stroke-width:1;fill:none}'
-      + '.elev .lt{fill:var(--frame);font-size:12px;font-weight:500;letter-spacing:.02em}'
+      + '.elev .lg path{stroke:var(--ink);stroke-width:1.5;fill:none}'
+      + '.elev .lg circle{fill:var(--ink);stroke:var(--paper-3);stroke-width:1.2}'
+      + '.elev .lg .lg-core{fill:var(--paper-3);stroke:none}'
+      + '.elev .lg-box{fill:var(--paper-3);stroke:var(--ink);stroke-width:1}'
+      + '.elev .lt{fill:var(--frame);font-size:11px;font-weight:600;letter-spacing:.015em}'
       + '.elev .fig{stroke:var(--pencil);stroke-width:1.4;fill:none;opacity:.6}'
       + '.elev .fig circle{fill:none}'
       + '.elev .tblk .tbbox{fill:var(--paper-3);stroke:var(--frame);stroke-width:1.5}'
@@ -1555,7 +1676,9 @@
         if (op.dataset.base == null) op.dataset.base = op.textContent;
         var v = op.value, isCur = v === String(S[grp.f]), t = withField(grp.f, v);
         op.textContent = isCur ? op.dataset.base : op.dataset.base + "  ·  " + fmtDelta(priceMid(t) - curMid);
-        op.disabled = !isCur && optionBlocked(t, curMid);
+        /* A fireplace is a design decision, not a hidden upgrade: keep every fire
+           selectable even when a budget target is active, then show its live impact. */
+        op.disabled = grp.id !== "fFire" && !isCur && optionBlocked(t, curMid);
       });
     });
 
@@ -1699,7 +1822,7 @@
     renderPrice(priceRange(S));
     refreshOptionPrices();
     rSummary.innerHTML = "Current drawing — <b>" + esc(specSentence(S)) + "</b>";
-    bSave.textContent = "Save spec";
+    bSave.textContent = "Save / share spec";
     try { localStorage.setItem("ff_spec", JSON.stringify(S)); } catch(e){}
   }
 
@@ -1884,16 +2007,153 @@
   });
   $("fPhotoClear").addEventListener("click", function(){ clearPhoto(); render(); });
 
+  function openSpecShare(){
+    var sheet = $("specShare");
+    sheet.classList.add("open");
+    sheet.setAttribute("aria-hidden", "false");
+    $("shareAssistant").focus();
+  }
+  function closeSpecShare(){
+    var sheet = $("specShare");
+    sheet.classList.remove("open");
+    sheet.setAttribute("aria-hidden", "true");
+    bSave.focus();
+  }
+  function setLiveUpdate(note){
+    var live = $("cfgLive"), text = $("cfgLiveText");
+    text.textContent = note;
+    live.classList.add("show");
+  }
+  function finalBriefText(){
+    var G = geom(S), pr = priceRange(S), guide = priceMid(S), rows = schedule(S);
+    var round10 = function(v){ return Math.round(v / 10) * 10; };
+    var design = round10(guide * 0.05), structure = round10(guide * 0.12), joinery = round10(guide * 0.18);
+    var finishes = round10(guide * 0.12), av = round10(guide * 0.05);
+    var fire = FIRE_PRICE[S.fireType] || 0, lighting = LED_PRICE[S.ledType] || 0;
+    var labour = guide - design - structure - joinery - finishes - av - fire - lighting;
+    if (labour < 350){ labour = 350; finishes = guide - design - structure - joinery - av - fire - lighting - labour; }
+    var vat = round10(guide * 0.2), incVat = guide + vat;
+    var scheduleText = rows.map(function(row){ return "• " + row[0] + " | " + row[1] + " | " + row[2]; }).join("\n");
+    var quoteLines = [
+      ["Survey, measured drawing & specification", "Site measure, scaled elevation, final sign-off set", design],
+      ["Wall preparation & carcass materials", "18 mm MR MDF carcasses, structural fixing and set-out", structure],
+      ["Bespoke joinery / side modules", MODNAME[S.left] + " left; " + MODNAME[S.right] + " right", joinery],
+      ["Faces, finish & ironmongery", finOf(S).name + "; " + FRONT[S.front] + "; " + HANDLE[S.handle], finishes],
+      ["TV recess & AV integration", S.tv + '\" recessed TV bay, ventilation, conduit and brush plates', av],
+      ["Electric fire feature", FIRENAME[S.fireType] + (S.fireType === "none" ? " (not selected)" : "; supply allowance"), fire],
+      ["Integrated lighting", LIGHTNAME[S.ledType] + (S.ledType === "none" ? " (not selected)" : "; " + (S.ledType === "accent" ? "RGB" : S.ledK + "K") + " dimmable"), lighting],
+      ["Workshop manufacture & installation labour", "Workshop build, delivery, two-person installation, alignment and handover", labour]
+    ];
+    var costText = quoteLines.map(function(line){ return "• " + line[0] + "\n  " + line[1] + "\n  Allowance: " + gbp(line[2]); }).join("\n");
+    return "FORM & FRAME — INDICATIVE TECHNICAL QUOTATION\n"
+      + "Reference: FF-" + S.rev + "-" + new Date().toLocaleDateString("en-GB").replace(/\//g, "") + "\n"
+      + "Status: proposal only — fixed quotation follows measured survey and signed drawing.\n\n"
+      + "PROJECT GEOMETRY\n"
+      + "• Overall wall: " + G.mm + " mm wide × " + realCeil(S) + " mm ceiling height\n"
+      + "• Centre TV bay: " + G.centreMM + " mm | Left module: " + G.lMM + " mm | Right module: " + G.rMM + " mm\n"
+      + "• TV: " + S.tv + '\" recessed / vented | Fire: ' + FIRENAME[S.fireType] + " | Lighting: " + LIGHTNAME[S.ledType] + "\n"
+      + "• Finish: " + finOf(S).name + "; " + TEXNAME[S.texture] + "; " + FRONT[S.front] + "; " + HANDLE[S.handle] + "\n\n"
+      + "SCHEDULE OF WORKS & QUANTITIES\n" + scheduleText + "\n\n"
+      + "INDICATIVE COST ALLOCATION — EX VAT\n" + costText + "\n\n"
+      + "PRICING SUMMARY\n"
+      + "• Working guide total: " + gbp(guide) + " ex VAT\n"
+      + "• Guide range: " + gbp(pr[0]) + "–" + gbp(pr[1]) + " ex VAT\n"
+      + "• VAT at 20% on working guide: " + gbp(vat) + "\n"
+      + "• Working guide total incl. VAT: " + gbp(incVat) + "\n\n"
+      + "ASSUMPTIONS & EXCLUSIONS\n"
+      + "• Includes the listed joinery, workshop manufacture and installation labour.\n"
+      + "• Excludes customer-supplied TV, unforeseen electrical / building works, structural alterations and remedial plastering unless confirmed at survey.\n"
+      + "• Final dimensions, materials, lead time and staged payment terms are confirmed in the signed quotation.\n";
+  }
+  function finalProformaHtml(){
+    var G = geom(S), pr = priceRange(S), guide = priceMid(S), rows = schedule(S), name = $("cName").value.trim() || "there";
+    var round10 = function(v){ return Math.round(v / 10) * 10; };
+    var design = round10(guide * 0.05), structure = round10(guide * 0.12), joinery = round10(guide * 0.18);
+    var finishes = round10(guide * 0.12), av = round10(guide * 0.05), fire = FIRE_PRICE[S.fireType] || 0, lighting = LED_PRICE[S.ledType] || 0;
+    var labour = guide - design - structure - joinery - finishes - av - fire - lighting;
+    if (labour < 350){ labour = 350; finishes = guide - design - structure - joinery - av - fire - lighting - labour; }
+    var vat = round10(guide * 0.2), inclVat = guide + vat;
+    var scheduleHtml = rows.map(function(row){ return "<tr><td>" + esc(row[0]) + "<small>" + esc(row[1]) + "</small></td><td>" + esc(row[2]) + "</td></tr>"; }).join("");
+    var costs = [
+      ["Survey, measured drawing & specification", "Site measure, scaled elevation and sign-off set", design],
+      ["Wall preparation & carcass materials", "18 mm MR MDF carcasses, structural fixing and set-out", structure],
+      ["Bespoke joinery / side modules", MODNAME[S.left] + " left; " + MODNAME[S.right] + " right", joinery],
+      ["Faces, finish & ironmongery", finOf(S).name + "; " + FRONT[S.front] + "; " + HANDLE[S.handle], finishes],
+      ["TV recess & AV integration", S.tv + '\" recessed bay, ventilation, conduit and brush plates', av],
+      ["Electric fire feature", FIRENAME[S.fireType] + (S.fireType === "none" ? " — not selected" : "; supply allowance"), fire],
+      ["Integrated lighting", LIGHTNAME[S.ledType] + (S.ledType === "none" ? " — not selected" : "; " + (S.ledType === "accent" ? "RGB" : S.ledK + "K") + " dimmable"), lighting],
+      ["Workshop manufacture & installation labour", "Workshop build, delivery, two-person installation, alignment and handover", labour]
+    ];
+    var costHtml = costs.map(function(row){ return "<tr><td>" + esc(row[0]) + "<small>" + esc(row[1]) + "</small></td><td>" + gbp(row[2]) + "</td></tr>"; }).join("");
+    var ref = "FF-" + S.rev + "-" + new Date().toLocaleDateString("en-GB").replace(/\//g, "");
+    return '<article class="proforma">'
+      + '<header class="proforma-head"><div><div class="proforma-brand">FORM <b>&amp;</b> FRAME</div><div class="proforma-kicker">Bespoke media walls · Slough &amp; Berkshire</div></div><div class="proforma-stamp">INDICATIVE<br>PRO FORMA</div></header>'
+      + '<div class="proforma-body"><div class="proforma-greeting">Hello <b>' + esc(name) + '</b>,<br>Thank you for developing your media-wall brief with Form &amp; Frame. Below is your live, indicative pro forma based on the selected design. A measured survey confirms the final fixed quotation.</div>'
+      + '<div class="proforma-meta"><div><span>Reference</span><b>' + ref + '</b></div><div><span>Project</span><b>Media wall / REV ' + esc(S.rev) + '</b></div><div><span>Guide range</span><b>' + gbp(pr[0]) + '–' + gbp(pr[1]) + ' ex VAT</b></div></div>'
+      + '<span class="proforma-sec">Design geometry</span><table class="proforma-table"><tbody><tr><td>Overall wall<small>' + G.mm + ' mm wide × ' + realCeil(S) + ' mm ceiling height</small></td><td>TV bay ' + G.centreMM + ' mm</td></tr><tr><td>Side modules<small>Left: ' + MODNAME[S.left] + ' · ' + G.lMM + ' mm | Right: ' + MODNAME[S.right] + ' · ' + G.rMM + ' mm</small></td><td>' + S.tv + '&quot; TV</td></tr><tr><td>Material palette<small>' + esc(finOf(S).name) + ' · ' + esc(TEXNAME[S.texture]) + ' · ' + esc(FRONT[S.front]) + ' · ' + esc(HANDLE[S.handle]) + '</small></td><td>' + esc(FIRENAME[S.fireType]) + '</td></tr></tbody></table>'
+      + '<span class="proforma-sec">Schedule of works & quantities</span><table class="proforma-table"><thead><tr><th>Item / technical specification</th><th>Qty</th></tr></thead><tbody>' + scheduleHtml + '</tbody></table>'
+      + '<span class="proforma-sec">Cost breakdown — ex VAT</span><table class="proforma-table"><thead><tr><th>Scope / allowance</th><th>Total</th></tr></thead><tbody>' + costHtml + '</tbody></table>'
+      + '<div class="proforma-total"><div><span>Working guide ex VAT</span><b>' + gbp(guide) + '</b></div><div><span>VAT @ 20%</span><b>' + gbp(vat) + '</b></div><div class="grand"><span>Guide total inc VAT</span><b>' + gbp(inclVat) + '</b></div></div>'
+      + '<div class="proforma-notes">Includes the listed bespoke joinery, workshop manufacture and installation labour. Excludes customer-supplied TV, unforeseen electrical or building works, structural alterations and remedial plastering unless confirmed at survey. Final materials, lead time and payment stages are agreed in the signed quotation.</div></div>'
+      + '<footer class="proforma-foot"><span>FORM &amp; FRAME LTD</span><span>DRAWN TO FIT YOUR ROOM</span><span>Slough · Berkshire</span></footer></article>';
+  }
+  function openFinalProject(){
+    var brief = finalBriefText(), subject = "My final Form & Frame media wall project";
+    $("finalProjectSpec").innerHTML = finalProformaHtml();
+    $("finalEmailLink").href = "mailto:?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent("Hello Form & Frame,\n\nPlease find my final media wall brief below:\n\n" + brief + "\nPlease get in touch to arrange a survey.");
+    $("finalProjectSheet").classList.add("open");
+    $("finalProjectSheet").setAttribute("aria-hidden", "false");
+    $("finalEmailLink").focus();
+  }
+  function closeFinalProject(){
+    $("finalProjectSheet").classList.remove("open");
+    $("finalProjectSheet").setAttribute("aria-hidden", "true");
+  }
   bSave.addEventListener("click", function(){
     try { localStorage.setItem("ff_spec", JSON.stringify(S)); } catch(e){}
-    bSave.textContent = "Saved ✓";
-    setTimeout(function(){ bSave.textContent = "Save spec"; }, 1400);
+    openSpecShare();
+  });
+  $("shareAssistant").addEventListener("click", function(){
+    closeSpecShare();
+    if (window.ffOpenAssistantWithSpec) window.ffOpenAssistantWithSpec();
+  });
+  $("shareEmail").addEventListener("click", function(){
+    closeSpecShare();
+    openFinalProject();
+  });
+  $("shareClose").addEventListener("click", closeSpecShare);
+  $("specShare").addEventListener("click", function(e){ if (e.target === this) closeSpecShare(); });
+  $("finalProjectClose").addEventListener("click", closeFinalProject);
+  $("finalProjectSheet").addEventListener("click", function(e){ if (e.target === this) closeFinalProject(); });
+  $("finalEmailLink").addEventListener("click", function(){
+    var link = this;
+    setTimeout(function(){ link.textContent = "Email app requested — copy brief if it did not open"; }, 0);
+  });
+  $("copyFinalBrief").addEventListener("click", function(){
+    var text = finalBriefText(), button = this;
+    function done(){ button.textContent = "Copied to clipboard ✓"; setTimeout(function(){ button.textContent = "Copy email brief"; }, 1800); }
+    function fallback(){
+      var area = document.createElement("textarea");
+      area.value = text; area.setAttribute("readonly", ""); area.style.position = "fixed"; area.style.opacity = "0";
+      document.body.appendChild(area); area.select();
+      try { document.execCommand("copy"); } catch(e) {}
+      area.remove(); done();
+    }
+    if (navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(text).then(done, fallback); }
+    else fallback();
+  });
+  $("downloadFinalBrief").addEventListener("click", function(){
+    var url = URL.createObjectURL(new Blob([finalBriefText()], { type:"text/plain;charset=utf-8" }));
+    var link = document.createElement("a");
+    link.href = url; link.download = "form-and-frame-final-project-brief.txt";
+    document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 0);
   });
   bSend.addEventListener("click", function(){
     var msg = $("cMsg");
     msg.value = specSentence(S);
     document.getElementById("request").scrollIntoView({ behavior: "smooth", block: "start" });
-    bSend.textContent = "Added to message ✓";
+    bSend.textContent = "Brief added ✓";
     setTimeout(function(){ bSend.textContent = "Send with survey"; }, 1600);
     var coarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
     if (!coarse) setTimeout(function(){ msg.focus(); }, 500);
@@ -2084,6 +2344,154 @@
     } catch(e){}
   })();
 
+  /* ---------- mobile navigation ---------- */
+  (function(){
+    var nav = document.querySelector(".nav"), toggle = $("navToggle"), links = $("primaryNav");
+    if (!nav || !toggle || !links) return;
+    function closeNav(){ nav.classList.remove("open"); toggle.setAttribute("aria-expanded", "false"); toggle.setAttribute("aria-label", "Open navigation"); toggle.textContent = "☰"; }
+    toggle.addEventListener("click", function(){
+      var open = nav.classList.toggle("open");
+      toggle.setAttribute("aria-expanded", String(open));
+      toggle.setAttribute("aria-label", open ? "Close navigation" : "Open navigation");
+      toggle.textContent = open ? "×" : "☰";
+    });
+    links.addEventListener("click", function(e){ if (e.target.closest("a")) closeNav(); });
+  })();
+
+  /* ---------- proposal project assistant ---------- */
+  (function(){
+    var launch = $("chatLaunch"), panel = $("chatPanel"), close = $("chatClose"), log = $("chatLog"), form = $("chatForm"), input = $("chatInput"), suggestions = $("chatSuggestions");
+    if (!launch || !panel || !close || !log || !form || !input) return;
+    function setOpen(open){ panel.classList.toggle("open", open); panel.setAttribute("aria-hidden", String(!open)); launch.setAttribute("aria-expanded", String(open)); if (open) setTimeout(function(){ input.focus(); }, 40); }
+    function add(text, role){ var el = document.createElement("div"); el.className = "chat-msg" + (role === "user" ? " user" : ""); el.textContent = text; log.appendChild(el); log.scrollTop = log.scrollHeight; }
+    function setSuggestions(items){
+      suggestions.innerHTML = items.map(function(item){ return '<button type="button" data-action="' + item[0] + '">' + item[1] + '</button>'; }).join("");
+    }
+    function nextSuggestions(){
+      var choices = [["review","Review live drawing"]];
+      if (S.left !== "cabinets" || S.right !== "cabinets") choices.push(["storage","Add closed storage"]);
+      if (S.left !== "shelves" || S.right !== "shelves") choices.push(["open","Add open shelving"]);
+      choices.push([S.shelf ? "removeShelf" : "shelf", S.shelf ? "Remove floating shelf" : "Add floating shelf"]);
+      choices.push([S.fireType === "none" ? "fire" : "noFire", S.fireType === "none" ? "Add linear fire" : "Remove fire"]);
+      choices.push([S.bridge ? "removeBridge" : "bridge", S.bridge ? "Remove top cabinets" : "Add top cabinets"]);
+      choices.push([S.ledType === "none" || S.ledK !== "2700" ? "warmer" : "cooler", S.ledType === "none" || S.ledK !== "2700" ? "Make lighting warmer" : "Use neutral lighting"]);
+      choices.push([S.budgetMode ? "budgetOff" : "lower", S.budgetMode ? "Turn off budget target" : "Create a value-led version"]);
+      choices.push(["custom","Custom change…"], ["email","Send final project to my email"]);
+      return choices;
+    }
+    function configSummary(){
+      var G = geom(S), pr = priceRange(S), modules = MODNAME[S.left] + " left / " + MODNAME[S.right] + " right";
+      return "Your saved drawing: " + G.mm + " mm wall, " + S.tv + '\" TV, ' + modules + ", " + finOf(S).name.toLowerCase() + ", " + FIRENAME[S.fireType].toLowerCase() + ", " + LIGHTNAME[S.ledType].toLowerCase() + ". Guide: " + gbp(pr[0]) + "–" + gbp(pr[1]) + " + VAT.";
+    }
+    function applyAdjustment(action){
+      var old = priceRange(S), note = "";
+      if (action === "lower"){
+        change(function(){ S.budgetMode = true; S.budget = Math.max(2500, Math.round(old[0] / 250) * 250); autoFit(); });
+        note = "I’ve applied a value-led revision: the budget tool has been set to the lower edge of the current guide and the specification has been adjusted where possible.";
+      } else if (action === "storage"){
+        change(function(){ if (S.left !== "cabinets") S.left = "cabinets"; else if (S.right !== "cabinets") S.right = "cabinets"; else if (!S.bridge) S.bridge = true; else S.shelf = true; });
+        note = "I’ve added more concealed storage to the configuration.";
+      } else if (action === "warmer"){
+        change(function(){ if (S.ledType === "none") S.ledType = "perim"; S.ledK = "2700"; });
+        note = "I’ve set the lighting to a 2700K warm tone" + (S.ledType === "perim" ? " with a perimeter reveal" : "") + ".";
+      } else if (action === "open"){
+        change(function(){ if (S.left === "none" || S.left !== "shelves") S.left = "shelves"; else S.right = "shelves"; });
+        note = "I’ve added open shelving to make the composition feel lighter and more display-led.";
+      } else if (action === "shelf"){
+        change(function(){ S.shelf = true; });
+        note = "I’ve added a floating media shelf beneath the TV.";
+      } else if (action === "removeShelf"){
+        change(function(){ S.shelf = false; });
+        note = "I’ve removed the floating media shelf.";
+      } else if (action === "fire"){
+        change(function(){ S.fireType = "lin1"; });
+        note = "I’ve added a 1.0 kW linear electric fire.";
+      } else if (action === "noFire"){
+        change(function(){ S.fireType = "none"; });
+        note = "I’ve removed the fire for a cleaner, lower-cost composition.";
+      } else if (action === "bridge"){
+        change(function(){ S.bridge = true; });
+        note = "I’ve added top bridging cabinets for a more architectural, full-height wall.";
+      } else if (action === "removeBridge"){
+        change(function(){ S.bridge = false; });
+        note = "I’ve removed the top bridging cabinets for a more open composition.";
+      } else if (action === "cooler"){
+        change(function(){ if (S.ledType === "none") S.ledType = "perim"; S.ledK = "3000"; });
+        note = "I’ve changed the lighting to a cleaner 3000K neutral tone.";
+      } else if (action === "budgetOff"){
+        change(function(){ S.budgetMode = false; });
+        note = "I’ve removed the budget target so every design option is available again.";
+      } else if (action === "tv75"){
+        change(function(){ S.tv = "75"; });
+        note = "I’ve resized the TV recess for a 75-inch screen.";
+      } else if (action === "walnut"){
+        change(function(){ S.finish = "walnut"; });
+        note = "I’ve changed the finish to walnut for a darker, richer look.";
+      } else if (action === "oak"){
+        change(function(){ S.finish = "oak"; });
+        note = "I’ve changed the finish to European oak for a lighter, more timeless look.";
+      }
+      if (note){
+        var current = priceRange(S);
+        setLiveUpdate(note + " New guide " + gbp(current[0]) + "–" + gbp(current[1]) + " + VAT.");
+        document.getElementById("specify").scrollIntoView({ behavior:"smooth", block:"start" });
+        add(note + " " + configSummary() + " The live drawing and guide price have updated above.", "assistant");
+        setSuggestions(nextSuggestions());
+      }
+    }
+    function reply(text){
+      var q = text.toLowerCase();
+      if (/email|send final|send project/.test(q)){
+        openFinalProject();
+        return "Your final project brief is ready. Choose Open email app or download the text file from the share panel.";
+      }
+      if (/save|load|spec|config|drawing|current/.test(q)) return configSummary() + " I can make it leaner, warmer or add closed storage without leaving the conversation.";
+      if (/remove.*fire|no.*fire|without.*fire/.test(q)){ applyAdjustment("noFire"); return ""; }
+      if (/remove.*shelf|no.*shelf/.test(q)){ applyAdjustment("removeShelf"); return ""; }
+      if (/remove.*top|remove.*bridge|no.*top cabinet/.test(q)){ applyAdjustment("removeBridge"); return ""; }
+      if (/add.*fire|linear fire|electric fire/.test(q)){ applyAdjustment("fire"); return ""; }
+      if (/top cabinet|bridge/.test(q)){ applyAdjustment("bridge"); return ""; }
+      if (/floating shelf|media shelf|add shelf/.test(q)){ applyAdjustment("shelf"); return ""; }
+      if (/75/.test(q)){ applyAdjustment("tv75"); return ""; }
+      if (/walnut|darker/.test(q)){ applyAdjustment("walnut"); return ""; }
+      if (/oak|lighter/.test(q)){ applyAdjustment("oak"); return ""; }
+      if (/cheaper|lower|reduce|budget/.test(q)){ applyAdjustment("lower"); return ""; }
+      if (/neutral|cooler|3000k/.test(q)){ applyAdjustment("cooler"); return ""; }
+      if (/storage|cabinet|clutter|hide/.test(q)){ applyAdjustment("storage"); return ""; }
+      if (/warm|light|led/.test(q)){ applyAdjustment("warmer"); return ""; }
+      if (/shelf|books|display|open/.test(q)){ applyAdjustment("open"); return ""; }
+      if (/cost|price|much/.test(q)) return configSummary() + " If you want, I can create a value-led revision now.";
+      if (/fire|fireplace|chimney/.test(q)) return "Your current drawing has " + FIRENAME[S.fireType].toLowerCase() + ". The survey confirms power, clearances and the best route for the existing chimney or wall.";
+      if (/photo|room|image/.test(q)) return "Use Overlay on your room photo in the configurator. In this proposal it stays in this browser; a live build can upload it securely with the enquiry.";
+      return configSummary() + " Try a specific request such as ‘make the TV 75 inches’, ‘add a linear fire’, ‘use walnut’, ‘add top cabinets’ or ‘make it cheaper’.";
+    }
+    function ask(text){ text = text.trim(); if (!text) return; add(text, "user"); input.value = ""; window.setTimeout(function(){ var answer = reply(text); if (answer) add(answer, "assistant"); }, 180); }
+    launch.addEventListener("click", function(){ setOpen(!panel.classList.contains("open")); });
+    close.addEventListener("click", function(){ setOpen(false); launch.focus(); });
+    form.addEventListener("submit", function(e){ e.preventDefault(); ask(input.value); });
+    suggestions.addEventListener("click", function(e){
+      var button = e.target.closest("button"); if (!button) return;
+      var action = button.dataset.action;
+      if (action === "review"){ ask("Review my current configuration"); }
+      else if (action === "custom"){
+        add(button.textContent, "user");
+        add("Tell me the change in plain English. For example: ‘make the TV 75 inches’, ‘use walnut and add a fire’, or ‘add top cabinets’. I’ll apply changes I understand and update the drawing live.", "assistant");
+        input.placeholder = "Describe your custom change…";
+        input.focus();
+      } else if (action === "email"){
+        add(button.textContent, "user");
+        add("Your final live specification and guide price are ready to share.", "assistant");
+        openFinalProject();
+      } else if (["lower","budgetOff","storage","warmer","cooler","open","shelf","removeShelf","fire","noFire","bridge","removeBridge","tv75","walnut","oak"].indexOf(action) > -1){ add(button.textContent, "user"); applyAdjustment(action); }
+      else ask(button.textContent);
+    });
+    window.ffOpenAssistantWithSpec = function(){
+      setOpen(true);
+      add("Saved specification loaded. " + configSummary(), "assistant");
+      setSuggestions(nextSuggestions());
+    };
+  })();
+
   /* ---------- works plates ---------- */
   var PLATES = [
     { s:{ wall:"4200", ceil:"2700", left:"cabinets", right:"mixed", width:"balanced", finish:"walnut", front:"fluted", handle:"brass", tv:"65", fireType:"lin1", ledType:"perim", ledK:"2700", shelf:true, shelfMat:"oak", bridge:true, avcup:true },
@@ -2095,12 +2503,21 @@
     { s:{ wall:"4200", ceil:"2700", left:"none", right:"none", width:"balanced", finish:"microcement", front:"flat", handle:"push", tv:"65", fireType:"stove", ledType:"perim", ledK:"2700", shelf:false, shelfMat:"match", bridge:false, avcup:false },
       a:"Burnham · SL1", b:'4.2 m · microcement · inset stove · 2025' }
   ];
-  $("rWorks").innerHTML = PLATES.map(function(p){
-    var st = Object.assign({ rev:"C" }, p.s);
-    return '<article class="work"><div class="wd">'
-      + elevation(st, { dims:false, leaders:false, tb:false, mini:true })
-      + '</div><div class="wc"><b>' + esc(p.a) + '</b><span>' + esc(p.b) + '</span></div></article>';
-  }).join("");
+  /* Completed-work cards retain meaningful image content even if JavaScript is unavailable. */
+  Array.prototype.forEach.call(document.querySelectorAll(".case-split"), function(card){
+    var before = card.querySelector(".case-before"), line = card.querySelector(".case-line"), beforeLabel = card.querySelector(".case-label.before"), afterLabel = card.querySelector(".case-label.after"), draggingCase = false;
+    function labelOpacity(visiblePercent){ return Math.max(0, Math.min(1, visiblePercent / 22)); }
+    function reveal(e){
+      var r = card.getBoundingClientRect(), p = Math.max(0, Math.min(100, (e.clientX - r.left) / r.width * 100));
+      before.style.clipPath = "inset(0 0 0 " + p + "%)";
+      line.style.left = p + "%";
+      beforeLabel.style.opacity = labelOpacity(p);
+      afterLabel.style.opacity = labelOpacity(100 - p);
+    }
+    card.addEventListener("pointerdown", function(e){ draggingCase = true; card.setPointerCapture(e.pointerId); reveal(e); });
+    card.addEventListener("pointermove", function(e){ if (draggingCase) reveal(e); });
+    ["pointerup","pointercancel"].forEach(function(type){ card.addEventListener(type, function(){ draggingCase = false; }); });
+  });
 
   /* ---------- contact form ---------- */
   var form = $("form"), logged = $("logged");
