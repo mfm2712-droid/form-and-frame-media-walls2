@@ -224,6 +224,7 @@
   .cfg{display:grid;grid-template-columns:1fr;border:1px solid var(--frame);background:var(--paper-3);box-shadow:6px 6px 0 var(--shadow)}
   .cfg-actions{display:flex;gap:10px;flex-wrap:wrap}
   .cfg-tabs{display:none}
+  .cfg-more-btn,.cfg-more-menu{display:none}
   .cfg-controls{border-right:1px solid var(--frame);padding:6px 22px 22px}
   .ctl{padding:17px 0;border-top:1px solid var(--pencil-2)}
   .ctl:first-child{border-top:none}
@@ -551,7 +552,7 @@
   /* canvas — kept large and pinned under the nav while the controls scroll */
   #deck.is-mobileui .cfg-stage{order:1;position:sticky;top:var(--stage-top,52px);z-index:8;background:var(--paper-3);border:1px solid var(--frame);box-shadow:0 10px 18px -12px var(--shadow)}
   #deck.is-mobileui.is-preview .cfg-stage{top:0}
-  #deck.is-mobileui .cfg-draw{flex:none;min-height:0;height:min(35vh,260px);border:0}
+  #deck.is-mobileui .cfg-draw{flex:none;min-height:0;height:min(30vh,220px);border:0}
   #deck.is-mobileui .vp-ctl{gap:2px}
   #deck.is-mobileui .vp-ctl button{min-width:44px;height:44px;padding:0 8px;font-size:16px}
   #deck.is-mobileui .vp-ctl button[data-z="reset"]{font-size:11px;padding:0 14px}
@@ -560,13 +561,13 @@
   /* category tab bar — part of the pinned block */
   #deck.is-mobileui .cfg-tabs{display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;border-top:1px solid var(--frame);border-bottom:1px solid var(--frame);background:var(--paper-2);scrollbar-width:none}
   #deck.is-mobileui .cfg-tabs::-webkit-scrollbar{display:none}
-  #deck.is-mobileui .cfg-tabs button{flex:1 1 auto;min-width:max-content;min-height:50px;padding:0 14px;border:0;border-right:1px solid var(--pencil-2);background:transparent;color:var(--pencil);cursor:pointer;white-space:nowrap;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
+  #deck.is-mobileui .cfg-tabs button{flex:1 1 0;min-width:0;min-height:48px;padding:0 6px;border:0;border-right:1px solid var(--pencil-2);background:transparent;color:var(--pencil);cursor:pointer;white-space:nowrap;font:600 10px/1 "IBM Plex Mono",monospace;letter-spacing:.03em;text-transform:uppercase}
   #deck.is-mobileui .cfg-tabs button:last-child{border-right:0}
   #deck.is-mobileui .cfg-tabs button[aria-selected="true"]{background:var(--ink);color:var(--paper-3)}
 
   /* controls — one category at a time, roomy touch targets.
      Bottom padding clears the fixed action bar so every card can scroll into view. */
-  #deck.is-mobileui .cfg-controls{order:2;border:0;position:static;max-height:none;overflow:visible;padding:16px 16px calc(240px + env(safe-area-inset-bottom))}
+  #deck.is-mobileui .cfg-controls{order:2;border:0;position:static;max-height:none;overflow:visible;padding:16px 16px calc(96px + env(safe-area-inset-bottom))}
   #deck.is-mobileui .cfg-controls > .ctl{display:none}
   #deck.is-mobileui .cfg-controls[data-tab="budget"]    > .ctl[data-grp="budget"],
   #deck.is-mobileui .cfg-controls[data-tab="layout"]    > .ctl[data-grp="layout"],
@@ -604,28 +605,38 @@
   #deck.is-mobileui .file::file-selector-button{padding:12px 14px;font-size:11px}
   #deck.is-mobileui .linkbtn{font-size:11px;padding:6px 0;min-height:32px}
 
-  /* sticky action bar — price + reset + primary CTA, one-thumb reach */
-  #deck.is-mobileui .cfg-price{order:3;position:fixed;left:0;right:0;bottom:0;z-index:9;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:9px 14px calc(9px + env(safe-area-inset-bottom));border-top:1px solid var(--frame);box-shadow:0 -10px 24px -12px rgba(0,0,0,.55)}
+  /* compact action bar — guide price + overflow menu + one primary CTA (~60px) */
+  #deck.is-mobileui .cfg-price{order:3;position:fixed;left:0;right:0;bottom:0;z-index:9;display:flex;flex-wrap:nowrap;align-items:center;gap:10px;padding:8px 12px calc(8px + env(safe-area-inset-bottom));border-top:1px solid var(--frame);box-shadow:0 -10px 24px -12px rgba(0,0,0,.55)}
   /* in the desktop "Mobile" preview the bar sticks within the phone frame, not the whole window */
   #deck.is-mobileui.is-preview .cfg-price{position:sticky;left:auto;right:auto}
   #deck.is-mobileui.is-preview .cfg-controls{padding-bottom:24px}
-  #deck.is-mobileui.is-preview .chat-launch,#deck.is-mobileui.is-preview .chat-panel{bottom:20px}
-  #deck.is-mobileui .cfg-price > div:first-child{order:0;flex:1 1 auto;display:flex;align-items:baseline;gap:10px}
-  #deck.is-mobileui .cfg-price .plabel{font-size:9.5px;opacity:.8}
-  #deck.is-mobileui .cfg-price .money{font-size:19px}
-  #deck.is-mobileui .cfg-price .sub{display:none}
-  #deck.is-mobileui .cfg-actions{order:2;flex:1 1 100%;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0}
-  #deck.is-mobileui .cfg-actions .btn{min-height:48px;justify-content:center;font-size:10.5px;line-height:1.15;letter-spacing:.05em;padding:0 8px}
-  #deck.is-mobileui .cfg-actions #bSend{order:1}
-  #deck.is-mobileui .cfg-actions #bReset{order:2}
-  #deck.is-mobileui .cfg-actions #bSave{order:3;grid-column:1 / -1}
-  #deck.is-mobileui .cfg-live{flex-basis:100%;order:3;padding-top:0;font-size:10.5px}
+  #deck.is-mobileui.is-preview .chat-panel{bottom:20px}
 
-  /* assistant launcher, docked in the action bar (moved by JS) — never floats over a card */
-  #deck.is-mobileui .cfg-price > .chat-launch{order:1;position:static;flex:0 0 auto;align-self:center;width:44px;height:44px;min-height:44px;padding:0;justify-content:center;border:1px solid var(--paper-3);background:transparent;color:var(--paper-3);box-shadow:none;letter-spacing:0}
-  #deck.is-mobileui .cfg-price > .chat-launch:hover{background:var(--paper-3);color:var(--frame)}
-  #deck.is-mobileui .cfg-price > .chat-launch span{display:none}
-  #deck.is-mobileui .chat-panel{bottom:calc(180px + env(safe-area-inset-bottom))}
+  #deck.is-mobileui .cfg-price > div:first-child{order:0;flex:1 1 auto;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:1px}
+  #deck.is-mobileui .cfg-price .plabel{font-size:8.5px;letter-spacing:.11em;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  #deck.is-mobileui .cfg-price .money{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  #deck.is-mobileui .cfg-price .sub,
+  #deck.is-mobileui .cfg-price .cfg-live{display:none}
+
+  /* overflow trigger */
+  #deck.is-mobileui .cfg-more-btn{order:1;display:flex;align-items:center;justify-content:center;flex:0 0 auto;width:44px;height:44px;padding:0;border:1px solid var(--paper-3);background:transparent;color:var(--paper-3);font-size:20px;line-height:1;cursor:pointer;letter-spacing:0}
+  #deck.is-mobileui .cfg-more-btn:hover{background:var(--paper-3);color:var(--frame)}
+
+  /* primary CTA — the only always-visible button */
+  #deck.is-mobileui .cfg-actions{order:2;flex:0 0 auto;display:block;margin:0}
+  #deck.is-mobileui .cfg-actions #bSave{display:inline-flex;align-items:center;justify-content:center;min-height:44px;font-size:11px;letter-spacing:.05em;padding:0 16px;white-space:nowrap}
+  #deck.is-mobileui .cfg-actions #bSend,
+  #deck.is-mobileui .cfg-actions #bReset{display:none}
+
+  /* overflow menu — popover anchored above the fixed bar (populated by JS) */
+  #deck.is-mobileui .cfg-more-menu{display:block;position:absolute;right:12px;bottom:calc(100% + 8px);min-width:230px;background:var(--paper-3);border:1px solid var(--frame);box-shadow:0 14px 30px -10px rgba(0,0,0,.5);padding:4px;z-index:11}
+  #deck.is-mobileui .cfg-more-menu[hidden]{display:none}
+  #deck.is-mobileui .cfg-more-menu > *{display:flex !important;width:100%;min-height:48px;align-items:center;justify-content:flex-start;gap:10px;padding:0 14px;border:0;border-radius:0;background:transparent;color:var(--frame);font:600 11.5px/1.2 "IBM Plex Mono",monospace;letter-spacing:.04em;text-transform:uppercase;text-align:left;box-shadow:none;cursor:pointer;position:static;width:100%;height:auto}
+  #deck.is-mobileui .cfg-more-menu > * + *{border-top:1px solid var(--pencil-2)}
+  #deck.is-mobileui .cfg-more-menu > *:hover{background:var(--paper-2)}
+  #deck.is-mobileui .cfg-more-menu .chat-launch i{font-style:normal;font-size:15px}
+  #deck.is-mobileui .cfg-more-menu .chat-launch span{display:inline;font-size:11.5px}
+  #deck.is-mobileui .chat-panel{bottom:calc(150px + env(safe-area-inset-bottom))}
 
   #deck.is-mobileui .cfg-summary{margin-top:16px;padding:0 16px;font-size:12.5px}
   #deck.is-mobileui .schedule{margin:20px 16px 0}
@@ -988,6 +999,8 @@
             <button class="btn" type="button" id="bSend">Send with survey</button>
             <button class="btn ghost" type="button" id="bReset">Reset parameters</button>
           </div>
+          <button class="cfg-more-btn" type="button" id="cfgMoreBtn" aria-haspopup="true" aria-expanded="false" aria-label="More actions">&#8943;</button>
+          <div class="cfg-more-menu" id="cfgMoreMenu" role="menu" hidden></div>
           <div class="cfg-live" id="cfgLive" aria-live="polite"><i></i><span><b>LIVE UPDATE</b> <span id="cfgLiveText"></span></span></div>
         </div>
       </div>
@@ -2441,17 +2454,22 @@
   /* ---------- desktop / mobile preview switch ---------- */
   (function(){
     var deck = $("deck"), seg = $("viewSeg");
+    /* the phone-frame "Mobile" preview is a desktop-only aid — on an actual small
+       screen it must never engage (it would clamp .sheet to 404px + overflow:hidden
+       and break the real mobile layout) */
+    var narrow = window.matchMedia("(max-width: 760px)");
     function setView(v){
-      v = (v === "mobile") ? "mobile" : "desktop";
+      v = (v === "mobile" && !narrow.matches) ? "mobile" : "desktop";
       deck.setAttribute("data-view", v);
-      Array.prototype.forEach.call(seg.children, function(b){ b.setAttribute("aria-pressed", String(b.dataset.view === v)); });
+      if (seg) Array.prototype.forEach.call(seg.children, function(b){ b.setAttribute("aria-pressed", String(b.dataset.view === v)); });
       try { localStorage.setItem("ff_view", v); } catch(e){}
       setTimeout(function(){
         try { cfgViewer.fit(); } catch(e){}
         try { heroViewer.fit(); } catch(e){}
       }, 80);
     }
-    seg.addEventListener("click", function(e){
+    if (narrow.addEventListener) narrow.addEventListener("change", function(){ if (narrow.matches && deck.getAttribute("data-view") === "mobile") setView("desktop"); });
+    if (seg) seg.addEventListener("click", function(e){
       var b = e.target.closest("button[data-view]"); if (!b) return;
       setView(b.dataset.view);
       window.scrollTo({ top: 0, behavior: "auto" });
@@ -2514,15 +2532,50 @@
       deck.style.setProperty("--stage-top", (pinned ? Math.round(nav.getBoundingClientRect().height) : 0) + "px");
     }
 
-    /* on mobile the "?" assistant launcher moves into the fixed action bar so it
-       can never float over a configuration card; on desktop it returns home */
-    var chatLaunch = document.getElementById("chatLaunch");
-    var clHome = chatLaunch ? { parent: chatLaunch.parentNode, next: chatLaunch.nextSibling } : null;
-    function placeChatLaunch(inBar){
-      if (!chatLaunch || !clHome) return;
-      var bar = document.querySelector(".cfg-price");
-      if (inBar && bar){ if (chatLaunch.parentNode !== bar) bar.appendChild(chatLaunch); }
-      else if (chatLaunch.parentNode !== clHome.parent){ clHome.parent.insertBefore(chatLaunch, clHome.next); }
+    /* on mobile, secondary actions (Send, Reset) and the "?" assistant launcher
+       collapse into the action bar's overflow menu; on desktop they return home */
+    var actions = document.querySelector(".cfg-actions");
+    var moreBtn = document.getElementById("cfgMoreBtn");
+    var moreMenu = document.getElementById("cfgMoreMenu");
+    var overflowItems = [];
+    function trackItem(el, parent){
+      if (el) overflowItems.push({ el: el, parent: parent || el.parentNode, next: el.nextSibling });
+    }
+    trackItem(document.getElementById("bSend"), actions);
+    trackItem(document.getElementById("bReset"), actions);
+    trackItem(document.getElementById("chatLaunch"));
+
+    function closeMore(){ if (moreMenu){ moreMenu.hidden = true; if (moreBtn) moreBtn.setAttribute("aria-expanded", "false"); } }
+    function openMore(){ if (moreMenu){ moreMenu.hidden = false; if (moreBtn) moreBtn.setAttribute("aria-expanded", "true"); } }
+    if (moreBtn && moreMenu){
+      moreBtn.addEventListener("click", function(e){
+        e.stopPropagation();
+        if (moreMenu.hidden) openMore(); else closeMore();
+      });
+      moreMenu.addEventListener("click", function(e){ if (e.target.closest("button")) closeMore(); });
+      document.addEventListener("click", function(e){
+        if (moreMenu.hidden) return;
+        if (!moreMenu.contains(e.target) && e.target !== moreBtn) closeMore();
+      });
+      document.addEventListener("keydown", function(e){
+        if (e.key === "Escape" && !moreMenu.hidden){ closeMore(); moreBtn.focus(); }
+      });
+    }
+
+    function placeChatLaunch(inMenu){
+      if (inMenu && moreMenu){
+        overflowItems.forEach(function(h){
+          if (h.el.parentNode !== moreMenu){ h.el.setAttribute("role", "menuitem"); moreMenu.appendChild(h.el); }
+        });
+      } else {
+        overflowItems.forEach(function(h){
+          h.el.removeAttribute("role");
+          if (h.parent && h.el.parentNode !== h.parent){
+            h.parent.insertBefore(h.el, (h.next && h.next.parentNode === h.parent) ? h.next : null);
+          }
+        });
+        closeMore();
+      }
     }
 
     /* switch the mobile-editor layout on for real small screens and the Mobile preview */
