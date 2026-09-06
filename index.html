@@ -135,6 +135,7 @@
   .navlinks{display:flex;gap:26px;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.16em}
   .navlinks a{color:var(--pencil);transition:color .12s}
   .navlinks a:hover{color:var(--frame)}
+  .nav-actions{display:flex;align-items:center;gap:14px}.staff-access{font:600 10px/1 "IBM Plex Mono",monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--pencil);white-space:nowrap}.staff-access:hover{color:var(--frame)}
   .nav-toggle{display:none;width:42px;height:40px;padding:0;border:1px solid var(--frame);background:transparent;cursor:pointer;font:600 17px/1 "IBM Plex Mono",monospace}
   .btn{
     display:inline-flex;align-items:center;justify-content:center;gap:.5em;
@@ -447,7 +448,7 @@
     .steps{grid-template-columns:1fr 1fr}
     .works{grid-template-columns:1fr}
     .navlinks{display:none}
-    .nav-toggle{display:block;margin-left:auto}
+    .nav-toggle{display:block;margin-left:auto}.nav-actions{gap:10px}
     .nav.open{flex-wrap:wrap}.nav.open .navlinks{order:4;display:flex;flex-basis:100%;padding-top:14px;border-top:1px solid var(--pencil-2);gap:14px;overflow-x:auto}.nav.open .navlinks a{white-space:nowrap}
     .testimonials{grid-template-columns:1fr 1fr}
   }
@@ -556,7 +557,7 @@
       <a href="#specify">SPECIFY</a>
       <a href="#works">WORKS</a>
     </div>
-    <a class="btn" href="#request">Book a survey</a>
+    <div class="nav-actions"><a class="staff-access" href="./operations/" aria-label="Open staff access">Staff access</a><a class="btn" href="#request">Book a survey</a></div>
   </nav>
 
   <div class="titlestrip">
