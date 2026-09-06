@@ -2101,10 +2101,13 @@
       + '<div class="proforma-notes">Includes the listed bespoke joinery, workshop manufacture and installation labour. Excludes customer-supplied TV, unforeseen electrical or building works, structural alterations and remedial plastering unless confirmed at survey. Final materials, lead time and payment stages are agreed in the signed quotation.</div></div>'
       + '<footer class="proforma-foot"><span>FORM &amp; FRAME LTD</span><span>DRAWN TO FIT YOUR ROOM</span><span>Slough · Berkshire</span></footer></article>';
   }
+  var finalProjectOpener = null;
   function openFinalProject(){
     var brief = finalBriefText(), subject = "My final Form & Frame media wall project";
+    finalProjectOpener = document.activeElement;
     $("finalProjectSpec").innerHTML = finalProformaHtml();
     $("finalEmailLink").href = "mailto:?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent("Hello Form & Frame,\n\nPlease find my final media wall brief below:\n\n" + brief + "\nPlease get in touch to arrange a survey.");
+    $("finalEmailLink").textContent = "Open email app with this brief";
     $("finalProjectSheet").classList.add("open");
     $("finalProjectSheet").setAttribute("aria-hidden", "false");
     $("finalEmailLink").focus();
@@ -2112,6 +2115,7 @@
   function closeFinalProject(){
     $("finalProjectSheet").classList.remove("open");
     $("finalProjectSheet").setAttribute("aria-hidden", "true");
+    if (finalProjectOpener && finalProjectOpener.focus){ finalProjectOpener.focus(); finalProjectOpener = null; }
   }
   bSave.addEventListener("click", function(){
     try { localStorage.setItem("ff_spec", JSON.stringify(S)); } catch(e){}
@@ -2129,6 +2133,11 @@
   $("specShare").addEventListener("click", function(e){ if (e.target === this) closeSpecShare(); });
   $("finalProjectClose").addEventListener("click", closeFinalProject);
   $("finalProjectSheet").addEventListener("click", function(e){ if (e.target === this) closeFinalProject(); });
+  document.addEventListener("keydown", function(e){
+    if (e.key !== "Escape") return;
+    if ($("finalProjectSheet").classList.contains("open")) closeFinalProject();
+    else if ($("specShare").classList.contains("open")) closeSpecShare();
+  });
   $("finalEmailLink").addEventListener("click", function(){
     var link = this;
     setTimeout(function(){ link.textContent = "Email app requested — copy brief if it did not open"; }, 0);
@@ -2360,6 +2369,8 @@
       toggle.textContent = open ? "×" : "☰";
     });
     links.addEventListener("click", function(e){ if (e.target.closest("a")) closeNav(); });
+    document.addEventListener("keydown", function(e){ if (e.key === "Escape" && nav.classList.contains("open")){ closeNav(); toggle.focus(); } });
+    document.addEventListener("click", function(e){ if (nav.classList.contains("open") && !nav.contains(e.target)) closeNav(); });
   })();
 
   /* ---------- proposal project assistant ---------- */
@@ -2472,6 +2483,9 @@
     function ask(text){ text = text.trim(); if (!text) return; add(text, "user"); input.value = ""; window.setTimeout(function(){ var answer = reply(text); if (answer) add(answer, "assistant"); }, 180); }
     launch.addEventListener("click", function(){ setOpen(!panel.classList.contains("open")); });
     close.addEventListener("click", function(){ setOpen(false); launch.focus(); });
+    document.addEventListener("keydown", function(e){
+      if (e.key === "Escape" && panel.classList.contains("open")){ setOpen(false); launch.focus(); }
+    });
     form.addEventListener("submit", function(e){ e.preventDefault(); ask(input.value); });
     suggestions.addEventListener("click", function(e){
       var button = e.target.closest("button"); if (!button) return;
