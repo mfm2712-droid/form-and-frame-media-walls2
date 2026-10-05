@@ -252,6 +252,7 @@
   .chip:hover:not(:disabled){border-color:var(--frame)}
   .chip:active:not(:disabled){background:var(--paper-2)}
   .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper-3);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:2px}
   .chip:disabled{opacity:.32;cursor:not-allowed}
   .chip-p{font:500 9px/1 "IBM Plex Mono",monospace;opacity:.78;letter-spacing:0;font-variant-numeric:tabular-nums}
   .chip[aria-pressed="true"] .chip-p{opacity:.9}
@@ -392,6 +393,11 @@
   .coverage b{color:var(--frame);font-weight:600}
   .form{border:1px solid var(--frame);background:var(--paper-3);padding:24px;box-shadow:6px 6px 0 var(--shadow)}
   .form .row{margin-bottom:16px}
+  .form .visit-window{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .form .visit-window label{margin:0 0 6px}
+  .form .visit-window input{min-width:0}
+  .form .hint{display:block;margin-top:7px;color:var(--pencil);font-size:12px;line-height:1.5}
+  .form-trap{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;left:-10000px}
   .form label{display:block;font:600 10px/1.4 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--pencil);margin-bottom:7px}
   .form input,.form select,.form textarea{
     width:100%;padding:11px;border:1px solid var(--pencil-2);background:var(--paper);color:var(--frame);
@@ -402,6 +408,8 @@
   .form .row.invalid .err{display:block}
   .form .row.invalid input,.form .row.invalid select,.form .row.invalid textarea{border-color:var(--bad)}
   .form .btn{width:100%;justify-content:center;padding:14px}
+  .form-status{min-height:1.5em;margin:0 0 10px;font:500 12px/1.5 "IBM Plex Mono",monospace;color:var(--bad)}
+  .form .btn:disabled{opacity:.65;cursor:wait}
   .logged{display:none;border:1px solid var(--ink);background:var(--paper-2);padding:22px}
   .logged h3{font-size:18px;color:var(--ink-2)}
   .logged .ref{font:600 12px "IBM Plex Mono",monospace;letter-spacing:.1em;margin:10px 0 14px;color:var(--frame)}
@@ -695,7 +703,7 @@
         </div>
         <div class="hero-facts">
           <span><b>1:20</b>drawing scale, signed off before build</span>
-          <span><b>2 days</b>typical on-site install</span>
+          <span><b>5–7 days</b>typical project completion</span>
           <span><b>SL0–SL9</b>plus Windsor &amp; Maidenhead</span>
         </div>
       </div>
@@ -749,7 +757,7 @@
           <div class="ctl budgetctl">
             <label class="tog"><span><b>Do your own budget</b> — design down to a figure</span><input type="checkbox" id="fBudgetMode"></label>
             <div class="budgetbox" id="budgetBox" hidden>
-              <div class="lbl"><span>Your budget · ex VAT</span><b id="rBudget">£7,500</b></div>
+              <div class="lbl"><span>Your budget</span><b id="rBudget">£7,500</b></div>
               <input type="range" class="range" id="fBudget" min="2500" max="20000" step="250" value="7500"
                      aria-label="Your budget in pounds">
               <div class="budgetrow">
@@ -990,8 +998,8 @@
         </div>
         <div class="cfg-price">
           <div>
-            <div class="plabel">Guide price · ex VAT</div>
-            <div class="money" id="rPrice">£6,950–£8,300</div>
+            <div class="plabel">Indicative guide range</div>
+            <div class="money" id="rPrice">£5,560–£6,640</div>
           </div>
           <div class="sub" id="rPriceSub">Guide only. A fixed quote follows the on-site survey.</div>
           <div class="cfg-actions">
@@ -1028,7 +1036,7 @@
         <div class="step"><div class="n">01</div><h3>Survey</h3><p>Laser measure, check the wall for square, mark power, aerial and any pipework to move.</p></div>
         <div class="step"><div class="n">02</div><h3>Drawing</h3><p>A scaled elevation with the full spec. You sign it off before anything is ordered.</p></div>
         <div class="step"><div class="n">03</div><h3>Workshop</h3><p>Carcasses and veneered faces built off-site in Slough, dry-assembled and checked.</p></div>
-        <div class="step"><div class="n">04</div><h3>Install</h3><p>Two days on site. Dust sheets, tidy cuts, cable runs brushed and hidden.</p></div>
+        <div class="step"><div class="n">04</div><h3>Install</h3><p>A typical media wall takes around 5–7 days to complete once work begins on site. Timing depends on the design, materials and site conditions.</p></div>
         <div class="step"><div class="n">05</div><h3>Handover</h3><p>Snag the doors, level the shelves, pair the fire remote, walk you through it.</p></div>
       </div>
     </div>
@@ -1111,13 +1119,24 @@
             <textarea id="cMsg" name="message" placeholder="Books and a couple of closed cupboards for the console clutter..."></textarea>
             <div class="err">A line or two is plenty.</div>
           </div>
-          <button class="btn" type="submit">Request a survey</button>
+          <div class="row" id="preferredWindowRow">
+            <label>Preferred visit window · optional</label>
+            <div class="visit-window">
+              <div><label for="cPreferredStart">From</label><input id="cPreferredStart" name="preferred_start" type="datetime-local" step="900"></div>
+              <div><label for="cPreferredEnd">Until</label><input id="cPreferredEnd" name="preferred_end" type="datetime-local" step="900"></div>
+            </div>
+            <small class="hint">A request only. We’ll confirm availability before adding a visit to the calendar.</small>
+            <div class="err">Choose both times, and make sure “Until” is later than “From”.</div>
+          </div>
+          <div class="form-trap" aria-hidden="true"><label for="cWebsite">Leave this field empty</label><input id="cWebsite" name="company_website" type="text" tabindex="-1" autocomplete="off"></div>
+          <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
+          <button class="btn" id="formSubmit" type="submit">Request a survey</button>
         </form>
 
         <div class="logged" id="logged">
-          <h3>Prototype request saved.</h3>
+          <h3>Thanks. We’ve received your enquiry.</h3>
           <div class="ref" id="loggedRef">REF FF-000000-00</div>
-          <p>This proposal stores your request in this browser only. Connect the live form to email or a CRM before launch.</p>
+          <p>Our team will review your project and confirm the next step. A preferred visit window is a request, not a confirmed appointment.</p>
           <div class="spec" id="loggedSpec"></div>
         </div>
       </div>
@@ -1147,7 +1166,7 @@
 
   <div class="share-sheet" id="finalProjectSheet" role="dialog" aria-modal="true" aria-labelledby="finalProjectTitle" aria-hidden="true">
     <div class="share-card">
-      <div class="eyebrow">Final project brief</div>
+      <div class="eyebrow">Design &amp; enquiry summary</div>
       <h3 id="finalProjectTitle">Your project is ready to share.</h3>
       <p>Open an email draft with the final specification, or download a copy to attach manually.</p>
       <div class="final-spec" id="finalProjectSpec"></div>
@@ -1170,6 +1189,7 @@
   </div>
 </div>
 
+<script src="/public-config.js"></script>
 <script>
 (function(){
   "use strict";
@@ -1636,6 +1656,7 @@
   var TEX_ADD    = { smooth:0, grain:120, cross:160, ribbed:420, linen:280, stone:680, board:520 };
   var GLASS_ADD  = { clear:0, lowiron:180, bronze:220, smoke:220, reeded:360, fluted:400, satin:280, mirror:520, antique:660 };
   var SHELF_ADD  = { match:240, oak:360, metal:420 };
+  var GUIDE_PRICE_FACTOR = 0.8; // Reposition all guide prices approximately 20% lower.
 
   function schedule(S){
     var G = geom(S), rows = [];
@@ -1691,7 +1712,7 @@
       + (S.shelf ? SHELF_ADD[S.shelfMat] : 0)
       + (S.bridge ? 900 + G.mm/1000*140 : 0)
       + (S.avcup ? 260 : 0);
-    sub = Math.max(1800, sub);
+    sub = Math.max(1800, sub) * GUIDE_PRICE_FACTOR;
     return [Math.round(sub*0.94/50)*50, Math.round(sub*1.12/50)*50];
   }
   function priceMid(S){ var p = priceRange(S); return (p[0] + p[1]) / 2; }
@@ -1712,7 +1733,7 @@
     if (S.shelf)  parts.push("floating media shelf");
     if (S.bridge) parts.push("bridging cabinets");
     if (S.avcup)  parts.push("concealed AV cupboard");
-    return "Media wall — " + parts.join("; ") + ". Guide " + gbp(pr[0]) + "–" + gbp(pr[1]) + " + VAT (spec REV " + S.rev + ").";
+    return "Media wall — " + parts.join("; ") + ". Indicative guide range " + gbp(pr[0]) + "–" + gbp(pr[1]) + " (spec REV " + S.rev + "). Final price and tax treatment are confirmed in the written quotation after survey.";
   }
 
   /* ---------- state ---------- */
@@ -1929,7 +1950,7 @@
         : "Guide " + gbp(pr[0]) + "–" + gbp(pr[1]) + " · about " + gbp(mid - b) + " over. Try narrower modules, oak, or fewer extras.";
       $("rPriceSub").innerHTML = meter + '<span class="pm-txt">' + esc(txt) + "</span>";
     } else {
-      plabel.textContent = "Guide price · ex VAT";
+      plabel.textContent = "Indicative guide range";
       $("rPrice").textContent = gbp(pr[0]) + "–" + gbp(pr[1]);
       $("rPriceSub").textContent = "Revision " + S.rev + " · guide only. A fixed quote follows the on-site survey.";
     }
@@ -1963,9 +1984,10 @@
   function view(fn){ fn(); syncControls(); render(); }
 
   function onChips(id, key, after){
-    $(id).addEventListener("click", function(e){
+    var container = $(id);
+    container.addEventListener("click", function(e){
       var b = e.target.closest("button"); if (!b) return;
-      if ($(id).getAttribute("data-disabled") === "true") return;
+      if (container.getAttribute("data-disabled") === "true") return;
       change(function(){ S[key] = b.dataset.v; if (after) after(); });
     });
   }
@@ -2147,84 +2169,43 @@
     live.classList.add("show");
   }
   function finalBriefText(){
-    var G = geom(S), pr = priceRange(S), guide = priceMid(S), rows = schedule(S);
-    var round10 = function(v){ return Math.round(v / 10) * 10; };
-    var design = round10(guide * 0.05), structure = round10(guide * 0.12), joinery = round10(guide * 0.18);
-    var finishes = round10(guide * 0.12), av = round10(guide * 0.05);
-    var fire = FIRE_PRICE[S.fireType] || 0, lighting = LED_PRICE[S.ledType] || 0;
-    var labour = guide - design - structure - joinery - finishes - av - fire - lighting;
-    if (labour < 350){ labour = 350; finishes = guide - design - structure - joinery - av - fire - lighting - labour; }
-    var vat = round10(guide * 0.2), incVat = guide + vat;
+    var G = geom(S), pr = priceRange(S), rows = schedule(S);
     var scheduleText = rows.map(function(row){ return "• " + row[0] + " | " + row[1] + " | " + row[2]; }).join("\n");
-    var quoteLines = [
-      ["Survey, measured drawing & specification", "Site measure, scaled elevation, final sign-off set", design],
-      ["Wall preparation & carcass materials", "18 mm MR MDF carcasses, structural fixing and set-out", structure],
-      ["Bespoke joinery / side modules", MODNAME[S.left] + " left; " + MODNAME[S.right] + " right", joinery],
-      ["Faces, finish & ironmongery", finOf(S).name + "; " + FRONT[S.front] + "; " + HANDLE[S.handle], finishes],
-      ["TV recess & AV integration", S.tv + '\" recessed TV bay, ventilation, conduit and brush plates', av],
-      ["Electric fire feature", FIRENAME[S.fireType] + (S.fireType === "none" ? " (not selected)" : "; supply allowance"), fire],
-      ["Integrated lighting", LIGHTNAME[S.ledType] + (S.ledType === "none" ? " (not selected)" : "; " + (S.ledType === "accent" ? "RGB" : S.ledK + "K") + " dimmable"), lighting],
-      ["Workshop manufacture & installation labour", "Workshop build, delivery, two-person installation, alignment and handover", labour]
-    ];
-    var costText = quoteLines.map(function(line){ return "• " + line[0] + "\n  " + line[1] + "\n  Allowance: " + gbp(line[2]); }).join("\n");
-    return "FORM & FRAME — INDICATIVE TECHNICAL QUOTATION\n"
+    return "FORM & FRAME — DESIGN & ENQUIRY SUMMARY\n"
       + "Reference: FF-" + S.rev + "-" + new Date().toLocaleDateString("en-GB").replace(/\//g, "") + "\n"
-      + "Status: proposal only — fixed quotation follows measured survey and signed drawing.\n\n"
+      + "Status: online design summary and price guide only — not a quotation, invoice or booking.\n\n"
       + "PROJECT GEOMETRY\n"
       + "• Overall wall: " + G.mm + " mm wide × " + realCeil(S) + " mm ceiling height\n"
       + "• Centre TV bay: " + G.centreMM + " mm | Left module: " + G.lMM + " mm | Right module: " + G.rMM + " mm\n"
       + "• TV: " + S.tv + '\" recessed / vented | Fire: ' + FIRENAME[S.fireType] + " | Lighting: " + LIGHTNAME[S.ledType] + "\n"
       + "• Finish: " + finOf(S).name + "; " + TEXNAME[S.texture] + "; " + FRONT[S.front] + "; " + HANDLE[S.handle] + "\n\n"
       + "SCHEDULE OF WORKS & QUANTITIES\n" + scheduleText + "\n\n"
-      + "INDICATIVE COST ALLOCATION — EX VAT\n" + costText + "\n\n"
-      + "PRICING SUMMARY\n"
-      + "• Working guide total: " + gbp(guide) + " ex VAT\n"
-      + "• Guide range: " + gbp(pr[0]) + "–" + gbp(pr[1]) + " ex VAT\n"
-      + "• VAT at 20% on working guide: " + gbp(vat) + "\n"
-      + "• Working guide total incl. VAT: " + gbp(incVat) + "\n\n"
-      + "ASSUMPTIONS & EXCLUSIONS\n"
-      + "• Includes the listed joinery, workshop manufacture and installation labour.\n"
-      + "• Excludes customer-supplied TV, unforeseen electrical / building works, structural alterations and remedial plastering unless confirmed at survey.\n"
-      + "• Final dimensions, materials, lead time and staged payment terms are confirmed in the signed quotation.\n";
+      + "ONLINE GUIDE PRICE RANGE\n"
+      + "• Indicative range: " + gbp(pr[0]) + "–" + gbp(pr[1]) + "\n"
+      + "• Final price, scope, lead time, payment terms and tax treatment are confirmed in the written quotation after a measured survey.\n\n"
+      + "PROJECT NOTES\n"
+      + "• This configured design is an initial brief for discussion, not an agreed scope.\n"
+      + "• TV, electrical or building work, structural alterations and remedial plastering are confirmed at survey and itemised in the written quotation.\n";
   }
-  function finalProformaHtml(){
-    var G = geom(S), pr = priceRange(S), guide = priceMid(S), rows = schedule(S), name = $("cName").value.trim() || "there";
-    var round10 = function(v){ return Math.round(v / 10) * 10; };
-    var design = round10(guide * 0.05), structure = round10(guide * 0.12), joinery = round10(guide * 0.18);
-    var finishes = round10(guide * 0.12), av = round10(guide * 0.05), fire = FIRE_PRICE[S.fireType] || 0, lighting = LED_PRICE[S.ledType] || 0;
-    var labour = guide - design - structure - joinery - finishes - av - fire - lighting;
-    if (labour < 350){ labour = 350; finishes = guide - design - structure - joinery - av - fire - lighting - labour; }
-    var vat = round10(guide * 0.2), inclVat = guide + vat;
+  function finalDesignSummaryHtml(){
+    var G = geom(S), pr = priceRange(S), rows = schedule(S), name = $("cName").value.trim() || "there";
     var scheduleHtml = rows.map(function(row){ return "<tr><td>" + esc(row[0]) + "<small>" + esc(row[1]) + "</small></td><td>" + esc(row[2]) + "</td></tr>"; }).join("");
-    var costs = [
-      ["Survey, measured drawing & specification", "Site measure, scaled elevation and sign-off set", design],
-      ["Wall preparation & carcass materials", "18 mm MR MDF carcasses, structural fixing and set-out", structure],
-      ["Bespoke joinery / side modules", MODNAME[S.left] + " left; " + MODNAME[S.right] + " right", joinery],
-      ["Faces, finish & ironmongery", finOf(S).name + "; " + FRONT[S.front] + "; " + HANDLE[S.handle], finishes],
-      ["TV recess & AV integration", S.tv + '\" recessed bay, ventilation, conduit and brush plates', av],
-      ["Electric fire feature", FIRENAME[S.fireType] + (S.fireType === "none" ? " — not selected" : "; supply allowance"), fire],
-      ["Integrated lighting", LIGHTNAME[S.ledType] + (S.ledType === "none" ? " — not selected" : "; " + (S.ledType === "accent" ? "RGB" : S.ledK + "K") + " dimmable"), lighting],
-      ["Workshop manufacture & installation labour", "Workshop build, delivery, two-person installation, alignment and handover", labour]
-    ];
-    var costHtml = costs.map(function(row){ return "<tr><td>" + esc(row[0]) + "<small>" + esc(row[1]) + "</small></td><td>" + gbp(row[2]) + "</td></tr>"; }).join("");
-    var ref = "FF-" + S.rev + "-" + new Date().toLocaleDateString("en-GB").replace(/\//g, "");
     return '<article class="proforma">'
-      + '<header class="proforma-head"><div><div class="proforma-brand">FORM <b>&amp;</b> FRAME</div><div class="proforma-kicker">Bespoke media walls · Slough &amp; Berkshire</div></div><div class="proforma-stamp">INDICATIVE<br>PRO FORMA</div></header>'
-      + '<div class="proforma-body"><div class="proforma-greeting">Hello <b>' + esc(name) + '</b>,<br>Thank you for developing your media-wall brief with Form &amp; Frame. Below is your live, indicative pro forma based on the selected design. A measured survey confirms the final fixed quotation.</div>'
-      + '<div class="proforma-meta"><div><span>Reference</span><b>' + ref + '</b></div><div><span>Project</span><b>Media wall / REV ' + esc(S.rev) + '</b></div><div><span>Guide range</span><b>' + gbp(pr[0]) + '–' + gbp(pr[1]) + ' ex VAT</b></div></div>'
+      + '<header class="proforma-head"><div><div class="proforma-brand">FORM <b>&amp;</b> FRAME</div><div class="proforma-kicker">Bespoke media walls · Slough &amp; Berkshire</div></div><div class="proforma-stamp">DESIGN<br>SUMMARY</div></header>'
+      + '<div class="proforma-body"><div class="proforma-greeting">Hello <b>' + esc(name) + '</b>,<br>Here is the media-wall design you configured. This is an enquiry summary and online price guide, not a quotation, invoice or booking.</div>'
+      + '<div class="proforma-meta"><div><span>Design revision</span><b>REV ' + esc(S.rev) + '</b></div><div><span>Project</span><b>Media wall</b></div><div><span>Guide range</span><b>' + gbp(pr[0]) + '–' + gbp(pr[1]) + '</b></div></div>'
       + '<span class="proforma-sec">Design geometry</span><table class="proforma-table"><tbody><tr><td>Overall wall<small>' + G.mm + ' mm wide × ' + realCeil(S) + ' mm ceiling height</small></td><td>TV bay ' + G.centreMM + ' mm</td></tr><tr><td>Side modules<small>Left: ' + MODNAME[S.left] + ' · ' + G.lMM + ' mm | Right: ' + MODNAME[S.right] + ' · ' + G.rMM + ' mm</small></td><td>' + S.tv + '&quot; TV</td></tr><tr><td>Material palette<small>' + esc(finOf(S).name) + ' · ' + esc(TEXNAME[S.texture]) + ' · ' + esc(FRONT[S.front]) + ' · ' + esc(HANDLE[S.handle]) + '</small></td><td>' + esc(FIRENAME[S.fireType]) + '</td></tr></tbody></table>'
       + '<span class="proforma-sec">Schedule of works & quantities</span><table class="proforma-table"><thead><tr><th>Item / technical specification</th><th>Qty</th></tr></thead><tbody>' + scheduleHtml + '</tbody></table>'
-      + '<span class="proforma-sec">Cost breakdown — ex VAT</span><table class="proforma-table"><thead><tr><th>Scope / allowance</th><th>Total</th></tr></thead><tbody>' + costHtml + '</tbody></table>'
-      + '<div class="proforma-total"><div><span>Working guide ex VAT</span><b>' + gbp(guide) + '</b></div><div><span>VAT @ 20%</span><b>' + gbp(vat) + '</b></div><div class="grand"><span>Guide total inc VAT</span><b>' + gbp(inclVat) + '</b></div></div>'
-      + '<div class="proforma-notes">Includes the listed bespoke joinery, workshop manufacture and installation labour. Excludes customer-supplied TV, unforeseen electrical or building works, structural alterations and remedial plastering unless confirmed at survey. Final materials, lead time and payment stages are agreed in the signed quotation.</div></div>'
+      + '<span class="proforma-sec">Indicative online guide range</span><div class="proforma-notes"><b>' + gbp(pr[0]) + '–' + gbp(pr[1]) + '</b><br>This guide is based on your selected design and is not a final price. The written quotation after a measured survey confirms scope, price, lead time, payment terms and any applicable tax treatment.</div>'
+      + '<div class="proforma-notes">The design and schedule are an initial brief for discussion. Site access, final dimensions, materials, customer-supplied equipment and any electrical, building or remedial work are assessed before a quotation is issued.</div></div>'
       + '<footer class="proforma-foot"><span>FORM &amp; FRAME LTD</span><span>DRAWN TO FIT YOUR ROOM</span><span>Slough · Berkshire</span></footer></article>';
   }
   var finalProjectOpener = null;
   function openFinalProject(){
-    var brief = finalBriefText(), subject = "My final Form & Frame media wall project";
+    var brief = finalBriefText(), subject = "My Form & Frame media wall design summary";
     finalProjectOpener = document.activeElement;
-    $("finalProjectSpec").innerHTML = finalProformaHtml();
-    $("finalEmailLink").href = "mailto:?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent("Hello Form & Frame,\n\nPlease find my final media wall brief below:\n\n" + brief + "\nPlease get in touch to arrange a survey.");
+    $("finalProjectSpec").innerHTML = finalDesignSummaryHtml();
+    $("finalEmailLink").href = "mailto:?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent("Hello Form & Frame,\n\nPlease find my media-wall design summary below:\n\n" + brief + "\nPlease get in touch to arrange a survey.");
     $("finalEmailLink").textContent = "Open email app with this brief";
     $("finalProjectSheet").classList.add("open");
     $("finalProjectSheet").setAttribute("aria-hidden", "false");
@@ -2346,7 +2327,8 @@
 
     host.addEventListener("wheel", function(e){
       e.preventDefault(); fadeHint();
-      zoomAt(e.deltaY < 0 ? 1.15 : 0.87, e.clientX, e.clientY);
+      var wheelDelta = Math.max(-180, Math.min(180, e.deltaY));
+      zoomAt(Math.exp(-wheelDelta * 0.0008), e.clientX, e.clientY);
     }, { passive:false });
 
     host.addEventListener("pointerdown", function(e){
@@ -2365,10 +2347,10 @@
       pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
       if (pointers.size === 2){
         var d = pdist();
-        if (lastDist){ var m = pmid(); zoomAt(d / lastDist, m.x, m.y); }
+        if (lastDist){ var m = pmid(); zoomAt(Math.pow(d / lastDist, 0.72), m.x, m.y); }
         lastDist = d;
       } else if (panning){
-        st.x += e.clientX - prev.x; st.y += e.clientY - prev.y; atFit = false; apply();
+        st.x += (e.clientX - prev.x) * 0.72; st.y += (e.clientY - prev.y) * 0.72; atFit = false; apply();
       }
     });
     function endPtr(e){
@@ -2632,12 +2614,12 @@
       choices.push([S.bridge ? "removeBridge" : "bridge", S.bridge ? "Remove top cabinets" : "Add top cabinets"]);
       choices.push([S.ledType === "none" || S.ledK !== "2700" ? "warmer" : "cooler", S.ledType === "none" || S.ledK !== "2700" ? "Make lighting warmer" : "Use neutral lighting"]);
       choices.push([S.budgetMode ? "budgetOff" : "lower", S.budgetMode ? "Turn off budget target" : "Create a value-led version"]);
-      choices.push(["custom","Custom change…"], ["email","Send final project to my email"]);
+      choices.push(["custom","Custom change…"], ["email","Email this design summary"]);
       return choices;
     }
     function configSummary(){
       var G = geom(S), pr = priceRange(S), modules = MODNAME[S.left] + " left / " + MODNAME[S.right] + " right";
-      return "Your saved drawing: " + G.mm + " mm wall, " + S.tv + '\" TV, ' + modules + ", " + finOf(S).name.toLowerCase() + ", " + FIRENAME[S.fireType].toLowerCase() + ", " + LIGHTNAME[S.ledType].toLowerCase() + ". Guide: " + gbp(pr[0]) + "–" + gbp(pr[1]) + " + VAT.";
+      return "Your saved drawing: " + G.mm + " mm wall, " + S.tv + '\" TV, ' + modules + ", " + finOf(S).name.toLowerCase() + ", " + FIRENAME[S.fireType].toLowerCase() + ", " + LIGHTNAME[S.ledType].toLowerCase() + ". Indicative guide range: " + gbp(pr[0]) + "–" + gbp(pr[1]) + ". Final price and tax treatment are confirmed in the written quotation after survey.";
     }
     function applyAdjustment(action){
       var old = priceRange(S), note = "";
@@ -2689,7 +2671,7 @@
       }
       if (note){
         var current = priceRange(S);
-        setLiveUpdate(note + " New guide " + gbp(current[0]) + "–" + gbp(current[1]) + " + VAT.");
+        setLiveUpdate(note + " New indicative guide range " + gbp(current[0]) + "–" + gbp(current[1]) + ".");
         document.getElementById("specify").scrollIntoView({ behavior:"smooth", block:"start" });
         add(note + " " + configSummary() + " The live drawing and guide price have updated above.", "assistant");
         setSuggestions(nextSuggestions());
@@ -2699,7 +2681,7 @@
       var q = text.toLowerCase();
       if (/email|send final|send project/.test(q)){
         openFinalProject();
-        return "Your final project brief is ready. Choose Open email app or download the text file from the share panel.";
+        return "Your design summary is ready. Choose Open email app or download the text file from the share panel.";
       }
       if (/save|load|spec|config|drawing|current/.test(q)) return configSummary() + " I can make it leaner, warmer or add closed storage without leaving the conversation.";
       if (/remove.*fire|no.*fire|without.*fire/.test(q)){ applyAdjustment("noFire"); return ""; }
@@ -2781,6 +2763,11 @@
   /* ---------- contact form ---------- */
   var form = $("form"), logged = $("logged");
   var required = ["cName","cContact","cPost","cWidth"];
+  var formControls = Array.prototype.slice.call(form.querySelectorAll("input,select,textarea,button"));
+  function setFormBusy(isBusy){
+    form.setAttribute("aria-busy", String(isBusy));
+    formControls.forEach(function(control){ control.disabled = isBusy; });
+  }
   form.addEventListener("submit", function(e){
     e.preventDefault();
     var firstBad = null;
@@ -2792,25 +2779,96 @@
       if (bad && !firstBad) firstBad = el;
     });
     if (firstBad){ firstBad.focus(); return; }
-    var d = new Date();
-    var ref = "REF FF-" + String(d.getFullYear()).slice(2)
-      + String(d.getMonth()+1).padStart(2,"0") + String(d.getDate()).padStart(2,"0")
-      + "-" + String(Math.floor(Math.random()*90)+10);
-    $("loggedRef").textContent = ref;
-    $("loggedSpec").textContent = ($("cMsg").value.trim() || specSentence(S));
-    try {
-      localStorage.setItem("ff_enquiry", JSON.stringify({
-        ref: ref, name: $("cName").value, contact: $("cContact").value,
-        postcode: $("cPost").value, width: $("cWidth").value, message: $("cMsg").value,
-        spec: S, at: d.toISOString()
-      }));
-    } catch(err){}
-    form.style.display = "none";
-    logged.style.display = "block";
-    logged.scrollIntoView({ behavior: "smooth", block: "center" });
+    var preferredRow = $("preferredWindowRow");
+    var preferredStartValue = $("cPreferredStart").value;
+    var preferredEndValue = $("cPreferredEnd").value;
+    var preferredStartDate = preferredStartValue ? new Date(preferredStartValue) : null;
+    var preferredEndDate = preferredEndValue ? new Date(preferredEndValue) : null;
+    var invalidWindow = (!!preferredStartValue !== !!preferredEndValue)
+      || (preferredStartValue && (!preferredStartDate || !Number.isFinite(preferredStartDate.getTime())
+        || !preferredEndDate || !Number.isFinite(preferredEndDate.getTime()) || preferredEndDate <= preferredStartDate));
+    preferredRow.classList.toggle("invalid", !!invalidWindow);
+    $("cPreferredStart").setAttribute("aria-invalid", invalidWindow ? "true" : "false");
+    $("cPreferredEnd").setAttribute("aria-invalid", invalidWindow ? "true" : "false");
+    if (invalidWindow){ $(preferredStartValue ? "cPreferredEnd" : "cPreferredStart").focus(); return; }
+    var config = window.FF_PUBLIC_CONFIG || {};
+    var status = $("formStatus");
+    if (!config.supabaseUrl || !config.supabaseAnonKey){
+      status.textContent = "The enquiry form is being connected. Please contact us directly for now.";
+      return;
+    }
+    var contact = $("cContact").value.trim();
+    var isEmail = contact.indexOf("@") !== -1;
+    var price = priceRange(S);
+    var projectSpec = JSON.parse(JSON.stringify(S));
+    var payload = {
+      customer_name: $("cName").value.trim(),
+      email: isEmail ? contact : "",
+      phone: isEmail ? "" : contact,
+      postcode: $("cPost").value.trim(),
+      wall_width: $("cWidth").value,
+      message: $("cMsg").value.trim(),
+      preferred_start: preferredStartDate ? preferredStartDate.toISOString() : null,
+      preferred_end: preferredEndDate ? preferredEndDate.toISOString() : null,
+      company_website: $("cWebsite").value,
+      project_spec: projectSpec,
+      guide_low: price[0],
+      guide_high: price[1],
+      source: "website"
+    };
+    var fingerprint = JSON.stringify(payload);
+    var idempotencyKey = form.dataset.idempotencyKey;
+    if (!idempotencyKey || form.dataset.idempotencyFingerprint !== fingerprint){
+      idempotencyKey = window.crypto.randomUUID();
+      form.dataset.idempotencyKey = idempotencyKey;
+      form.dataset.idempotencyFingerprint = fingerprint;
+    }
+    payload.idempotency_key = idempotencyKey;
+    status.textContent = "Sending your enquiry securely…";
+    setFormBusy(true);
+    var requestController = new AbortController();
+    var requestTimeout = window.setTimeout(function(){ requestController.abort(); }, 30000);
+    fetch(config.supabaseUrl.replace(/\/$/, "") + "/functions/v1/submit-enquiry", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + config.supabaseAnonKey,
+        "apikey": config.supabaseAnonKey,
+        "Content-Type": "application/json",
+        "X-Idempotency-Key": idempotencyKey
+      },
+      body: JSON.stringify(payload),
+      signal: requestController.signal
+    }).then(function(response){
+      return response.json().catch(function(){ return {}; }).then(function(result){
+        if (response.status === 429 && Number.isFinite(result.retry_after_seconds) && result.retry_after_seconds > 0){
+          var waitMinutes = Math.ceil(result.retry_after_seconds / 60);
+          throw new Error("Please wait about " + waitMinutes + (waitMinutes === 1 ? " minute" : " minutes") + " before sending another enquiry.");
+        }
+        if (!response.ok) throw new Error(result.error || "We couldn't send your enquiry. Please try again.");
+        return result;
+      });
+    }).then(function(result){
+      if (!result || typeof result.reference !== "string" || !result.reference.trim()){
+        throw new Error("We couldn't confirm the enquiry reference. Please retry; we'll check for duplicates.");
+      }
+      $("loggedRef").textContent = "REF " + result.reference;
+      $("loggedSpec").textContent = payload.message || specSentence(payload.project_spec);
+      form.style.display = "none";
+      logged.style.display = "block";
+      logged.scrollIntoView({ behavior: "smooth", block: "center" });
+    }).catch(function(error){
+      status.textContent = error.name === "AbortError"
+        ? "This is taking longer than expected. Check your connection and retry; duplicate enquiries are prevented."
+        : (error.message || "We couldn't send your enquiry. Check your connection and try again.");
+    }).finally(function(){ window.clearTimeout(requestTimeout); setFormBusy(false); });
   });
   form.addEventListener("input", function(e){
     var row = e.target.closest(".row");
+    if (row && row.id === "preferredWindowRow" && e.target.value){
+      $("cPreferredStart").setAttribute("aria-invalid", "false");
+      $("cPreferredEnd").setAttribute("aria-invalid", "false");
+      row.classList.remove("invalid");
+    }
     if (row && row.classList.contains("invalid") && e.target.value.trim()){
       row.classList.remove("invalid");
       e.target.setAttribute("aria-invalid", "false");

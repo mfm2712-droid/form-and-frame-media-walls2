@@ -1,0 +1,12 @@
+{
+  "id": "./",
+  "name": "Form & Frame Operations",
+  "short_name": "F&F Desk",
+  "description": "Private Form & Frame staff operations desk",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f1ecdf",
+  "theme_color": "#0e342c",
+  "icons": [{ "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

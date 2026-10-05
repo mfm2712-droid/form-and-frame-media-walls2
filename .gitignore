@@ -1,4 +1,6 @@
 operations/config.js
 .env
 .env.*
-
+dist/
+planning/
+public-config.js

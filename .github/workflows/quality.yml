@@ -1,0 +1,74 @@
+name: Quality checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Tests and public build boundary
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Run offline tests
+        run: TZ=Europe/London node --test
+
+      - name: Check JavaScript and TypeScript syntax
+        run: |
+          node --check operations/app.js
+          node --check operations/today-view.mjs
+          node --check operations/project-model.mjs
+          node --check operations/mutation-result.mjs
+          node --check operations/datetime-local.mjs
+          node --check operations/pipeline.mjs
+          node --check operations/workflow.mjs
+          node --check operations/push-support.mjs
+          node --check operations/assignment.mjs
+          node --check operations/activity-label.mjs
+          node --check operations/push-target.mjs
+          node --check operations/invoice-document.mjs
+          node --check operations/availability-list.mjs
+          node --check scripts/public-config.mjs
+          node --check scripts/build-public.mjs
+          node --check scripts/check-public-build.mjs
+          node --check scripts/check-inline-scripts.mjs
+          node --check supabase/config.test.mjs
+          node --check supabase/functions/submit-enquiry/handler.mjs
+          node --check supabase/functions/push-new-enquiry/handler.mjs
+          node --check supabase/functions/retry-notifications/handler.mjs
+          node --experimental-strip-types --check supabase/functions/submit-enquiry/index.ts
+          node --experimental-strip-types --check supabase/functions/push-new-enquiry/index.ts
+          node --experimental-strip-types --check supabase/functions/retry-notifications/index.ts
+          node scripts/check-inline-scripts.mjs
+
+      - name: Ensure production builds fail without Supabase configuration
+        run: |
+          if VERCEL_ENV=production node scripts/build-public.mjs; then
+            echo 'Expected the unconfigured production build to fail.' >&2
+            exit 1
+          fi
+
+      - name: Build the public site with fictional configuration
+        run: node scripts/build-public.mjs
+        env:
+          VERCEL_ENV: production
+          FF_PUBLIC_SUPABASE_URL: https://otqzhocismdjbvvsjnpe.supabase.co
+          FF_PUBLIC_SUPABASE_ANON_KEY: public-test-key-only
+
+      - name: Verify public build contents
+        run: node scripts/check-public-build.mjs

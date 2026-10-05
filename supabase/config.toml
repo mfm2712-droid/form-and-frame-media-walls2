@@ -1,0 +1,10 @@
+project_id = "otqzhocismdjbvvsjnpe"
+
+[functions.submit-enquiry]
+verify_jwt = true
+
+[functions.push-new-enquiry]
+verify_jwt = false
+
+[functions.retry-notifications]
+verify_jwt = false
