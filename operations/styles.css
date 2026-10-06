@@ -157,3 +157,5 @@
 .today-actions{grid-column:3;grid-row:1 / span 2;display:flex;justify-self:end;align-items:center;gap:5px}
 .today-actions .outline{position:static}
 @media(max-width:760px){.today-actions{grid-column:2;grid-row:2 / span 2;flex-direction:column;align-self:center}}
+
+.customer-actions{display:flex;gap:8px;margin:8px 0 12px}.customer-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--green);font:500 10px "DM Mono",monospace;text-decoration:none}.customer-actions a:hover,.customer-actions a:focus-visible{border-color:var(--green);outline:2px solid color-mix(in srgb,var(--green) 25%,transparent);outline-offset:2px}

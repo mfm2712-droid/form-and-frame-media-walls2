@@ -1,6 +1,6 @@
 // Complete staff-visible financial coverage; never silently total a capped page.
 export async function loadBusinessRows(client, table, order, ascending = false) {
-  if (!["quotes", "work_orders", "invoice_balances", "invoices"].includes(table)) throw new Error("Unsupported business table.");
+  if (!["consultation_requests", "quotes", "work_orders", "invoice_balances", "invoices"].includes(table)) throw new Error("Unsupported business table.");
   const rows = [], seen = new Set();
   let expected = null;
   while (true) {

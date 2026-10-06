@@ -5,6 +5,12 @@ function clientFor(pages) {
   let index = 0;
   return { from() { return { select() { return this; }, order() { return this; }, range() { return Promise.resolve(pages[index++]); } }; } };
 }
+test("enquiry coverage exceeds server page caps", async () => {
+  const rows = Array.from({length:301},(_,i)=>({id:String(i),total_pence:100}));
+  const pages = [0,100,200,300].map(n=>({data:rows.slice(n,n+100),count:301}));
+  const result = await loadBusinessRows(clientFor(pages),"consultation_requests","created_at");
+  assert.equal(result.data.length,301);
+});
 test("financial coverage exceeds server page caps", async () => {
   const rows = Array.from({length:301},(_,i)=>({id:String(i),total_pence:100}));
   const pages = [0,100,200,300].map(n=>({data:rows.slice(n,n+100),count:301}));
