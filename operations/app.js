@@ -12,6 +12,9 @@ import { assignmentLabel, assignmentOptionsHtml, assignmentUnavailableOptionsHtm
 import { blockListHtml } from "./availability-list.mjs";
 import { invoiceSettingsReady, renderInvoiceDocument } from "./invoice-document.mjs";
 import { clearPaymentRecordingKey, getPaymentRecordingKey, paymentMatchesIntent } from "./payment-idempotency.mjs";
+import { checkStaffAccess, staffAccessMessage } from "./staff-access.mjs";
+import { calendarWindow, loadCalendarRecords } from "./calendar-records.mjs";
+import { loadBusinessRows } from "./business-records.mjs";
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value || "").replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
@@ -25,7 +28,8 @@ let demo = false, db = null, demoLeads = [], demoBlocks = [], liveLeads = [], li
 let liveQuotes = [], liveWorkOrders = [], liveAppointments = [], liveInvoices = [], liveInvoiceDetails = [], liveProfiles = null;
 let invoiceSettings = null, currentStaffRole = null;
 let calendarMode = "month", calendarDate = new Date();
-let liveRefreshTimer = null;
+let liveRefreshTimer = null, liveChannel = null;
+let calendarBlocks = [], calendarAppointments = [], calendarLoadVersion = 0;
 
 function setMobileView(view) {
   document.body.dataset.mobileView = view;
@@ -80,12 +84,12 @@ function renderCalendar(blocks, appointments = []) {
   periodEnd.setDate(periodEnd.getDate() + cellCount - 1);
   periodEnd.setHours(23, 59, 59, 999);
   const cells = Array.from({ length:cellCount }, (_, index) => {
-    const day = new Date(start); day.setDate(start.getDate() + index); const end = new Date(day); end.setHours(23, 59, 59, 999);
-    const dayBlocks = blocks.filter(item => new Date(item.starts_at) <= end && new Date(item.ends_at) >= day).map(item => ({ ...item, isAppointment:false }));
-    const dayAppointments = appointments.filter(item => !["cancelled", "completed"].includes(item.status) && new Date(item.starts_at) <= end && new Date(item.ends_at) >= day).map(item => {
+    const day = new Date(start); day.setDate(start.getDate() + index); const end = new Date(day); end.setDate(end.getDate() + 1);
+    const dayBlocks = blocks.filter(item => new Date(item.starts_at) < end && new Date(item.ends_at) > day).map(item => ({ ...item, isAppointment:false }));
+    const dayAppointments = appointments.filter(item => item.status !== "cancelled" && new Date(item.starts_at) < end && new Date(item.ends_at) > day).map(item => {
       const enquiry = requestFor(item.request_id);
       const assignee = assignmentLabel(item.assigned_to, liveProfiles);
-      const title = `${new Date(item.starts_at).toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit" })} ${item.kind} · ${enquiry?.customer_name || "Booked"}${assignee === "Unassigned" ? "" : ` · ${assignee}`}`;
+      const title = `${item.status === "completed" ? "Completed · " : ""}${new Date(item.starts_at).toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit" })} ${item.kind} · ${enquiry?.customer_name || "Booked"}${assignee === "Unassigned" ? "" : ` · ${assignee}`}`;
       return { ...item, kind:"appointment", title, isAppointment:true };
     });
     const events = [...dayBlocks, ...dayAppointments];
@@ -149,16 +153,16 @@ function renderWorkflows(data) {
   const wins = [...acceptedQuoteRequests].filter(requestId => sentQuoteRequests.has(requestId)).length;
   const sentCount = sentQuoteRequests.size;
   $("quoteWinRate").textContent = sentCount ? `${Math.round(wins / sentCount * 100)}%` : "—";
-  $("quoteWinCount").textContent = `${wins} accepted / ${sentCount} enquiries with a sent quote (latest 100 quotes)`;
+  $("quoteWinCount").textContent = `${wins} accepted / ${sentCount} enquiries with a sent quote (all saved quotes)`;
   const latestSentQuoteByRequest = new Map();
   for (const quote of data.quotes.filter(item => item.sent_at)) {
     const previous = latestSentQuoteByRequest.get(quote.request_id);
     if (!previous || Number(quote.version) > Number(previous.version)) latestSentQuoteByRequest.set(quote.request_id, quote);
   }
   const sentQuoteValuePence = [...latestSentQuoteByRequest.values()].reduce((sum, quote) => sum + Number(quote.total_pence || 0), 0);
-  $("todayMoney").innerHTML = `<div class="today-money-heading"><p>YOUR BUSINESS · RECORDED RECORDS</p><h2>Today, at a glance</h2><small>Up to 100 recent saved invoice and quote records · GBP</small></div><div class="today-money-hero"><span>Received against sent invoices</span><b>${moneyPence(totalReceivedPence)}</b><small>${moneyPence(totalOutstandingPence)} remains outstanding</small></div><div class="today-money-cards"><article><span>Invoiced</span><b>${moneyPence(totalBilledPence)}</b></article><article><span>Still due</span><b>${moneyPence(totalOutstandingPence)}</b></article><article><span>Quotes sent</span><b>${moneyPence(sentQuoteValuePence)}</b></article><article><span>Quote win rate</span><b>${sentCount ? `${Math.round(wins / sentCount * 100)}%` : "—"}</b></article></div><p class="today-money-note">Figures are based on the latest saved business records, not website guide prices. Quote rate is by enquiry, not total revenue.</p>`;
+  $("todayMoney").innerHTML = `<div class="today-money-heading"><p>YOUR BUSINESS · RECORDED RECORDS</p><h2>Today, at a glance</h2><small>All staff-visible saved invoice and quote records · GBP</small></div><div class="today-money-hero"><span>Received against sent invoices</span><b>${moneyPence(totalReceivedPence)}</b><small>${moneyPence(totalOutstandingPence)} remains outstanding</small></div><div class="today-money-cards"><article><span>Invoiced</span><b>${moneyPence(totalBilledPence)}</b></article><article><span>Still due</span><b>${moneyPence(totalOutstandingPence)}</b></article><article><span>Quotes sent</span><b>${moneyPence(sentQuoteValuePence)}</b></article><article><span>Quote win rate</span><b>${sentCount ? `${Math.round(wins / sentCount * 100)}%` : "—"}</b></article></div><p class="today-money-note">Figures are based on saved business records, not website guide prices. Quote rate is by enquiry, not total revenue.</p>`;
   $("activeBuilds").textContent = liveWorkOrders.filter(item => !["completed", "cancelled"].includes(item.status)).length;
-  $("businessState").textContent = "Up to 100 latest records · GBP";
+  $("businessState").textContent = "All saved financial records · GBP";
 
   $("quoteList").innerHTML = data.quotes.length ? data.quotes.map(quote => {
     const enquiry = requestFor(quote.request_id);
@@ -197,11 +201,11 @@ async function loadWorkflows() {
   try {
     const { start:todayStart, end:tomorrowStart } = getLocalDayBounds();
     const [quotes, workOrders, appointments, invoices, invoiceRecords, followUps, activity] = await Promise.all([
-      db.from("quotes").select("*").order("created_at", { ascending:false }).limit(100),
-      db.from("work_orders").select("*").order("created_at", { ascending:false }).limit(100),
-      db.from("appointments").select("*").gte("starts_at", todayStart.toISOString()).lt("starts_at", plusDays(365, 0).toISOString()).order("starts_at").limit(500),
-      db.from("invoice_balances").select("*").order("due_date").limit(100),
-      db.from("invoices").select("*").order("created_at", { ascending:false }).limit(100),
+      loadBusinessRows(db, "quotes", "created_at"),
+      loadBusinessRows(db, "work_orders", "created_at"),
+      db.from("appointments").select("*").gt("ends_at", todayStart.toISOString()).lt("starts_at", plusDays(365, 0).toISOString()).order("starts_at").limit(500),
+      loadBusinessRows(db, "invoice_balances", "due_date", true),
+      loadBusinessRows(db, "invoices", "created_at"),
       db.from("follow_up_tasks").select("*").is("completed_at", null).is("cancelled_at", null).lte("due_at", tomorrowStart.toISOString()).order("due_at").limit(100),
       db.from("workflow_activity").select("*").order("created_at", { ascending:false }).limit(30)
     ]);
@@ -212,7 +216,7 @@ async function loadWorkflows() {
       const detail = activityDetailText(item);
       return `<article class="activity-row"><span>${format(item.created_at)}</span><b>${esc(item.event_type.replaceAll("_", " "))}</b><small>${esc(item.entity_type.replaceAll("_", " "))} · ${esc(item.entity_id.slice(0, 8))}${detail ? ` · ${esc(detail)}` : ""}</small></article>`;
     }).join("") : `<p class="today-empty">No activity recorded yet.</p>`;
-    renderCalendar(liveBlocks, appointments.data || []);
+    await refreshCalendar();
     const startMs = todayStart.getTime(), endMs = tomorrowStart.getTime();
     const todaysAppointments = (appointments.data || []).filter(item => item.status !== "cancelled" && new Date(item.starts_at).getTime() < endMs && new Date(item.ends_at).getTime() > startMs);
     $("todayAppointments").parentElement.querySelector("h3").textContent = "Booked appointments today";
@@ -233,13 +237,16 @@ async function loadWorkflows() {
     const deadlineEndIso = local(nextSevenDays).slice(0, 10);
     const upcomingJobs = (workOrders.data || []).filter(job => job.status !== "completed" && job.status !== "cancelled" && job.target_completion && job.target_completion <= deadlineEndIso);
     $("todayBlockers").innerHTML = upcomingJobs.length ? upcomingJobs.map(job => `<article class="today-item"><div class="today-meta"><b>${esc(job.work_order_number)}</b><span>${job.target_completion < todayIso ? "Overdue" : job.target_completion === todayIso ? "Target today" : "Target"} · ${esc(job.target_completion)}</span></div><span class="today-status">${esc(job.status.replaceAll("_", " "))}</span></article>`).join("") : `<p class="today-empty">No active build targets within the next seven days.</p>`;
+    return true;
   } catch (error) {
     console.error("Business workflow records could not be loaded.", error);
-    $("businessState").textContent = "Business workflow database is not ready";
-    $("todayMoney").innerHTML = `<div class="today-money-heading"><p>OWNER OVERVIEW</p><h2>Today, at a glance</h2></div><div class="today-money-empty">Financial totals will appear when the business workflow tables are available. Website guide prices are not included.</div>`;
+    $("businessState").textContent = "Business records could not be fully loaded · refresh to retry";
+    $("todayMoney").innerHTML = `<div class="today-money-heading"><p>OWNER OVERVIEW</p><h2>Today, at a glance</h2></div><div class="today-money-empty">Financial totals are unavailable until all required records load successfully. Use Refresh to retry. Website guide prices are not included.</div>`;
     for (const id of ["totalBilled", "totalReceived", "totalOutstanding", "quoteWinRate", "activeBuilds"]) $(id).textContent = "—";
-    $("quoteWinCount").textContent = "Awaiting the business workflow database";
-    for (const id of ["quoteList", "workOrderList", "appointmentList", "invoiceList", "activityList"]) $(id).innerHTML = `<p class="today-empty">These records need the business workflow migration and staff access before they can load.</p>`;
+    $("quoteWinCount").textContent = "Unavailable until all records load successfully";
+    liveQuotes = []; liveWorkOrders = []; liveAppointments = []; liveInvoices = []; liveInvoiceDetails = [];
+    for (const id of ["quoteList", "workOrderList", "appointmentList", "invoiceList", "activityList", "todayAppointments", "todayPayments", "todayBlockers"]) $(id).innerHTML = `<p class="today-empty">These records could not be loaded completely. Use Refresh to retry.</p>`;
+    return false;
   }
 }
 
@@ -251,7 +258,7 @@ function render(items, blocks, statsItems = items) {
   renderToday(items);
   liveBlocks = blocks;
   $("leadList").innerHTML = items.length ? items.map(lead => `<article class="lead ${lead.id === selectedId ? "selected" : ""}" data-lead-id="${esc(lead.id)}"><div class="lead-top"><div><h3>${esc(lead.customer_name)} <small>· ${esc(lead.reference)}</small></h3><p>${esc(lead.postcode)} · ${esc(lead.email || lead.phone)} · ${esc(lead.wall_width)}</p></div><select data-id="${esc(lead.id)}" class="status" aria-label="Status for ${esc(lead.customer_name)}">${allStatuses.map(status => `<option value="${status}" ${lead.status === status ? "selected" : ""}>${status.replace("_", " ")}</option>`).join("")}</select></div><p>${esc(lead.message || "No customer note.")}</p><small>${format(lead.created_at)} · ${esc(lead.source)} · guide ${money(lead.guide_low)}–${money(lead.guide_high)}</small></article>`).join("") : `<p class="empty">No enquiries yet. New website, chat and booking requests will appear here.</p>`;
-  renderCalendar(blocks);
+  if (demo) renderCalendar(blocks);
   if (items.length) renderProject(items.find(item => item.id === selectedId));
   else $("projectPanel").innerHTML = `<p>PROJECT BRIEF</p><h2>Select an enquiry</h2><p class="empty">A selected enquiry will show its customer brief and website guide range. Actual job costs, quotes and invoices appear only when recorded.</p>`;
 }
@@ -315,10 +322,6 @@ function setBlockDefaults() { $("blockStart").value = local(plusDays(2, 8)); $("
 function loadDemo() { render(demoLeads, demoBlocks); loadWorkflows(); }
 async function loadInvoiceSettings() {
   const status = $("invoiceSetupStatus");
-  const { data:userResult, error:userError } = await db.auth.getUser();
-  if (userError || !userResult?.user) return;
-  const { data:profile } = await db.from("profiles").select("role").eq("id", userResult.user.id).maybeSingle();
-  currentStaffRole = profile?.role || null;
   $("invoiceSettings").hidden = currentStaffRole !== "owner";
   const { data, error } = await db.from("business_settings").select("*").eq("singleton", true).maybeSingle();
   if (error) {
@@ -342,8 +345,65 @@ async function loadInvoiceSettings() {
     ? "Invoice details are ready. Print or save each reviewed invoice as PDF; delivery remains manual."
     : "Invoice PDFs stay disabled until an owner saves the legal seller name, billing address and contact email.";
 }
+async function showStaffAccessIssue(access) {
+  $("hub").hidden = true; $("setup").hidden = false;
+  $("login").hidden = access.state !== "signed_out";
+  $("accessActions").hidden = access.state === "signed_out";
+  $("setupCopy").textContent = staffAccessMessage(access.state);
+  $("loginMsg").textContent = "";
+  document.querySelector(".mobile-nav").hidden = true;
+  liveLeads = []; liveBlocks = []; liveQuotes = []; liveWorkOrders = [];
+  liveAppointments = []; liveInvoices = []; liveInvoiceDetails = [];
+  calendarBlocks = []; calendarAppointments = []; calendarLoadVersion++;
+  liveProfiles = null; invoiceSettings = null; currentStaffRole = null;
+  clearTimeout(liveRefreshTimer);
+  if (liveChannel) { await db.removeChannel(liveChannel); liveChannel = null; }
+}
+
+async function refreshCalendar() {
+  if (demo) { renderCalendar(demoBlocks); return true; }
+  const version = ++calendarLoadVersion;
+  const period = calendarWindow(calendarDate, calendarMode);
+  renderCalendar([], []);
+  $("calendar").hidden = true; $("blockList").hidden = true;
+  $("calendar").setAttribute("aria-busy", "true");
+  $("calendarLoadState").textContent = "Loading appointments and availability for this period…";
+  $("calendarRetry").hidden = true;
+  try {
+    const access = await checkStaffAccess(db);
+    if (version !== calendarLoadVersion) return false;
+    if (access.state !== "authorized") { await showStaffAccessIssue(access); return false; }
+    currentStaffRole = access.role;
+    $("invoiceSettings").hidden = currentStaffRole !== "owner";
+    const records = await loadCalendarRecords(db, period);
+    if (version !== calendarLoadVersion) return false;
+    calendarBlocks = records.blocks; calendarAppointments = records.appointments;
+    liveBlocks = [...new Map([...liveBlocks, ...calendarBlocks].map(item => [item.id, item])).values()];
+    renderCalendar(calendarBlocks, calendarAppointments);
+    $("calendar").hidden = false; $("blockList").hidden = false;
+    $("calendarLoadState").textContent = "Selected period loaded. Completed appointments remain in history; cancelled appointments release the time.";
+    return true;
+  } catch {
+    if (version !== calendarLoadVersion) return false;
+    $("calendarLoadState").textContent = "This period could not be loaded completely. Retry before using it to plan bookings.";
+    $("calendarRetry").hidden = false;
+    return false;
+  } finally {
+    if (version === calendarLoadVersion) $("calendar").setAttribute("aria-busy", "false");
+  }
+}
+
 async function loadLive() {
   try {
+    const access = await checkStaffAccess(db);
+    if (access.state !== "authorized") {
+      await showStaffAccessIssue(access);
+      return false;
+    }
+    currentStaffRole = access.role;
+    $("setup").hidden = true; $("hub").hidden = false;
+    $("login").hidden = false; $("accessActions").hidden = true;
+    document.querySelector(".mobile-nav").hidden = false;
     await loadInvoiceSettings();
     const notifiedEnquiryId = pushEnquiryTarget;
     const { start:todayStart, end:tomorrowStart } = getLocalDayBounds();
@@ -381,7 +441,11 @@ async function loadLive() {
     }
     render(liveLeads, blockResult.data || [], recentLeads);
     if (notifiedLeadResult.data) document.querySelector(`[data-lead-id="${CSS.escape(notifiedLeadResult.data.id)}"]`)?.scrollIntoView({ behavior:"smooth", block:"center" });
-    await loadWorkflows();
+    const workflowsLoaded = await loadWorkflows();
+    if (!workflowsLoaded) {
+      showNotice("Enquiries loaded, but business records could not be fully refreshed. Use Refresh before making further changes.", "warning");
+      return false;
+    }
     showNotice("");
     if (profilesLookupFailed) showNotice("The team member list could not be loaded. Assignment is unavailable until Refresh.", "warning");
     return true;
@@ -411,11 +475,11 @@ async function startLive() {
   try {
     const { data, error } = await db.auth.getSession();
     if (error) throw error;
-    if (!data.session) return;
-    $("setup").hidden = true; $("hub").hidden = false; document.querySelector(".mobile-nav").hidden = false; setBlockDefaults();
+    if (!data.session) { await loadLive(); return; }
+    setBlockDefaults();
     if (pushEnquiryTarget) setMobileView("work");
     else if (pushViewTarget) setMobileView(pushViewTarget);
-    await loadLive();
+    if (!await loadLive()) return;
     if (pushEnquiryTarget && liveLeads.some(item => item.id === pushEnquiryTarget)) {
       requestAnimationFrame(() => document.querySelector(`[data-lead-id="${CSS.escape(pushEnquiryTarget)}"]`)?.scrollIntoView({ behavior:"smooth", block:"center" }));
     }
@@ -445,7 +509,8 @@ async function startLive() {
       }
     }
     const realtimeTables = ["consultation_requests", "availability_blocks", "profiles", "business_settings", "quotes", "work_orders", "appointments", "follow_up_tasks", "invoices", "invoice_payments", "workflow_activity"];
-    const liveChannel = db.channel("ff-operations");
+    if (liveChannel) await db.removeChannel(liveChannel);
+    liveChannel = db.channel("ff-operations");
     for (const table of realtimeTables) {
       liveChannel.on("postgres_changes", { event:"*", schema:"public", table }, scheduleLiveRefresh);
     }
@@ -459,7 +524,7 @@ async function startLive() {
 }
 const cfg = window.FF_OPERATIONS_CONFIG;
 if (!cfg?.supabaseUrl || cfg.supabaseUrl.includes("YOUR_PROJECT")) { $("setupCopy").textContent = "Demo mode: preview the staff workspace with enquiries, commercial briefs and calendar controls."; startDemo(); }
-else { db = createClient(cfg.supabaseUrl, cfg.supabaseAnonKey); $("login").addEventListener("submit", async event => { event.preventDefault(); const button = event.submitter || $("login").querySelector("button"); button.disabled = true; $("loginMsg").textContent = "Sending secure sign-in link…"; try { const { error } = await db.auth.signInWithOtp({ email:$("email").value, options:{ emailRedirectTo:location.href } }); if (error) throw error; $("loginMsg").textContent = "Secure sign-in link sent — check your inbox."; } catch (error) { console.error("Operations sign-in request failed.", error); $("loginMsg").textContent = "The sign-in link couldn't be sent. Check your connection and try again."; } finally { button.disabled = false; } }); startLive(); }
+else { db = createClient(cfg.supabaseUrl, cfg.supabaseAnonKey); $("login").addEventListener("submit", async event => { event.preventDefault(); const button = event.submitter || $("login").querySelector("button"); button.disabled = true; $("loginMsg").textContent = "Sending secure sign-in link…"; try { const { error } = await db.auth.signInWithOtp({ email:$("email").value, options:{ emailRedirectTo:location.href, shouldCreateUser:false } }); if (error) throw error; $("loginMsg").textContent = "Secure sign-in link sent — check your inbox."; } catch (error) { console.error("Operations sign-in request failed.", error); $("loginMsg").textContent = "The sign-in link couldn't be sent. Check your connection and try again."; } finally { button.disabled = false; } }); startLive(); }
 
 function scheduleLiveRefresh() {
   clearTimeout(liveRefreshTimer);
@@ -518,10 +583,11 @@ $("enablePush").addEventListener("click", async buttonEvent => {
 });
 
 $("refresh").addEventListener("click", load); $("unblockAll").addEventListener("click", load);
-$("calendarPrev").addEventListener("click", () => { calendarDate = calendarMode === "month" ? new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1) : new Date(calendarDate.getFullYear(), calendarDate.getMonth(), calendarDate.getDate() - 7); renderCalendar(liveBlocks, liveAppointments); });
-$("calendarNext").addEventListener("click", () => { calendarDate = new Date(calendarDate); if (calendarMode === "month") calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1); else calendarDate.setDate(calendarDate.getDate() + 7); renderCalendar(liveBlocks, liveAppointments); });
-$("calendarToday").addEventListener("click", () => { calendarDate = new Date(); renderCalendar(liveBlocks, liveAppointments); });
-document.querySelectorAll(".calendar-mode").forEach(button => button.addEventListener("click", () => { calendarMode = button.dataset.calendarMode; renderCalendar(liveBlocks, liveAppointments); }));
+$("calendarPrev").addEventListener("click", () => { calendarDate = calendarMode === "month" ? new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1) : new Date(calendarDate.getFullYear(), calendarDate.getMonth(), calendarDate.getDate() - 7); refreshCalendar(); });
+$("calendarNext").addEventListener("click", () => { calendarDate = new Date(calendarDate); if (calendarMode === "month") calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1); else calendarDate.setDate(calendarDate.getDate() + 7); refreshCalendar(); });
+$("calendarToday").addEventListener("click", () => { calendarDate = new Date(); refreshCalendar(); });
+$("calendarRetry").addEventListener("click", refreshCalendar);
+document.querySelectorAll(".calendar-mode").forEach(button => button.addEventListener("click", () => { calendarMode = button.dataset.calendarMode; refreshCalendar(); }));
 const openTodayEnquiry = async event => {
   const button = event.target.closest("button[data-open-enquiry]");
   if (!button) return;
@@ -863,3 +929,9 @@ $("business").addEventListener("submit", async event => {
 });
 
 $("signOut").addEventListener("click", async () => { if (db) await db.auth.signOut(); location.reload(); });
+$("accessSignOut").addEventListener("click", () => $("signOut").click());
+$("retryAccess").addEventListener("click", async () => {
+  const button = $("retryAccess");
+  button.disabled = true;
+  try { await startLive(); } finally { button.disabled = false; }
+});

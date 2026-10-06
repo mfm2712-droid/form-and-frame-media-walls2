@@ -16,6 +16,20 @@ export function resolvePublicConfig(environment) {
   if (match && match[1].toLowerCase() !== FORM_AND_FRAME_SUPABASE_REF) {
     throw new Error("This Form & Frame build is configured for a different Supabase project. Check the project reference; do not use another product's database.");
   }
+  if (supabaseAnonKey) {
+    // This checks the deployment configuration, not a JWT signature. Supabase
+    // verifies the key at runtime. Never serialize a privileged key to browsers.
+    let claims;
+    try {
+      if (!/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(supabaseAnonKey)) throw new Error();
+      claims = JSON.parse(Buffer.from(supabaseAnonKey.split(".")[1], "base64url").toString("utf8"));
+    } catch {
+      throw new Error("FF_PUBLIC_SUPABASE_ANON_KEY must be the legacy public anon JWT; the enquiry gateway currently requires a JWT-based key.");
+    }
+    if (claims?.role !== "anon" || claims?.ref !== FORM_AND_FRAME_SUPABASE_REF) {
+      throw new Error("Only the Form & Frame public anon key may be included in browser configuration; privileged or other-project keys are forbidden.");
+    }
+  }
   const vapidPublicKey = (environment.FF_OPERATIONS_VAPID_PUBLIC_KEY || "").trim();
   if (vapidPublicKey && !/^B[A-Za-z0-9_-]{86}$/.test(vapidPublicKey)) {
     throw new Error("FF_OPERATIONS_VAPID_PUBLIC_KEY must be a valid uncompressed P-256 public key in base64url form.");

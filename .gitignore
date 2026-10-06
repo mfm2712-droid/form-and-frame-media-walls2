@@ -4,3 +4,4 @@ operations/config.js
 dist/
 planning/
 public-config.js
+supabase/.temp/

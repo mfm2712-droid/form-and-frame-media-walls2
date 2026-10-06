@@ -6,6 +6,8 @@
 .today-meta{grid-column:1;grid-row:1}
 .today-action{grid-column:2;grid-row:2;justify-self:end;text-align:right;font:9px "DM Mono",monospace;color:var(--green)}
 .today-visit-state{grid-column:1;grid-row:2;font:9px "DM Mono",monospace;color:var(--muted);margin-top:2px}
+/* Hidden access panels must stay hidden even when mobile layouts use flex/grid. */
+[hidden]{display:none!important}
 /* Today section labels */
 .today-section{padding:8px 12px;border-top:1px solid var(--line);background:var(--card)}.today-section h3{margin:0 0 8px;color:var(--green);font:500 10px "DM Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
 /* Pipeline status badges */
