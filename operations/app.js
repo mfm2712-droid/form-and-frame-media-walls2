@@ -22,9 +22,12 @@ const money = value => new Intl.NumberFormat("en-GB", { style:"currency", curren
 const format = value => new Intl.DateTimeFormat("en-GB", { dateStyle:"medium", timeStyle:"short" }).format(new Date(value));
 const plusDays = (days, hour = 9) => { const d = new Date(); d.setDate(d.getDate() + days); d.setHours(hour, 0, 0, 0); return d; };
 const local = toLocalDateTimeInputValue;
-const pushEnquiryTarget = enquiryTargetFromSearch(window.location.search);
-const pushViewTarget = operationsViewFromSearch(window.location.search);
-let demo = false, db = null, demoLeads = [], demoBlocks = [], liveLeads = [], liveBlocks = [], selectedId = pushEnquiryTarget;
+// A push link's enquiry/view target is honoured once. After the first
+// successful load it is cleared from memory and the address bar, so later
+// refreshes, live updates and manual selections don't jump back to it.
+let pendingPushEnquiry = enquiryTargetFromSearch(window.location.search);
+let pendingPushView = operationsViewFromSearch(window.location.search);
+let demo = false, db = null, demoLeads = [], demoBlocks = [], liveLeads = [], liveBlocks = [], selectedId = pendingPushEnquiry;
 let liveQuotes = [], liveWorkOrders = [], liveAppointments = [], liveInvoices = [], liveInvoiceDetails = [], liveProfiles = null;
 let invoiceSettings = null, currentStaffRole = null;
 let calendarMode = "month", calendarDate = new Date();
@@ -43,6 +46,28 @@ function setMobileView(view) {
 
 document.querySelectorAll(".mobile-nav [data-mobile-view]").forEach(button => button.addEventListener("click", () => setMobileView(button.dataset.mobileView)));
 
+function consumePushLink() {
+  pendingPushEnquiry = null;
+  pendingPushView = null;
+  try {
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has("enquiry") && !url.searchParams.has("view")) return;
+    url.searchParams.delete("enquiry");
+    url.searchParams.delete("view");
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  } catch (error) {
+    console.error("The push link target could not be cleared from the address bar.", error);
+  }
+}
+
+// PostgreSQL exclusion violation: the database refused a booking or block
+// because it overlaps reserved time. Nothing was saved.
+const CALENDAR_CONFLICT_CODE = "23P01";
+const CALENDAR_CONFLICT_MESSAGE = "Not saved: this time overlaps a booked appointment or blocked time already in the calendar. Nothing was changed. Choose another time, or cancel or move the conflicting entry first.";
+const changeFailureMessage = error => error?.code === CALENDAR_CONFLICT_CODE
+  ? CALENDAR_CONFLICT_MESSAGE
+  : "We couldn't confirm this change. The latest data may be out of date; refresh before retrying.";
+
 function showNotice(message, kind = "error") {
   const notice = $("notice");
   notice.textContent = message;
@@ -58,7 +83,7 @@ async function saveLive(action, successMessage) {
     return { saved:true, refreshed };
   } catch (error) {
     console.error("Operations change failed.", error);
-    showNotice("We couldn't confirm this change. The latest data may be out of date; refresh before retrying.");
+    showNotice(changeFailureMessage(error), error?.code === CALENDAR_CONFLICT_CODE ? "warning" : "error");
     return { saved:false, refreshed:false };
   }
 }
@@ -407,7 +432,7 @@ async function loadLive() {
     $("login").hidden = false; $("accessActions").hidden = true;
     document.querySelector(".mobile-nav").hidden = false;
     await loadInvoiceSettings();
-    const notifiedEnquiryId = pushEnquiryTarget;
+    const notifiedEnquiryId = pendingPushEnquiry;
     const { start:todayStart, end:tomorrowStart } = getLocalDayBounds();
     const startIso = todayStart.toISOString(), endIso = tomorrowStart.toISOString();
     const [leadResult, blockResult, todayLeadResult, visitLeadResult, notifiedLeadResult, profileResult] = await Promise.all([
@@ -423,6 +448,8 @@ async function loadLive() {
     if (todayLeadResult.error) throw todayLeadResult.error;
     if (visitLeadResult.error) throw visitLeadResult.error;
     if (notifiedLeadResult.error) throw notifiedLeadResult.error;
+    const notifiedEnquiryMissing = !!notifiedEnquiryId && !notifiedLeadResult.data;
+    consumePushLink();
     // A failed profile lookup must not take the work or calendar views with it:
     // assignment stays disabled until the next successful Refresh.
     let profilesLookupFailed = false;
@@ -450,6 +477,7 @@ async function loadLive() {
     }
     showNotice("");
     if (profilesLookupFailed) showNotice("The team member list could not be loaded. Assignment is unavailable until Refresh.", "warning");
+    else if (notifiedEnquiryMissing) showNotice("The enquiry from this alert could not be found. It may have been removed or you may not have access to it.", "warning");
     return true;
   } catch (error) {
     console.error("Operations data refresh failed.", error);
@@ -479,11 +507,12 @@ async function startLive() {
     if (error) throw error;
     if (!data.session) { await loadLive(); return; }
     setBlockDefaults();
-    if (pushEnquiryTarget) setMobileView("work");
-    else if (pushViewTarget) setMobileView(pushViewTarget);
+    const pushTarget = pendingPushEnquiry;
+    if (pushTarget) setMobileView("work");
+    else if (pendingPushView) setMobileView(pendingPushView);
     if (!await loadLive()) return;
-    if (pushEnquiryTarget && liveLeads.some(item => item.id === pushEnquiryTarget)) {
-      requestAnimationFrame(() => document.querySelector(`[data-lead-id="${CSS.escape(pushEnquiryTarget)}"]`)?.scrollIntoView({ behavior:"smooth", block:"center" }));
+    if (pushTarget && liveLeads.some(item => item.id === pushTarget)) {
+      requestAnimationFrame(() => document.querySelector(`[data-lead-id="${CSS.escape(pushTarget)}"]`)?.scrollIntoView({ behavior:"smooth", block:"center" }));
     }
     const pushButton = $("enablePush");
     const ios = isIOSDevice({ userAgent:navigator.userAgent, platform:navigator.platform, maxTouchPoints:navigator.maxTouchPoints });
@@ -590,15 +619,49 @@ $("calendarNext").addEventListener("click", () => { calendarDate = new Date(cale
 $("calendarToday").addEventListener("click", () => { calendarDate = new Date(); refreshCalendar(); });
 $("calendarRetry").addEventListener("click", refreshCalendar);
 document.querySelectorAll(".calendar-mode").forEach(button => button.addEventListener("click", () => { calendarMode = button.dataset.calendarMode; refreshCalendar(); }));
-const openTodayEnquiry = async event => {
-  const button = event.target.closest("button[data-open-enquiry]");
-  if (!button) return;
-  selectedId = button.dataset.openEnquiry;
+// Today's Open action shows the chosen enquiry in Work, where its brief and
+// actions are visible on phones as well as wider screens.
+const openTodayEnquiry = async button => {
+  const id = button.dataset.openEnquiry;
+  selectedId = id;
+  setMobileView("work");
   await load();
-  document.querySelector(`[data-lead-id="${CSS.escape(selectedId)}"]`)?.scrollIntoView({ behavior:"smooth", block:"center" });
+  if (selectedId !== id) return;
+  const panel = $("projectPanel");
+  document.querySelector(`#leadList [data-lead-id="${CSS.escape(id)}"]`)?.scrollIntoView({ behavior:"smooth", block:"start" });
+  panel.setAttribute("tabindex", "-1");
+  panel.focus({ preventScroll:true });
 };
-$("todayEnquiries").addEventListener("click", openTodayEnquiry);
-$("todayVisits").addEventListener("click", openTodayEnquiry);
+
+// Today panel actions: open an enquiry, complete or cancel a booked
+// appointment, and complete a follow-up. The Today panel sits outside the
+// business section, so its actions need their own listener.
+document.querySelector(".today-panel").addEventListener("click", async event => {
+  const open = event.target.closest("button[data-open-enquiry]");
+  if (open) return openTodayEnquiry(open);
+  const updateAppointment = event.target.closest("button[data-cancel-appointment], button[data-complete-appointment]");
+  if (updateAppointment) {
+    if (demo || updateAppointment.disabled) return;
+    const isCancellation = updateAppointment.hasAttribute("data-cancel-appointment");
+    const appointmentId = updateAppointment.dataset.cancelAppointment || updateAppointment.dataset.completeAppointment;
+    const appointment = liveAppointments.find(item => item.id === appointmentId);
+    if (!appointment || !["scheduled", "confirmed"].includes(appointment.status)) return showNotice("That appointment has changed. Refresh to see its latest status.", "warning");
+    if (isCancellation && !window.confirm("Cancel this booked appointment? The time will become available again. No message is sent to the customer.")) return;
+    updateAppointment.disabled = true;
+    const status = isCancellation ? "cancelled" : "completed";
+    const message = isCancellation ? "Appointment cancelled. Its time is available again. No customer message was sent." : "Appointment marked complete.";
+    const result = await saveLive(() => db.from("appointments").update({ status }).eq("id", appointment.id).in("status", ["scheduled", "confirmed"]).select("id").maybeSingle(), message);
+    if (!result.saved && updateAppointment.isConnected) updateAppointment.disabled = false;
+    return;
+  }
+  const complete = event.target.closest("button[data-complete-followup]");
+  if (complete) {
+    if (demo || complete.disabled) return;
+    complete.disabled = true;
+    const result = await saveLive(() => db.from("follow_up_tasks").update({ completed_at:new Date().toISOString() }).eq("id", complete.dataset.completeFollowup).is("completed_at", null).select("id").maybeSingle(), "Follow-up completed.");
+    if (!result.saved && complete.isConnected) complete.disabled = false;
+  }
+});
 $("leadList").addEventListener("click", event => { if (event.target.closest("select")) return; const card = event.target.closest("[data-lead-id]"); if (!card) return; selectedId = card.dataset.leadId; load(); });
 $("leadList").addEventListener("change", async event => {
   if (!event.target.matches(".status")) return;
@@ -827,26 +890,6 @@ $("business").addEventListener("click", async event => {
     printWindow.document.write(documentHtml);
     printWindow.document.close();
     printWindow.setTimeout(() => { printWindow.focus(); printWindow.print(); }, 300);
-    return;
-  }
-  const updateAppointment = event.target.closest("button[data-cancel-appointment], button[data-complete-appointment]");
-  if (updateAppointment) {
-    const isCancellation = updateAppointment.hasAttribute("data-cancel-appointment");
-    const appointmentId = updateAppointment.dataset.cancelAppointment || updateAppointment.dataset.completeAppointment;
-    const appointment = liveAppointments.find(item => item.id === appointmentId);
-    if (!appointment || !["scheduled", "confirmed"].includes(appointment.status)) return;
-    if (isCancellation && !window.confirm("Cancel this booked appointment? The time will become available again.")) return;
-    updateAppointment.disabled = true;
-    const status = isCancellation ? "cancelled" : "completed";
-    const message = isCancellation ? "Appointment cancelled. Its time is available again." : "Appointment marked complete.";
-    const result = await saveLive(() => db.from("appointments").update({ status }).eq("id", appointment.id).select("id").maybeSingle(), message);
-    if (!result.saved && updateAppointment.isConnected) updateAppointment.disabled = false;
-    return;
-  }
-  const complete = event.target.closest("button[data-complete-followup]");
-  if (complete) {
-    complete.disabled = true;
-    await saveLive(() => db.from("follow_up_tasks").update({ completed_at:new Date().toISOString() }).eq("id", complete.dataset.completeFollowup).is("completed_at", null).select("id").maybeSingle(), "Follow-up completed.");
     return;
   }
   const createOrder = event.target.closest("button[data-make-order]");
