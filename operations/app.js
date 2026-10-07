@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
+import { canIssueQuote, surveyReadiness } from "./quote-readiness.mjs";
 import { getLocalDayBounds, getTodayAgenda, nextAction, relevantDate } from "./today-view.mjs";
 import { buildFinanceSummary, buildProjectModel } from "./project-model.mjs";
 import { requirePersistedRow } from "./mutation-result.mjs";
@@ -117,10 +118,13 @@ function renderProject(lead) {
   const appointmentAssigneeControl = liveProfiles
     ? `<label>Assigned to<select name="assignedTo">${assignmentOptionsHtml(liveProfiles, "")}</select></label>`
     : `<label>Assigned to<select name="assignedTo" disabled title="The team member list is unavailable; assignment is disabled until Refresh">${assignmentUnavailableOptionsHtml(null)}</select></label>`;
+  const survey = surveyReadiness({ appointments:liveAppointments, requestId:lead.id });
+  const assessmentRequired = Boolean(lead.assessment_required);
+  const assessmentControl = demo ? "" : `<div class="assessment-card"><p>SITE ASSESSMENT</p><b>${assessmentRequired ? (survey.completed ? "Complete" : survey.booked ? "Booked" : "Required") : "Not required"}</b><span>${assessmentRequired ? (survey.completed ? "Assessment complete. A formal quote may now be issued." : "Complete a booked site survey before issuing the formal quote.") : "This enquiry can use the fast path to quote if the supplied brief is sufficient."}</span><button type="button" class="outline" data-assessment-toggle="${esc(lead.id)}" data-required="${assessmentRequired ? "true" : "false"}">${assessmentRequired ? "Assessment not required" : "Require site assessment"}</button></div>`;
   const liveControls = demo ? "" : `<details class="record-form"><summary>Create formal quote draft</summary><form id="quoteDraft" data-request-id="${esc(lead.id)}"><label>Scope<textarea name="scope" required maxlength="12000" rows="3" placeholder="What is included in the media wall build?"></textarea></label><label>Subtotal (£)<input name="subtotal" type="number" min="0" step="0.01" required></label><label>Tax rate (%)<input name="taxRate" type="number" min="0" max="100" step="0.01" value="0" required></label><label>Valid until<input name="validUntil" type="date"></label><small>Rates require your business tax decision. Saving creates a draft only; it does not send a quote.</small><button>Create draft quote</button></form></details><details class="record-form"><summary>Schedule a real appointment</summary><form id="appointmentDraft" data-request-id="${esc(lead.id)}"><label>Appointment type<select name="kind"><option value="survey">Site survey</option><option value="installation">Installation</option></select></label><label>Starts<input name="startsAt" type="datetime-local" required></label><label>Ends<input name="endsAt" type="datetime-local" required></label><label>Location<input name="location" maxlength="240" value="${esc(lead.postcode)}"></label>${appointmentAssigneeControl}<button>Save appointment</button><small>Saved bookings reserve this time and are checked against holiday/closed blocks. The app does not send a customer confirmation.</small></form></details><details class="record-form"><summary>Schedule a follow-up</summary><form id="followUpDraft" data-request-id="${esc(lead.id)}"><label>Task<input name="title" required maxlength="160" value="Follow up ${esc(lead.customer_name)}"></label><label>Due<input name="dueAt" type="datetime-local" required></label><button>Save follow-up</button></form></details>`;
   const customerActions = `<div class="customer-actions">${lead.email ? `<a class="outline" href="mailto:${encodeURIComponent(lead.email)}?subject=${encodeURIComponent(`Form & Frame enquiry ${lead.reference}`)}">Reply by email</a>` : ""}${lead.phone ? `<a class="outline" href="tel:${encodeURIComponent(String(lead.phone).replace(/[^+\d]/g, ""))}">Call customer</a>` : ""}</div>`;
   const editBrief = demo ? "" : `<details class="record-form"><summary>Edit customer enquiry details</summary><form id="enquiryEdit" data-request-id="${esc(lead.id)}"><label>Customer name<input name="customerName" value="${esc(lead.customer_name)}" minlength="2" maxlength="120" required></label><label>Email<input name="email" type="email" value="${esc(lead.email || "")}" maxlength="254"></label><label>Phone<input name="phone" type="tel" value="${esc(lead.phone || "")}" maxlength="60"></label><label>Postcode<input name="postcode" value="${esc(lead.postcode)}" maxlength="24" required></label><label>Wall size / dimensions<input name="wallWidth" value="${esc(lead.wall_width || "")}" maxlength="120"></label><label>Customer brief<textarea name="message" maxlength="4000" rows="4">${esc(lead.message || "")}</textarea></label><button>Save enquiry changes</button><small>Updates the customer record only. The website guide price is not a formal quote.</small></form></details>`;
-  $("projectPanel").innerHTML = `<p>PROJECT BRIEF</p><h2>${esc(p.title)}</h2>${customerActions}<details class="record-form"><summary>Customer contact &amp; brief</summary><div class="project-spec"><b>${esc(lead.customer_name)}</b><br>${esc(lead.email || "No email provided")} · ${esc(lead.phone || "No phone provided")}<br>${esc(lead.postcode)} · ${esc(lead.wall_width || "Dimensions not provided")}<br>${esc(lead.message || "No customer note.")}</div></details>${editBrief}<img src="${esc(p.image)}" alt="Proposed finish reference for ${esc(p.title)}"><div class="project-spec"><b>${esc(p.location)}</b><br>${esc(p.geometry)}<br>${esc(p.system)}</div><p>MATERIAL PALETTE</p><div class="material-row" title="${esc(p.materialLabel)}">${p.materials.map(colour => `<i class="material" style="--c:${colour}"></i>`).join("")}</div><small>${esc(p.materialLabel)}</small><div class="mini-plan" aria-label="Indicative media wall elevation"></div>${finance}<button id="confirmVisit" data-id="${esc(lead.id)}">Mark visit status confirmed</button><small class="project-note">This updates the enquiry status only; it does not reserve a calendar slot.</small>${liveControls}`;
+  $("projectPanel").innerHTML = `<p>PROJECT BRIEF</p><h2>${esc(p.title)}</h2>${customerActions}<details class="record-form"><summary>Customer contact &amp; brief</summary><div class="project-spec"><b>${esc(lead.customer_name)}</b><br>${esc(lead.email || "No email provided")} · ${esc(lead.phone || "No phone provided")}<br>${esc(lead.postcode)} · ${esc(lead.wall_width || "Dimensions not provided")}<br>${esc(lead.message || "No customer note.")}</div></details>${editBrief}<img src="${esc(p.image)}" alt="Proposed finish reference for ${esc(p.title)}"><div class="project-spec"><b>${esc(p.location)}</b><br>${esc(p.geometry)}<br>${esc(p.system)}</div><p>MATERIAL PALETTE</p><div class="material-row" title="${esc(p.materialLabel)}">${p.materials.map(colour => `<i class="material" style="--c:${colour}"></i>`).join("")}</div><small>${esc(p.materialLabel)}</small><div class="mini-plan" aria-label="Indicative media wall elevation"></div>${assessmentControl}${finance}<button id="confirmVisit" data-id="${esc(lead.id)}">Mark visit status confirmed</button><small class="project-note">This updates the enquiry status only; it does not reserve a calendar slot.</small>${liveControls}`;
 }
 
 const moneyPence = pence => new Intl.NumberFormat("en-GB", { style:"currency", currency:"GBP" }).format(Number(pence || 0) / 100);
@@ -669,6 +673,15 @@ $("projectPanel").addEventListener("click", async event => {
   if (button.isConnected) button.disabled = false;
 });
 
+$("projectPanel").addEventListener("click", async event => {
+  const button = event.target.closest("button[data-assessment-toggle]");
+  if (!button || demo) return;
+  const id = button.dataset.assessmentToggle, required = button.dataset.required !== "true";
+  button.disabled = true;
+  await saveLive(() => db.from("consultation_requests").update({ assessment_required:required }).eq("id", id).select("id").maybeSingle(), required ? "Site assessment required before quote." : "Site assessment gate removed; this enquiry can use the fast quote path.");
+  if (button.isConnected) button.disabled = false;
+});
+
 $("projectPanel").addEventListener("submit", async event => {
   const form = event.target;
   if (!(form instanceof HTMLFormElement)) return;
@@ -681,6 +694,12 @@ $("projectPanel").addEventListener("submit", async event => {
   const button = form.querySelector("button[type=submit],button:not([type])");
   if (button) button.disabled = true;
   if (form.id === "quoteDraft") {
+    const lead = liveLeads.find(item => item.id === requestId);
+    if (lead && !canIssueQuote({ assessmentRequired:Boolean(lead.assessment_required), appointments:liveAppointments, requestId })) {
+      showNotice("Complete the required site assessment before creating the formal quote.", "warning");
+      if (button) button.disabled = false;
+      return;
+    }
     const subtotalPence = poundsToPence(fields.get("subtotal"));
     const tax = calculateTax(subtotalPence, fields.get("taxRate"));
     if (subtotalPence === null || !tax) {

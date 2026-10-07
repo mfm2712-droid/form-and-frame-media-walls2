@@ -122,3 +122,9 @@ The existing enquiry `request_status` values are `new`, `reviewing`, `date_reque
 - Keep each enquiry's status, preferred dates and confirmed bookings factually distinct. A confirmed status alone is not a calendar reservation.
 - Test with fictional records until the specific project and exact customer data flow have been authorised.
 - Web Push permission is requested only after a signed-in staff member presses the opt-in button. Push delivery remains best-effort; the saved enquiry and in-app list are the source of truth.
+
+## Optional site assessment gate
+
+Anthony's workflow feedback is implemented as an optional gate rather than forcing every enquiry through a visit. Staff can mark an enquiry as requiring a site assessment. When required, a formal quote cannot be created or issued until a real `survey` appointment for that enquiry is completed. Simple jobs can leave the gate off and move directly to a quote. Accepted formal quotes continue to be the only source for creating build work orders.
+
+Company email routing stays deliberately simple: `enquiries@formandframe.co.uk` is the shared operational inbox, while `anthony@formandframe.co.uk` is intended for invoices, payments and commercial correspondence. A Thiago mailbox can be added later without changing the workflow.

@@ -159,3 +159,5 @@
 @media(max-width:760px){.today-actions{grid-column:2;grid-row:2 / span 2;flex-direction:column;align-self:center}}
 
 .customer-actions{display:flex;gap:8px;margin:8px 0 12px}.customer-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--green);font:500 10px "DM Mono",monospace;text-decoration:none}.customer-actions a:hover,.customer-actions a:focus-visible{border-color:var(--green);outline:2px solid color-mix(in srgb,var(--green) 25%,transparent);outline-offset:2px}
+
+.assessment-card{margin:18px 0;padding:16px;border:1px solid var(--line);display:grid;gap:7px;background:rgba(255,255,255,.34)}.assessment-card>p{margin:0}.assessment-card>b{font-family:"Playfair Display",serif;font-size:20px}.assessment-card>span{font-size:12px;line-height:1.5;color:var(--muted)}.assessment-card button{justify-self:start;margin-top:4px}
