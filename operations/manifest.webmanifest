@@ -22,6 +22,12 @@
       "purpose": "any maskable"
     },
     {
+      "src": "./notification-badge-ff.png?v=20261016e",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "monochrome"
+    },
+    {
       "src": "./icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
