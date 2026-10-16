@@ -14,7 +14,7 @@
 </head>
 <body data-mobile-view="today">
   <main class="app">
-    <aside class="sidebar"><a class="brand" href="../index.html">FORM <b>&amp;</b><br>FRAME</a><span class="rule"></span><nav><a class="active" href="#desk">▦ <span>Operations</span></a><a href="#leads">◌ <span>New enquiries</span></a><a href="#availability">□ <span>Availability</span></a></nav><div class="side-drawing"></div><a class="round" href="../index.html">F&amp;F</a></aside>
+    <aside class="sidebar"><a class="brand" href="../index.html">FORM <b>&amp;</b><br>FRAME</a><span class="rule"></span><nav aria-label="Sections"><a class="active" href="#desk">▦ <span>Today</span></a><a href="#leads">◌ <span>Enquiries</span></a><a href="#availability">□ <span>Calendar</span></a><a href="#business">£ <span>Money</span></a></nav><div class="side-drawing"></div><a class="round" href="../index.html">F&amp;F</a></aside>
 <section id="setup" class="login"><p>STAFF ACCESS</p><h1>Form &amp; Frame<br>operations.</h1><span id="setupCopy">Enter your work email for a secure sign-in link.</span><form id="login"><input id="email" type="email" placeholder="name@company.co.uk" required><button>Send secure link</button></form><small id="loginMsg" role="status" aria-live="polite"></small><div id="accessActions" hidden><button id="retryAccess" type="button" class="outline">Retry access</button><button id="accessSignOut" type="button" class="outline">Sign out</button></div></section>
     <section id="hub" class="desk" hidden>
       <header><div><p>FORM &amp; FRAME · OWNER DESK <span id="demoTag" hidden>DEMO DATA</span></p><h1>Owner Desk</h1></div><div class="header-actions"><span id="liveDate"></span><button id="enablePush" class="outline" type="button" aria-label="Enable push alerts">Enable push alerts</button><button id="refresh" class="outline">Refresh</button><button id="signOut" class="outline">Sign out</button></div></header>
@@ -32,6 +32,7 @@
       </section>
     </section>
   </main>
+  <section id="workspace" class="workspace" aria-label="Enquiry workspace" hidden><div id="workspaceBody" class="ws"></div></section>
   <nav class="mobile-nav" aria-label="Main navigation" hidden>
     <button type="button" data-mobile-view="today" aria-current="page"><span aria-hidden="true">⌂</span><span>Today</span></button>
     <button type="button" data-mobile-view="work"><span aria-hidden="true">▤</span><span>Work</span></button>

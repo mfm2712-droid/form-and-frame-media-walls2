@@ -1,6 +1,6 @@
 export const PIPELINE_STAGES = [
   { label: "New enquiry", className: "pipeline-new" },
-  { label: "Needs review", className: "pipeline-negotiating" },
+  { label: "Opened", className: "pipeline-negotiating" },
   { label: "Visit requested", className: "pipeline-visit" },
   { label: "Visit marked confirmed", className: "pipeline-visit" },
   { label: "Quote sent", className: "pipeline-quote" },

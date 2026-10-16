@@ -44,6 +44,8 @@ jobs:
           node --check operations/invoice-document.mjs
           node --check operations/availability-list.mjs
           node --check operations/quote-readiness.mjs
+          node --check operations/enquiry-workspace.mjs
+          node --check operations/enquiry-workspace-view.mjs
           node --check scripts/public-config.mjs
           node --check scripts/build-public.mjs
           node --check scripts/check-public-build.mjs
