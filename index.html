@@ -393,7 +393,9 @@
   .coverage b{color:var(--frame);font-weight:600}
   .form{border:1px solid var(--frame);background:var(--paper-3);padding:24px;box-shadow:6px 6px 0 var(--shadow)}
   .form .row{margin-bottom:16px}
-  .form .visit-window{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .form .visit-window{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .form .visit-window>*{min-width:0}
+  @media(max-width:560px){.form .visit-window{grid-template-columns:minmax(0,1fr)}}
   .form .visit-window label{margin:0 0 6px}
   .form .visit-window input{min-width:0}
   .form .hint{display:block;margin-top:7px;color:var(--pencil);font-size:12px;line-height:1.5}
@@ -460,7 +462,8 @@
     .hero{grid-template-columns:1fr;gap:34px}
     .cfg{grid-template-columns:1fr}
     .cfg-controls{border-right:none;border-bottom:1px solid var(--frame)}
-    .contact{grid-template-columns:1fr;gap:32px}
+    .contact{grid-template-columns:minmax(0,1fr);gap:32px}
+    .contact>*{min-width:0}
     .steps{grid-template-columns:1fr 1fr}
     .works{grid-template-columns:1fr}
     .navlinks{display:none}
@@ -537,7 +540,8 @@
   .deck[data-view="mobile"] .cfg{grid-template-columns:1fr}
   .deck[data-view="mobile"] .cfg-controls{border-right:none;border-bottom:1px solid var(--frame);max-height:none;overflow:visible}
   .deck[data-view="mobile"] .cfg-draw{min-height:clamp(340px,56vh,500px)}
-  .deck[data-view="mobile"] .contact{grid-template-columns:1fr;gap:30px}
+  .deck[data-view="mobile"] .contact{grid-template-columns:minmax(0,1fr);gap:30px}
+  .deck[data-view="mobile"] .contact>*{min-width:0}
   .deck[data-view="mobile"] .steps{grid-template-columns:1fr}
   .deck[data-view="mobile"] .works{grid-template-columns:1fr}
   .deck[data-view="mobile"] .mosaic{grid-template-columns:1fr}

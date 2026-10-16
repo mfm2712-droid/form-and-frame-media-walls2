@@ -43,6 +43,7 @@ jobs:
           node --check operations/push-target.mjs
           node --check operations/invoice-document.mjs
           node --check operations/availability-list.mjs
+          node --check operations/quote-readiness.mjs
           node --check scripts/public-config.mjs
           node --check scripts/build-public.mjs
           node --check scripts/check-public-build.mjs
@@ -64,11 +65,13 @@ jobs:
           fi
 
       - name: Build the public site with fictional configuration
-        run: node scripts/build-public.mjs
+        run: |
+          b64() { printf '%s' "$1" | base64 -w0 | tr '+/' '-_' | tr -d '='; }
+          export FF_PUBLIC_SUPABASE_ANON_KEY="$(b64 '{"alg":"HS256","typ":"JWT"}').$(b64 '{"role":"anon","ref":"otqzhocismdjbvvsjnpe"}').$(b64 fictional-signature)"
+          node scripts/build-public.mjs
         env:
           VERCEL_ENV: production
           FF_PUBLIC_SUPABASE_URL: https://otqzhocismdjbvvsjnpe.supabase.co
-          FF_PUBLIC_SUPABASE_ANON_KEY: public-test-key-only
 
       - name: Verify public build contents
         run: node scripts/check-public-build.mjs
