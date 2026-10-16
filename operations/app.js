@@ -517,7 +517,7 @@ async function startLive() {
       $("pushHelp").textContent = pushSetupMessage({ ios, installed, secure:window.isSecureContext, configured:!!cfg?.vapidPublicKey, supported:pushSupported });
     } else {
       try {
-        const current = await navigator.serviceWorker.register("./service-worker.js?v=ff-icon-3", { scope:"./", updateViaCache:"none" });
+        const current = await navigator.serviceWorker.register("./service-worker.js?v=ff-status-4", { scope:"./", updateViaCache:"none" });
         const existing = await current.pushManager.getSubscription();
         if (existing) {
           const { data:userData } = await db.auth.getUser();
@@ -577,7 +577,7 @@ $("enablePush").addEventListener("click", async buttonEvent => {
   help.hidden = false;
   button.disabled = true;
   try {
-    const registration = await navigator.serviceWorker.register("./service-worker.js?v=ff-icon-3", { scope:"./", updateViaCache:"none" });
+    const registration = await navigator.serviceWorker.register("./service-worker.js?v=ff-status-4", { scope:"./", updateViaCache:"none" });
     let subscription = await registration.pushManager.getSubscription();
     const { data: userResult, error: userError } = await db.auth.getUser();
     if (userError || !userResult.user) throw userError || new Error("Sign in again to manage this device.");

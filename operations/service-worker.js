@@ -5,7 +5,7 @@ self.addEventListener("push", event => {
     await self.registration.showNotification(data.title || "Form & Frame", {
       body:data.body || "There is a new update in the staff desk.",
       tag:data.tag || "form-and-frame-update",
-      icon:"./notification-badge-ff.png",
+      icon:"./icon-192.png",
       badge:"./notification-badge-ff.png",
       data:{ url:data.url || "./" },
       renotify:false
