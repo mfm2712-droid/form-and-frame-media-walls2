@@ -258,3 +258,4 @@ body.ws-open{overflow:hidden}
 body.nc-open{overflow:hidden}
 @media(max-width:760px){.nc{width:100vw;border-left:0}.bell .bell-text{display:none}.bell{min-width:44px;justify-content:center}}
 .nc button,.bell{-webkit-tap-highlight-color:transparent;touch-action:manipulation}.nc{-webkit-user-select:none;user-select:none}.nc-list,.nc-text{-webkit-user-select:text;user-select:text}
+.nc,.nc *{-webkit-tap-highlight-color:transparent}
