@@ -8,6 +8,8 @@ import { PIPELINE_STAGES, isConfirmedVisitStatus, pipelineIndexForStatus } from 
 import { allowedNextStatuses, calculateTax, poundsToPence, taxRateForAmount } from "./workflow.mjs";
 import { isIOSDevice, isInstalledPWA, pushSetupMessage } from "./push-support.mjs";
 import { activityDetailText } from "./activity-label.mjs";
+import { CATEGORIES, visibleNotifications, unreadCount, unreadForRequest, normalisePreferences, deviceState } from "./notification-centre.mjs";
+import { bellLabel, listHtml, preferencesHtml, deviceHtml } from "./notification-view.mjs";
 import { enquiryTargetFromSearch, operationsViewFromSearch } from "./push-target.mjs";
 import { assignmentLabel, assignmentOptionsHtml, assignmentUnavailableOptionsHtml } from "./assignment.mjs";
 import { blockListHtml } from "./availability-list.mjs";
@@ -462,6 +464,7 @@ async function loadLive() {
     renderLeadList();
     if (openFromNotification) { notifiedHandled = true; openWorkspace(notifiedLeadResult.data.id); }
     else refreshWorkspace();
+    void loadNotifications();
     if (!workflowsLoaded) {
       showNotice("Enquiries loaded, but business records could not be fully refreshed. Use Refresh before making further changes.", "warning");
       return false;
@@ -481,7 +484,7 @@ const load = () => demo ? loadDemo() : loadLive();
 function startDemo() {
   demo = true; $("setup").hidden = true; $("hub").hidden = false; $("demoTag").hidden = false; $("signOut").hidden = true;
   document.querySelector(".mobile-nav").hidden = false;
-  $("enablePush").hidden = true;
+  $("enablePush").hidden = true; $("notifBell").hidden = true;
   demoLeads = [
     { id:"d1", reference:"FF-DEMO-1042", customer_name:"Amelia Grant", email:"amelia.grant@example.com", postcode:"SL4 2HT", wall_width:"4.2 m wall", message:"75-inch TV, concealed storage and a linear fire. Tuesday or Thursday survey preferred.", status:"new", source:"project assistant", guide_low:6950, guide_high:8250, created_at:new Date().toISOString(), project:{ title:"Windsor library wall", location:"WINDSOR · SL4 2HT", image:"../assets/cases/burnham-library-after.webp", geometry:"4.2 m wall · 75” recessed TV · 1.2 m linear fire", system:"European oak library wings · warm white LED · fluted lower cabinetry", materials:["#895e3f", "#e6d1a5", "#164138"], materialLabel:"European oak · warm ivory lacquer · forest green accent", materialsCost:3650, equipmentCost:1670, labourCost:2930, total:8250, sampleCosts:true } },
     { id:"d2", reference:"FF-DEMO-1041", customer_name:"Hugo Clarke", phone:"07700 900 441", postcode:"SL1 5QJ", wall_width:"5.8 m wall", message:"Full-width cinema wall with walnut shelving. Room photos attached.", status:"reviewing", source:"website enquiry", guide_low:9800, guide_high:11600, created_at:plusDays(-1).toISOString(), project:{ title:"Slough cinema wall", location:"SLOUGH · SL1 5QJ", image:"../assets/cases/slough-cinema-after.webp", geometry:"5.8 m wall · 85” recessed TV · 1.5 m linear fire", system:"Charcoal lacquer carcasses · smoked bronze display doors · RGB scene lighting", materials:["#242826", "#7c573b", "#c29156"], materialLabel:"Charcoal lacquer · smoked oak · aged bronze", materialsCost:5100, equipmentCost:2280, labourCost:4220, total:11600, sampleCosts:true } },
@@ -519,7 +522,18 @@ async function startLive() {
         if (existing) {
           const { data:userData } = await db.auth.getUser();
           const { data:registration } = await db.from("push_subscriptions").select("id").eq("endpoint", existing.endpoint).eq("user_id", userData?.user?.id).maybeSingle();
-          if (registration) { pushButton.textContent = "Disable push alerts"; pushButton.setAttribute("aria-label", "Disable push alerts"); }
+          // Self-heal: a device that still holds a browser subscription is re-registered
+          // (or refreshed) so alerts keep arriving after a database reset or a long gap.
+          let registered = !!registration;
+          if (Notification.permission === "granted" && userData?.user?.id) {
+            const json = existing.toJSON();
+            const { error:resyncError } = await db.from("push_subscriptions").upsert({
+              user_id:userData.user.id, endpoint:json.endpoint, p256dh:json.keys?.p256dh, auth_secret:json.keys?.auth,
+              user_agent:navigator.userAgent.slice(0, 500), last_seen_at:new Date().toISOString()
+            }, { onConflict:"endpoint" });
+            registered = !resyncError || registered;
+          }
+          if (registered) { pushButton.textContent = "Turn off notifications"; pushButton.setAttribute("aria-label", "Turn off notifications"); }
         }
       } catch (error) {
         console.error("Operations service worker registration failed.", error);
@@ -567,14 +581,14 @@ $("enablePush").addEventListener("click", async buttonEvent => {
     let subscription = await registration.pushManager.getSubscription();
     const { data: userResult, error: userError } = await db.auth.getUser();
     if (userError || !userResult.user) throw userError || new Error("Sign in again to manage this device.");
-    if (button.textContent === "Disable push alerts" && subscription) {
+    if (button.textContent === "Turn off notifications" && subscription) {
       const { data:deleted, error } = await db.from("push_subscriptions").delete().eq("endpoint", subscription.endpoint).eq("user_id", userResult.user.id).select("id").maybeSingle();
       if (error) throw error;
       if (!deleted) throw new Error("This device was not registered with the signed-in account.");
       await subscription.unsubscribe();
-      button.textContent = "Enable push alerts";
-      button.setAttribute("aria-label", "Enable push alerts");
-      help.textContent = "Push alerts are disabled on this device.";
+      button.textContent = "Enable notifications";
+      button.setAttribute("aria-label", "Enable notifications");
+      help.textContent = "Notifications are turned off on this device.";
       button.disabled = false;
       return;
     }
@@ -592,15 +606,190 @@ $("enablePush").addEventListener("click", async buttonEvent => {
     };
     const { error } = await db.from("push_subscriptions").upsert(record, { onConflict:"endpoint" });
     if (error) throw error;
-    button.textContent = "Disable push alerts";
-    button.setAttribute("aria-label", "Disable push alerts");
-    help.textContent = "This device is registered for private new-enquiry alerts. Use this button to turn them off.";
+    button.textContent = "Turn off notifications";
+    button.setAttribute("aria-label", "Turn off notifications");
+    help.textContent = "This device is registered for private alerts. Use this button to turn them off.";
   } catch (error) {
     console.error("Push subscription failed.", error);
     help.textContent = error?.message || "We couldn't enable push on this device. Check browser settings and try again.";
     button.disabled = false;
   }
 });
+
+
+// ---- Notification centre (reads the existing notification_events outbox) ----
+let ncEvents = [], ncReadIds = new Set(), ncPrefs = normalisePreferences(null), ncStoreReady = true, ncUser = null;
+let ncInstallPrompt = null, ncTab = "inbox", ncLoadVersion = 0, ncLoading = Promise.resolve(), ncNoteTimer = null;
+const ncItems = () => visibleNotifications(ncEvents, { userId:ncUser, readIds:ncReadIds, preferences:ncPrefs });
+
+function ncSay(id, message) {
+  const note = $(id);
+  note.textContent = message; note.hidden = !message;
+  if (id === "ncPrefNote" || id === "ncNote") { clearTimeout(ncNoteTimer); if (message && ncStoreReady) ncNoteTimer = setTimeout(() => { note.hidden = true; }, 6000); }
+}
+
+function renderNotifications() {
+  const items = ncItems();
+  const count = unreadCount(items);
+  const bell = $("notifBell"), badge = $("notifBadge");
+  bell.setAttribute("aria-label", bellLabel(count));
+  badge.hidden = count === 0; badge.textContent = count > 99 ? "99+" : String(count);
+  bell.classList.toggle("has-unread", count > 0);
+  const tabCount = $("ncTabCount"); tabCount.hidden = count === 0; tabCount.textContent = String(count);
+  document.title = `${count ? `(${count}) ` : ""}Form & Frame — Staff Access`;
+  try { if (count) navigator.setAppBadge?.(count); else navigator.clearAppBadge?.(); } catch { /* optional */ }
+  $("ncList").innerHTML = listHtml(items);
+  $("ncMarkAll").disabled = count === 0;
+  if (!ncStoreReady) ncSay("ncNote", "Read tracking and preferences need the latest database update. Alerts still arrive on your devices.");
+}
+
+async function loadNotifications() {
+  if (demo || !db) return;
+  const version = ++ncLoadVersion;
+  ncLoading = (async () => {
+    try {
+      const { data:userData } = await db.auth.getUser();
+      ncUser = userData?.user?.id || null;
+      if (!ncUser) return;
+      const [events, reads, prefs] = await Promise.all([
+        db.from("notification_events").select("id, request_id, channel, event_type, payload, created_at")
+          .eq("channel", "push").in("event_type", ["new_enquiry", "workflow_update"]).order("created_at", { ascending:false }).limit(60),
+        db.from("notification_reads").select("event_id").eq("user_id", ncUser).limit(1000),
+        db.from("notification_preferences").select("*").eq("user_id", ncUser).maybeSingle()
+      ]);
+      if (version !== ncLoadVersion) return;
+      if (events.error) throw events.error;
+      ncStoreReady = !reads.error && !prefs.error;
+      ncEvents = events.data || [];
+      ncReadIds = new Set((reads.data || []).map(row => row.event_id));
+      ncPrefs = normalisePreferences(prefs.data);
+    } catch (error) {
+      console.error("Notifications could not be loaded.", error);
+      ncStoreReady = false;
+    }
+    renderNotifications();
+  })();
+  return ncLoading;
+}
+
+async function markNotificationsRead(ids) {
+  ids = [...new Set(ids)].filter(id => !ncReadIds.has(id));
+  if (!ids.length) return;
+  ids.forEach(id => ncReadIds.add(id)); renderNotifications();
+  if (demo || !ncUser) return;
+  const { error } = await db.from("notification_reads").upsert(ids.map(event_id => ({ user_id:ncUser, event_id })), { onConflict:"user_id,event_id", ignoreDuplicates:true });
+  if (error) {
+    console.error("Could not save read state.", error);
+    ids.forEach(id => ncReadIds.delete(id)); ncStoreReady = false; renderNotifications();
+  }
+}
+
+// Looking at a project clears that project's alerts.
+async function markRequestNotificationsRead(requestId) {
+  if (demo || !db) return;
+  await ncLoading;
+  await markNotificationsRead(unreadForRequest(ncItems(), requestId));
+}
+
+async function renderDevicePanel() {
+  const ios = isIOSDevice({ userAgent:navigator.userAgent, platform:navigator.platform, maxTouchPoints:navigator.maxTouchPoints });
+  const android = /Android/i.test(navigator.userAgent);
+  const installed = isInstalledPWA({ displayModeStandalone:window.matchMedia("(display-mode: standalone)").matches, navigatorStandalone:navigator.standalone === true });
+  const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  const device = deviceState({
+    ios, installed, secure:window.isSecureContext, supported, configured:!!cfg?.vapidPublicKey,
+    permission:supported ? Notification.permission : "default",
+    registered:$("enablePush").textContent === "Turn off notifications"
+  });
+  $("ncDevice").innerHTML = deviceHtml(device, { ios, android, installed }, { canInstall:!!ncInstallPrompt && !installed });
+  $("ncPrefs").innerHTML = preferencesHtml(ncPrefs, { disabled:!ncStoreReady });
+}
+
+function setNotificationTab(tab) {
+  ncTab = tab;
+  document.querySelectorAll("[data-nc-tab]").forEach(button => button.setAttribute("aria-selected", String(button.dataset.ncTab === tab)));
+  $("ncInbox").hidden = tab !== "inbox"; $("ncSettings").hidden = tab !== "settings";
+  if (tab === "settings") renderDevicePanel();
+}
+
+function openNotificationPanel(tab = "inbox") {
+  $("notifPanel").hidden = false; $("notifBell").setAttribute("aria-expanded", "true");
+  document.body.classList.add("nc-open");
+  setNotificationTab(tab); void loadNotifications();
+  $("ncClose").focus();
+}
+function closeNotificationPanel() {
+  if ($("notifPanel").hidden) return;
+  $("notifPanel").hidden = true; $("notifBell").setAttribute("aria-expanded", "false");
+  document.body.classList.remove("nc-open");
+  $("notifBell").focus();
+}
+
+async function sendTestNotification() {
+  const note = "ncPrefNote";
+  try {
+    const { data } = await db.auth.getSession();
+    if (!data.session) throw new Error("Sign in again first.");
+    const response = await fetch(`${cfg.supabaseUrl.replace(/\/+$/, "")}/functions/v1/push-new-enquiry`, {
+      method:"POST",
+      headers:{ Authorization:`Bearer ${data.session.access_token}`, apikey:cfg.supabaseAnonKey, "Content-Type":"application/json" },
+      body:JSON.stringify({ test:true })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (response.status === 401) ncSay(note, "The push service did not accept this sign-in. Sign out and back in, then try again.");
+    else if (result.status === "sent") ncSay(note, "Test sent. It should appear on this device within a few seconds, even with the app closed.");
+    else if (result.status === "not_configured") ncSay(note, "The push service is not configured yet: the private VAPID keys are missing in Supabase.");
+    else if (result.status === "no_subscriptions") ncSay(note, "No device is registered for your account yet. Turn notifications on first.");
+    else ncSay(note, "The test could not be delivered. Try again in a minute.");
+  } catch (error) {
+    console.error("Test notification failed.", error);
+    ncSay(note, "The push service could not be reached. Check your connection and that this site is in the service's allowed origins.");
+  }
+}
+
+$("notifBell").addEventListener("click", () => $("notifPanel").hidden ? openNotificationPanel() : closeNotificationPanel());
+$("ncClose").addEventListener("click", closeNotificationPanel);
+$("ncMarkAll").addEventListener("click", () => markNotificationsRead(ncItems().filter(item => item.unread).map(item => item.id)));
+document.addEventListener("keydown", event => { if (event.key === "Escape") closeNotificationPanel(); });
+$("notifPanel").addEventListener("click", async event => {
+  const tab = event.target.closest("[data-nc-tab]");
+  if (tab) { setNotificationTab(tab.dataset.ncTab); return; }
+  const read = event.target.closest("[data-nc-read]");
+  if (read) { await markNotificationsRead([read.dataset.ncRead]); return; }
+  const open = event.target.closest("[data-nc-open]");
+  if (open) {
+    const requestId = open.dataset.ncRequest;
+    await markNotificationsRead([open.dataset.ncOpen]);
+    closeNotificationPanel();
+    if (requestId) {
+      if (leadById(requestId)) { setMobileView("work"); openWorkspace(requestId); }
+      else location.assign(`./?enquiry=${encodeURIComponent(requestId)}`);
+    } else setMobileView(open.dataset.ncView || "today");
+    return;
+  }
+  const action = event.target.closest("[data-nc-device]")?.dataset.ncDevice;
+  if (action === "enable" || action === "disable") $("enablePush").click();
+  else if (action === "test") await sendTestNotification();
+  else if (action === "install" && ncInstallPrompt) { ncInstallPrompt.prompt(); await ncInstallPrompt.userChoice.catch(() => {}); ncInstallPrompt = null; renderDevicePanel(); }
+});
+$("notifPanel").addEventListener("change", async event => {
+  const box = event.target.closest("[data-nc-pref]");
+  if (!box || demo || !ncUser) return;
+  const key = box.dataset.ncPref, previous = ncPrefs[key];
+  ncPrefs = { ...ncPrefs, [key]:box.checked }; renderNotifications();
+  const { error } = await db.from("notification_preferences").upsert({ user_id:ncUser, ...ncPrefs }, { onConflict:"user_id" });
+  if (error) {
+    console.error("Could not save notification preferences.", error);
+    ncPrefs = { ...ncPrefs, [key]:previous }; renderNotifications(); renderDevicePanel();
+    ncSay("ncPrefNote", "Your choice could not be saved. Check your connection and try again.");
+  } else ncSay("ncPrefNote", `${CATEGORIES.find(category => category.key === key)?.label || "Alert"} alerts ${box.checked ? "on" : "off"}.`);
+});
+new MutationObserver(() => { if (!$("notifPanel").hidden && ncTab === "settings") renderDevicePanel(); })
+  .observe($("enablePush"), { childList:true, characterData:true, subtree:true });
+window.addEventListener("beforeinstallprompt", event => { event.preventDefault(); ncInstallPrompt = event; if (!$("notifPanel").hidden) renderDevicePanel(); });
+window.addEventListener("appinstalled", () => { ncInstallPrompt = null; if (!$("notifPanel").hidden) renderDevicePanel(); });
+navigator.serviceWorker?.addEventListener("message", event => { if (event.data?.type === "ff-push-received") { void loadNotifications(); scheduleLiveRefresh(); } });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") void loadNotifications(); });
 
 $("refresh").addEventListener("click", load); $("unblockAll").addEventListener("click", load);
 $("calendarPrev").addEventListener("click", () => { calendarDate = calendarMode === "month" ? new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1) : new Date(calendarDate.getFullYear(), calendarDate.getMonth(), calendarDate.getDate() - 7); refreshCalendar(); });
@@ -714,6 +903,7 @@ async function openWorkspace(id) {
   const lead = leadById(id);
   if (!lead) return;
   selectedId = id; wsOpenId = id; wsDeferred = false;
+  void markRequestNotificationsRead(id);
   document.body.classList.add("ws-open");
   $("workspace").hidden = false;
   $("workspace").scrollTop = 0;

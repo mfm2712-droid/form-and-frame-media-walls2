@@ -46,6 +46,8 @@ jobs:
           node --check operations/quote-readiness.mjs
           node --check operations/enquiry-workspace.mjs
           node --check operations/enquiry-workspace-view.mjs
+          node --check operations/notification-centre.mjs
+          node --check operations/notification-view.mjs
           node --check scripts/public-config.mjs
           node --check scripts/build-public.mjs
           node --check scripts/check-public-build.mjs

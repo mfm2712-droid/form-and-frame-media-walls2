@@ -110,6 +110,8 @@ export function createNotificationRetryHandler({ env, createAdmin, fetcher = fet
                   title:event.payload?.title,
                   body:event.payload?.body,
                   view:event.payload?.view,
+                  category:event.payload?.category || null,
+                  request_id:event.payload?.request_id || null,
                   exclude_user_id:event.payload?.exclude_user_id || null
                 };
               }
