@@ -6,7 +6,6 @@ self.addEventListener("push", event => {
       body:data.body || "There is a new update in the staff desk.",
       tag:data.tag || "form-and-frame-update",
       icon:"./icon-192.png",
-      badge:"./icon.svg",
       data:{ url:data.url || "./" },
       renotify:false
     });
