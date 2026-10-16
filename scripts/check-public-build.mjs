@@ -39,6 +39,10 @@ assert.deepEqual(
 for (const unverifiedClaim of ["VAT at 20%", "VAT @ 20%", " ex VAT", "+ VAT", "INDICATIVE COST ALLOCATION", "INDICATIVE<br>PRO FORMA"]) {
   assert.equal(publicHtml.includes(unverifiedClaim), false, `The public page must not state unverified tax/cost claim: ${unverifiedClaim}`);
 }
+assert.match(publicHtml, /<html lang="en-GB">/, "The public page must declare its language for screen readers and search engines.");
+for (const controlId of ["fWall", "fFinish", "fHandle", "fFire", "fLed", "fPhoto"]) {
+  assert.match(publicHtml, new RegExp(`id="${controlId}"[^>]*aria-label="[^"]+"`), `Configurator control ${controlId} must have an accessible name.`);
+}
 assert.match(publicHtml, /not a quotation, invoice or booking/i, "The customer design summary must be clearly non-binding.");
 assert.match(publicHtml, /any applicable tax treatment/i, "Tax treatment must remain for the written quotation to confirm.");
 assert.match(publicHtml, /id="cWebsite"[^>]*name="company_website"/, "The public enquiry form must include its off-screen honeypot field.");
