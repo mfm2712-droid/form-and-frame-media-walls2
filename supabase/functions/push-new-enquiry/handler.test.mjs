@@ -12,10 +12,10 @@ const env = {
   VAPID_SUBJECT:"mailto:owner@formandframe.co.uk"
 };
 
-function setup({ subscriptions = [], owners = [{ id:"owner-id" }], sendPush = async () => ({ statusCode:201 }), envOverrides = {} } = {}) {
+function setup({ subscriptions = [], owners = [{ id:"owner-id" }], preferences = [], jwtUser = null, sendPush = async () => ({ statusCode:201 }), envOverrides = {} } = {}) {
   const config = { ...env, ...envOverrides };
   const state = { events:[], deleted:[], sent:[] };
-  const admin = { from(table) {
+  const admin = { auth:{ getUser:async token => token === "user-jwt" && jwtUser ? { data:{ user:{ id:jwtUser.id } }, error:null } : { data:{ user:null }, error:{ message:"bad" } } }, from(table) {
     const query = { table, operation:"", record:null, patch:null, filter:null };
     query.select = () => query;
     query.eq = async (column, value) => {
@@ -25,7 +25,8 @@ function setup({ subscriptions = [], owners = [{ id:"owner-id" }], sendPush = as
       return query;
     };
     query.in = async (column, value) => {
-      if (table === "profiles" && column === "role") return { data:owners.filter(owner => value.includes(owner.role || "owner")), error:null };
+      if (table === "profiles" && column === "role") return { data:(jwtUser && !jwtUser.staff ? owners.filter(owner => owner.id !== jwtUser.id) : owners).filter(owner => value.includes(owner.role || "owner")), error:null };
+      if (table === "notification_preferences") return { data:preferences.filter(item => value.includes(item.user_id)), error:null };
       if (table === "push_subscriptions" && query.operation !== "delete") return { data:subscriptions.filter(item => value.includes(item.user_id)), error:null };
       state.deleted.push(...value); return { error:null };
     };
@@ -174,4 +175,80 @@ test("rejects workflow alerts with an external navigation target or missing even
   }));
   assert.equal(bad.status, 422);
   assert.equal(state.sent.length, 0);
+});
+
+const alice = "223e4567-e89b-42d3-a456-426614174000", bob = "323e4567-e89b-42d3-a456-426614174000";
+const twoOwners = [{ id:alice, role:"owner" }, { id:bob, role:"owner" }];
+const twoSubs = [
+  { id:"a", user_id:alice, endpoint:"https://push.example/alice", p256dh:"p", auth_secret:"a" },
+  { id:"b", user_id:bob, endpoint:"https://push.example/bob", p256dh:"p", auth_secret:"a" }
+];
+
+test("a new enquiry alert reaches both owners and opens that enquiry", async () => {
+  const { handler, request, state } = setup({ subscriptions:twoSubs, owners:twoOwners });
+  const result = await (await handler(request())).json();
+  assert.equal(result.status, "sent");
+  assert.deepEqual(state.sent.map(item => item[0].endpoint).sort(), ["https://push.example/alice", "https://push.example/bob"]);
+  assert.equal(JSON.parse(state.sent[0][1]).url, `./?enquiry=${id}`);
+});
+
+test("workflow alerts with an enquiry id deep-link to that enquiry command centre", async () => {
+  const { handler, request, state } = setup({ subscriptions:twoSubs, owners:twoOwners });
+  const result = await (await handler(request(env.PUSH_DISPATCH_TOKEN, {
+    event_id:id, title:"Quotation sent", body:"FF-261005-ABCD · A quotation was recorded as sent.", view:"work",
+    category:"quotations", request_id:"423e4567-e89b-42d3-a456-426614174000", exclude_user_id:alice
+  }))).json();
+  assert.equal(result.status, "sent");
+  assert.equal(state.sent.length, 1);
+  assert.equal(JSON.parse(state.sent[0][1]).url, "./?enquiry=423e4567-e89b-42d3-a456-426614174000");
+});
+
+test("category preferences mute only the person who switched that category off", async () => {
+  const { handler, request, state } = setup({ subscriptions:twoSubs, owners:twoOwners, preferences:[{ user_id:bob, new_enquiries:false }] });
+  const result = await (await handler(request())).json();
+  assert.equal(result.status, "sent");
+  assert.equal(state.sent.length, 1);
+  assert.match(state.sent[0][0].endpoint, /alice/);
+});
+
+test("when everyone has muted a category nothing is sent and it is not retried as a failure", async () => {
+  const { handler, request, state } = setup({ subscriptions:twoSubs, owners:twoOwners, preferences:[{ user_id:alice, new_enquiries:false }, { user_id:bob, new_enquiries:false }] });
+  const result = await (await handler(request())).json();
+  assert.equal(result.status, "no_recipients");
+  assert.equal(state.sent.length, 0);
+});
+
+test("rejects workflow alerts with an unknown category or non-UUID enquiry id", async () => {
+  const { handler, request } = setup({ subscriptions:twoSubs, owners:twoOwners });
+  for (const extra of [{ category:"everything" }, { request_id:"../evil" }]) {
+    const bad = await handler(request(env.PUSH_DISPATCH_TOKEN, { event_id:id, title:"T", body:"B", view:"work", ...extra }));
+    assert.equal(bad.status, 422);
+  }
+});
+
+test("a signed-in staff member can send a generic test alert to their own devices only", async () => {
+  const { handler, request, state } = setup({ subscriptions:twoSubs, owners:twoOwners, jwtUser:{ id:alice, staff:true } });
+  const result = await (await handler(request("user-jwt", { test:true }))).json();
+  assert.equal(result.status, "sent");
+  assert.equal(state.sent.length, 1);
+  assert.match(state.sent[0][0].endpoint, /alice/);
+  assert.equal(JSON.parse(state.sent[0][1]).title, "Test notification");
+});
+
+test("test alerts are refused for non-staff users, bad tokens and non-test bodies", async () => {
+  const outsider = setup({ subscriptions:twoSubs, owners:twoOwners, jwtUser:{ id:alice, staff:false } });
+  assert.equal((await outsider.handler(outsider.request("user-jwt", { test:true }))).status, 401);
+  const bad = setup({ subscriptions:twoSubs, owners:twoOwners, jwtUser:{ id:alice, staff:true } });
+  assert.equal((await bad.handler(bad.request("forged", { test:true }))).status, 401);
+  assert.equal((await bad.handler(bad.request("user-jwt", { request_id:id, reference:"FF-261005-ABCD" }))).status, 401);
+  assert.equal(bad.state.sent.length + outsider.state.sent.length, 0);
+});
+
+test("answers CORS preflight only for allowed origins", async () => {
+  const { handler } = setup({ envOverrides:{ ALLOWED_ORIGINS:"https://form-and-frame.vercel.app" } });
+  const ok = await handler(new Request("https://edge.example.test/push", { method:"OPTIONS", headers:{ origin:"https://form-and-frame.vercel.app" } }));
+  assert.equal(ok.status, 204);
+  assert.equal(ok.headers.get("access-control-allow-origin"), "https://form-and-frame.vercel.app");
+  const no = await handler(new Request("https://edge.example.test/push", { method:"OPTIONS", headers:{ origin:"https://evil.example" } }));
+  assert.equal(no.status, 403);
 });

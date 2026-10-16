@@ -117,7 +117,7 @@ test("retries a workflow push without loading or exposing customer or financial 
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { status:"complete", scanned:1, claimed:1, sent:1, failed:0, skipped:0 });
   assert.deepEqual(JSON.parse(sent.options.body), {
-    event_id:workflowEvent.id, title:"Visit booked", body:"Survey appointment was added to the calendar.", view:"calendar", exclude_user_id:requestId
+    event_id:workflowEvent.id, title:"Visit booked", body:"Survey appointment was added to the calendar.", view:"calendar", category:null, request_id:null, exclude_user_id:requestId
   });
   assert.equal(state.events[0].delivery_status, "sent");
 });

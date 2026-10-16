@@ -7,6 +7,11 @@
   <title>Form &amp; Frame — Staff Access</title>
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon-180.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="F&amp;F Desk">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
@@ -17,7 +22,7 @@
     <aside class="sidebar"><a class="brand" href="../index.html">FORM <b>&amp;</b><br>FRAME</a><span class="rule"></span><nav aria-label="Sections"><a class="active" href="#desk">▦ <span>Today</span></a><a href="#leads">◌ <span>Enquiries</span></a><a href="#availability">□ <span>Calendar</span></a><a href="#business">£ <span>Money</span></a></nav><div class="side-drawing"></div><a class="round" href="../index.html">F&amp;F</a></aside>
 <section id="setup" class="login"><p>STAFF ACCESS</p><h1>Form &amp; Frame<br>operations.</h1><span id="setupCopy">Enter your work email for a secure sign-in link.</span><form id="login"><input id="email" type="email" placeholder="name@company.co.uk" required><button>Send secure link</button></form><small id="loginMsg" role="status" aria-live="polite"></small><div id="accessActions" hidden><button id="retryAccess" type="button" class="outline">Retry access</button><button id="accessSignOut" type="button" class="outline">Sign out</button></div></section>
     <section id="hub" class="desk" hidden>
-      <header><div><p>FORM &amp; FRAME · OWNER DESK <span id="demoTag" hidden>DEMO DATA</span></p><h1>Owner Desk</h1></div><div class="header-actions"><span id="liveDate"></span><button id="enablePush" class="outline" type="button" aria-label="Enable push alerts">Enable push alerts</button><button id="refresh" class="outline">Refresh</button><button id="signOut" class="outline">Sign out</button></div></header>
+      <header><div><p>FORM &amp; FRAME · OWNER DESK <span id="demoTag" hidden>DEMO DATA</span></p><h1>Owner Desk</h1></div><div class="header-actions"><span id="liveDate"></span><button id="notifBell" class="outline bell" type="button" aria-haspopup="dialog" aria-controls="notifPanel" aria-label="Notifications, none unread"><span aria-hidden="true">🔔</span> <span class="bell-text">Alerts</span><b id="notifBadge" class="bell-badge" hidden>0</b></button><button id="enablePush" class="outline" type="button" aria-label="Enable notifications">Enable notifications</button><button id="refresh" class="outline">Refresh</button><button id="signOut" class="outline">Sign out</button></div></header>
       <p id="pushHelp" class="push-help" role="status" aria-live="polite" hidden></p>
       <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
       <section id="todayMoney" class="today-money" aria-label="Recorded financial overview"></section>
@@ -33,6 +38,12 @@
     </section>
   </main>
   <section id="workspace" class="workspace" aria-label="Enquiry workspace" hidden><div id="workspaceBody" class="ws"></div></section>
+  <aside id="notifPanel" class="nc" role="dialog" aria-modal="false" aria-labelledby="ncTitle" hidden>
+    <header class="nc-head"><div><p>FORM &amp; FRAME · ALERTS</p><h2 id="ncTitle">Notifications</h2></div><button type="button" id="ncClose" class="outline" aria-label="Close notifications">Close</button></header>
+    <div class="nc-tabs" role="tablist"><button type="button" role="tab" data-nc-tab="inbox" aria-selected="true">Inbox <b id="ncTabCount" hidden></b></button><button type="button" role="tab" data-nc-tab="settings" aria-selected="false">Settings &amp; install</button></div>
+    <section id="ncInbox" class="nc-body"><div class="nc-toolbar"><button type="button" id="ncMarkAll" class="outline">Mark all read</button></div><p id="ncNote" class="nc-note" role="status" hidden></p><div id="ncList"></div></section>
+    <section id="ncSettings" class="nc-body" hidden><div id="ncDevice"></div><div id="ncPrefs"></div><p id="ncPrefNote" class="nc-note" role="status" hidden></p></section>
+  </aside>
   <nav class="mobile-nav" aria-label="Main navigation" hidden>
     <button type="button" data-mobile-view="today" aria-current="page"><span aria-hidden="true">⌂</span><span>Today</span></button>
     <button type="button" data-mobile-view="work"><span aria-hidden="true">▤</span><span>Work</span></button>
