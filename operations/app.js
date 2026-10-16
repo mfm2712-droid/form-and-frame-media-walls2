@@ -9,7 +9,7 @@ import { allowedNextStatuses, calculateTax, poundsToPence, taxRateForAmount } fr
 import { isIOSDevice, isInstalledPWA, pushSetupMessage } from "./push-support.mjs";
 import { activityDetailText } from "./activity-label.mjs";
 import { CATEGORIES, visibleNotifications, unreadCount, unreadForRequest, normalisePreferences, deviceState } from "./notification-centre.mjs";
-import { bellLabel, listHtml, preferencesHtml, deviceHtml } from "./notification-view.mjs";
+import { bellLabel, listHtml, preferencesHtml, deviceHtml, iconDiagnosticsHtml } from "./notification-view.mjs";
 import { enquiryTargetFromSearch, operationsViewFromSearch } from "./push-target.mjs";
 import { assignmentLabel, assignmentOptionsHtml, assignmentUnavailableOptionsHtml } from "./assignment.mjs";
 import { blockListHtml } from "./availability-list.mjs";
@@ -517,7 +517,7 @@ async function startLive() {
       $("pushHelp").textContent = pushSetupMessage({ ios, installed, secure:window.isSecureContext, configured:!!cfg?.vapidPublicKey, supported:pushSupported });
     } else {
       try {
-        const current = await navigator.serviceWorker.register("./service-worker.js?v=ff-lumi-badge-5", { scope:"./", updateViaCache:"none" });
+        const current = await navigator.serviceWorker.register("./service-worker.js", { scope:"./", updateViaCache:"none" });
         const existing = await current.pushManager.getSubscription();
         if (existing) {
           const { data:userData } = await db.auth.getUser();
@@ -577,7 +577,7 @@ $("enablePush").addEventListener("click", async buttonEvent => {
   help.hidden = false;
   button.disabled = true;
   try {
-    const registration = await navigator.serviceWorker.register("./service-worker.js?v=ff-lumi-badge-5", { scope:"./", updateViaCache:"none" });
+    const registration = await navigator.serviceWorker.register("./service-worker.js", { scope:"./", updateViaCache:"none" });
     let subscription = await registration.pushManager.getSubscription();
     const { data: userResult, error: userError } = await db.auth.getUser();
     if (userError || !userResult.user) throw userError || new Error("Sign in again to manage this device.");
@@ -691,6 +691,26 @@ async function markRequestNotificationsRead(requestId) {
   await markNotificationsRead(unreadForRequest(ncItems(), requestId));
 }
 
+
+// Asks the running notification worker which version and icons it uses.
+async function readWorkerInfo() {
+  try {
+    const registration = await navigator.serviceWorker.getRegistration("./");
+    const active = registration?.active;
+    if (!active) return null;
+    return await new Promise(resolve => {
+      const channel = new MessageChannel();
+      const timer = setTimeout(() => resolve(null), 1500);
+      channel.port1.onmessage = event => { clearTimeout(timer); resolve(event.data); };
+      active.postMessage({ type:"ff-worker-version" }, [channel.port2]);
+    });
+  } catch { return null; }
+}
+async function renderIconDiagnostics(installed) {
+  const worker = await readWorkerInfo();
+  $("ncIcon").innerHTML = iconDiagnosticsHtml({ installed, worker, badgeUrl:worker?.badge || "./notification-badge-ff.png" });
+}
+
 async function renderDevicePanel() {
   const ios = isIOSDevice({ userAgent:navigator.userAgent, platform:navigator.platform, maxTouchPoints:navigator.maxTouchPoints });
   const android = /Android/i.test(navigator.userAgent);
@@ -702,6 +722,8 @@ async function renderDevicePanel() {
     registered:$("enablePush").textContent === "Turn off notifications"
   });
   $("ncDevice").innerHTML = deviceHtml(device, { ios, android, installed }, { canInstall:!!ncInstallPrompt && !installed });
+  if (android || !ios) renderIconDiagnostics(installed);
+  else $("ncIcon").innerHTML = "";
   $("ncPrefs").innerHTML = preferencesHtml(ncPrefs, { disabled:!ncStoreReady });
 }
 
@@ -770,6 +792,11 @@ $("notifPanel").addEventListener("click", async event => {
   const action = event.target.closest("[data-nc-device]")?.dataset.ncDevice;
   if (action === "enable" || action === "disable") $("enablePush").click();
   else if (action === "test") await sendTestNotification();
+  else if (action === "update-worker") {
+    try { const registration = await navigator.serviceWorker.register("./service-worker.js", { scope:"./", updateViaCache:"none" }); await registration.update(); ncSay("ncPrefNote", "Alert worker updated."); }
+    catch { ncSay("ncPrefNote", "The alert worker could not be updated. Check your connection."); }
+    renderDevicePanel();
+  }
   else if (action === "install" && ncInstallPrompt) { ncInstallPrompt.prompt(); await ncInstallPrompt.userChoice.catch(() => {}); ncInstallPrompt = null; renderDevicePanel(); }
 });
 $("notifPanel").addEventListener("change", async event => {

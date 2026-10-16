@@ -64,7 +64,7 @@ test("a notification can never open a page outside the staff app", async () => {
   assert.deepEqual(calls.filter(call => call[0] === "open"), [["open", "https://staff.example.test/operations/"]]);
 });
 
-test("a push shows the generic text it was sent, badges the app and nudges open windows", async () => {
+test("a push shows the generic text it was sent, with the FF status-bar badge and the brand logo, and nudges open windows", async () => {
   const messages = [];
   const { handlers, calls } = loadWorker({ shown:[{}], windows:[{ postMessage:message => messages.push(message) }] });
   let done;
@@ -74,6 +74,8 @@ test("a push shows the generic text it was sent, badges the app and nudges open 
   assert.equal(shown[1], "New Form & Frame enquiry");
   assert.equal(shown[2].data.url, "./?enquiry=1");
   assert.equal(shown[2].tag, "enquiry-1");
-  assert.deepEqual(calls.find(call => call[0] === "badge"), ["badge", 1]);
+  assert.match(shown[2].badge, /^\.\/notification-badge-ff\.png/);
+  assert.equal(shown[2].icon, "./icon-192.png");
+  assert.equal(calls.some(call => call[0] === "badge" || call[0] === "clear"), false, "the worker no longer touches the app-icon counter; the open window does");
   assert.equal(messages.length, 1); assert.equal(messages[0].type, "ff-push-received");
 });

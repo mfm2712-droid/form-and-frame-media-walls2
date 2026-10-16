@@ -35,3 +35,14 @@ export function deviceHtml(device, guideOptions, { canInstall = false } = {}) {
     <details class="nc-guide" ${device.key === "install" || device.key === "off" ? "open" : ""}><summary>How to install on ${esc(guide.title)}</summary><ol>${guide.steps.map(step => `<li>${esc(step)}</li>`).join("")}</ol></details>
     <p class="nc-privacy">Alerts show only the enquiry reference and a short status. Customer contact details and money amounts are never sent to your lock screen.</p></div>`;
 }
+
+// Explains where Android's tiny status-bar icon comes from and shows what this build sends.
+export function iconDiagnosticsHtml({ installed = false, worker = null, badgeUrl = "" } = {}) {
+  const state = worker ? `Alert worker ${esc(worker.version)} is running` : "Alert worker not running yet (open Settings again after a moment)";
+  return `<details class="nc-guide nc-icon"><summary>Status-bar icon (Android)</summary>
+    <p class="nc-icon-demo"><span class="nc-chip" aria-hidden="true"><i class="nc-mask" style="--mask:url('${esc(badgeUrl)}')"></i></span><span>This is the white FF that Android should show in the top status bar.</span></p>
+    <p class="nc-state nc-${worker ? "on" : "off"}"><span>Worker</span><b>${state}</b></p>
+    <p class="nc-state nc-${installed ? "on" : "off"}"><span>Opened as</span><b>${installed ? "Installed app" : "Browser tab"}</b></p>
+    <p class="nc-privacy">Android draws that tiny icon from the <b>installed app's own packaged icon</b>, which it fixes when the app is installed and refreshes on its own schedule. After an icon change, a phone can keep showing a white square until the app is updated. To force it now: remove Form &amp; Frame from the home screen, open the site in Chrome, and install it again.</p>
+    <div class="nc-actions"><button type="button" class="outline" data-nc-device="update-worker">Update alert worker now</button></div></details>`;
+}

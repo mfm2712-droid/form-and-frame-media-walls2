@@ -1,4 +1,4 @@
-import { cp, mkdir, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { resolvePublicConfig } from "./public-config.mjs";
 
@@ -16,6 +16,19 @@ const operationsOutput = resolve(output, "operations");
 await mkdir(operationsOutput, { recursive: true });
 for (const file of ["index.html", "app.js", "styles.css", "today-view.mjs", "project-model.mjs", "mutation-result.mjs", "datetime-local.mjs", "pipeline.mjs", "workflow.mjs", "push-support.mjs", "activity-label.mjs", "assignment.mjs", "availability-list.mjs", "push-target.mjs", "invoice-document.mjs", "payment-idempotency.mjs", "quote-readiness.mjs", "enquiry-workspace.mjs", "enquiry-workspace-view.mjs", "staff-access.mjs", "calendar-records.mjs", "business-records.mjs", "service-worker.js", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "icon-180.png", "notification-badge-ff.png", "notification-centre.mjs", "notification-view.mjs"]) {
   await cp(resolve(root, "operations", file), resolve(operationsOutput, file));
+}
+// Every icon the manifest or the service worker names must ship. Deriving the
+// list (instead of remembering it) prevents a notification icon from being
+// left out of a deployment again.
+const operationsManifest = JSON.parse(await readFile(resolve(root, "operations/manifest.webmanifest"), "utf8"));
+const operationsWorker = await readFile(resolve(root, "operations/service-worker.js"), "utf8");
+const referencedAssets = new Set([
+  ...operationsManifest.icons.map(icon => icon.src),
+  ...[...operationsWorker.matchAll(/const NOTIFICATION_(?:ICON|BADGE) = "([^"]+)"/g)].map(match => match[1])
+].map(src => src.split("?")[0].replace(/^\.\//, "")));
+for (const asset of referencedAssets) {
+  if (asset.includes("/") || asset.includes("..")) throw new Error(`Unexpected icon path ${asset}`);
+  await cp(resolve(root, "operations", asset), resolve(operationsOutput, asset));
 }
 
 await writeFile(resolve(output, "public-config.js"), `window.FF_PUBLIC_CONFIG = Object.freeze(${JSON.stringify({

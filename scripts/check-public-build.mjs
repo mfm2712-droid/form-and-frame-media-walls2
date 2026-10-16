@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile, readdir, stat } from "node:fs/promises";
 import { resolve } from "node:path";
+import { badgeReport, readPng } from "./png-info.mjs";
 
 const root = resolve("dist/public");
 const rootEntries = new Set(await readdir(root));
@@ -77,5 +78,22 @@ for (const entry of ["app.js", ...(await readdir(resolve(root, "operations"))).f
 }
 assert.match(operationsHtml, /id="workspace"/, "The enquiry workspace container must be deployed.");
 
+
+// Android status-bar icon: the manifest and the service worker must point at files that were
+// really deployed, and the badge must be a transparent white mask (an opaque one renders as a white square).
+const deployedManifest = JSON.parse(await readFile(resolve(root, "operations/manifest.webmanifest"), "utf8"));
+const deployedWorker = await readFile(resolve(root, "operations/service-worker.js"), "utf8");
+for (const icon of deployedManifest.icons) {
+  const path = resolve(root, "operations", icon.src.split("?")[0].replace(/^\.\//, ""));
+  assert.equal((await stat(path)).isFile(), true, `Manifest icon ${icon.src} must be deployed.`);
+}
+const workerBadge = /const NOTIFICATION_BADGE = "([^"]+)"/.exec(deployedWorker)?.[1];
+assert.ok(workerBadge, "The service worker must declare its notification badge.");
+assert.ok(deployedManifest.icons.some(icon => icon.purpose === "monochrome" && icon.src === workerBadge), "The manifest must declare the worker's badge as a monochrome icon.");
+for (const icon of deployedManifest.icons.filter(icon => icon.purpose === "monochrome")) {
+  const report = badgeReport(readPng(await readFile(resolve(root, "operations", icon.src.split("?")[0].replace(/^\.\//, "")))));
+  assert.ok(report.hasAlphaChannel && report.transparentShare > 0.5 && report.nonWhiteVisiblePixels === 0 && report.edgeVisiblePixels === 0,
+    `Deployed monochrome icon ${icon.src} must be a transparent white mask, not an opaque image.`);
+}
 
 console.log(`Verified public build root: ${[...rootEntries].sort().join(", ")}`);
