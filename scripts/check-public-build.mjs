@@ -68,5 +68,14 @@ for (const forbiddenSecretName of ["SUPABASE_SERVICE_ROLE_KEY", "VAPID_PRIVATE_K
 }
 const operationsHtml = await readFile(resolve(root, "operations/index.html"), "utf8");
 assert.match(operationsHtml, /Send secure link/, "Operations requires staff sign-in.");
+// Every relative module the staff app imports must actually be deployed (a missing one breaks sign-in).
+for (const entry of ["app.js", ...(await readdir(resolve(root, "operations"))).filter(name => name.endsWith(".mjs"))]) {
+  const source = await readFile(resolve(root, "operations", entry), "utf8");
+  for (const match of source.matchAll(/from\s+"\.\/([A-Za-z0-9._-]+\.mjs)"/g)) {
+    assert.equal((await stat(resolve(root, "operations", match[1]))).isFile(), true, `operations/${entry} imports ${match[1]}, which must be deployed.`);
+  }
+}
+assert.match(operationsHtml, /id="workspace"/, "The enquiry workspace container must be deployed.");
+
 
 console.log(`Verified public build root: ${[...rootEntries].sort().join(", ")}`);

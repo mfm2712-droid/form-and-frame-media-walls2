@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
 import { canIssueQuote, surveyReadiness } from "./quote-readiness.mjs";
-import { getLocalDayBounds, getTodayAgenda, nextAction, relevantDate } from "./today-view.mjs";
+import { getLocalDayBounds, getTodayAgenda, relevantDate } from "./today-view.mjs";
 import { buildFinanceSummary, buildProjectModel } from "./project-model.mjs";
 import { requirePersistedRow } from "./mutation-result.mjs";
 import { toLocalDateTimeInputValue } from "./datetime-local.mjs";
@@ -16,6 +16,8 @@ import { clearPaymentRecordingKey, getPaymentRecordingKey, paymentMatchesIntent 
 import { checkStaffAccess, staffAccessMessage } from "./staff-access.mjs";
 import { calendarWindow, loadCalendarRecords } from "./calendar-records.mjs";
 import { loadBusinessRows } from "./business-records.mjs";
+import { nextJobStep, recommendedAction, relatedRecords, statusBadge, workflowSteps } from "./enquiry-workspace.mjs";
+import { badgeHtml, renderWorkspaceHtml } from "./enquiry-workspace-view.mjs";
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value || "").replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
@@ -31,6 +33,7 @@ let invoiceSettings = null, currentStaffRole = null;
 let calendarMode = "month", calendarDate = new Date();
 let liveRefreshTimer = null, liveChannel = null;
 let calendarBlocks = [], calendarAppointments = [], calendarLoadVersion = 0;
+let wsOpenId = null, wsExtras = { activity:[], photos:[] }, wsExtrasFor = null, wsDeferred = false, currentItems = [], legacyToolsHtml = "", notifiedHandled = false;
 
 function setMobileView(view) {
   document.body.dataset.mobileView = view;
@@ -124,7 +127,10 @@ function renderProject(lead) {
   const liveControls = demo ? "" : `<details class="record-form"><summary>Create formal quote draft</summary><form id="quoteDraft" data-request-id="${esc(lead.id)}"><label>Scope<textarea name="scope" required maxlength="12000" rows="3" placeholder="What is included in the media wall build?"></textarea></label><label>Subtotal (£)<input name="subtotal" type="number" min="0" step="0.01" required></label><label>Tax rate (%)<input name="taxRate" type="number" min="0" max="100" step="0.01" value="0" required></label><label>Valid until<input name="validUntil" type="date"></label><small>Rates require your business tax decision. Saving creates a draft only; it does not send a quote.</small><button>Create draft quote</button></form></details><details class="record-form"><summary>Schedule a real appointment</summary><form id="appointmentDraft" data-request-id="${esc(lead.id)}"><label>Appointment type<select name="kind"><option value="survey">Site survey</option><option value="installation">Installation</option></select></label><label>Starts<input name="startsAt" type="datetime-local" required></label><label>Ends<input name="endsAt" type="datetime-local" required></label><label>Location<input name="location" maxlength="240" value="${esc(lead.postcode)}"></label>${appointmentAssigneeControl}<button>Save appointment</button><small>Saved bookings reserve this time and are checked against holiday/closed blocks. The app does not send a customer confirmation.</small></form></details><details class="record-form"><summary>Schedule a follow-up</summary><form id="followUpDraft" data-request-id="${esc(lead.id)}"><label>Task<input name="title" required maxlength="160" value="Follow up ${esc(lead.customer_name)}"></label><label>Due<input name="dueAt" type="datetime-local" required></label><button>Save follow-up</button></form></details>`;
   const customerActions = `<div class="customer-actions">${lead.email ? `<a class="outline" href="mailto:${encodeURIComponent(lead.email)}?subject=${encodeURIComponent(`Form & Frame enquiry ${lead.reference}`)}">Reply by email</a>` : ""}${lead.phone ? `<a class="outline" href="tel:${encodeURIComponent(String(lead.phone).replace(/[^+\d]/g, ""))}">Call customer</a>` : ""}</div>`;
   const editBrief = demo ? "" : `<details class="record-form"><summary>Edit customer enquiry details</summary><form id="enquiryEdit" data-request-id="${esc(lead.id)}"><label>Customer name<input name="customerName" value="${esc(lead.customer_name)}" minlength="2" maxlength="120" required></label><label>Email<input name="email" type="email" value="${esc(lead.email || "")}" maxlength="254"></label><label>Phone<input name="phone" type="tel" value="${esc(lead.phone || "")}" maxlength="60"></label><label>Postcode<input name="postcode" value="${esc(lead.postcode)}" maxlength="24" required></label><label>Wall size / dimensions<input name="wallWidth" value="${esc(lead.wall_width || "")}" maxlength="120"></label><label>Customer brief<textarea name="message" maxlength="4000" rows="4">${esc(lead.message || "")}</textarea></label><button>Save enquiry changes</button><small>Updates the customer record only. The website guide price is not a formal quote.</small></form></details>`;
-  $("projectPanel").innerHTML = `<p>PROJECT BRIEF</p><h2>${esc(p.title)}</h2>${customerActions}<details class="record-form"><summary>Customer contact &amp; brief</summary><div class="project-spec"><b>${esc(lead.customer_name)}</b><br>${esc(lead.email || "No email provided")} · ${esc(lead.phone || "No phone provided")}<br>${esc(lead.postcode)} · ${esc(lead.wall_width || "Dimensions not provided")}<br>${esc(lead.message || "No customer note.")}</div></details>${editBrief}<img src="${esc(p.image)}" alt="Proposed finish reference for ${esc(p.title)}"><div class="project-spec"><b>${esc(p.location)}</b><br>${esc(p.geometry)}<br>${esc(p.system)}</div><p>MATERIAL PALETTE</p><div class="material-row" title="${esc(p.materialLabel)}">${p.materials.map(colour => `<i class="material" style="--c:${colour}"></i>`).join("")}</div><small>${esc(p.materialLabel)}</small><div class="mini-plan" aria-label="Indicative media wall elevation"></div>${assessmentControl}${finance}<button id="confirmVisit" data-id="${esc(lead.id)}">Mark visit status confirmed</button><small class="project-note">This updates the enquiry status only; it does not reserve a calendar slot.</small>${liveControls}`;
+  const quoteFormless = liveControls.replace(/<details class="record-form"><summary>Create formal quote draft<\/summary>[\s\S]*?<\/form><\/details>/, "").replace('<details class="record-form"><summary>Schedule a real appointment', '<details class="record-form" id="wsAppointment"><summary>Schedule a real appointment');
+  legacyToolsHtml = `${editBrief}${assessmentControl}<div class="ws-visit"><button id="confirmVisit" data-id="${esc(lead.id)}">Mark visit status confirmed</button><small class="project-note">This updates the enquiry status only; it does not reserve a calendar slot.</small></div>${quoteFormless}`;
+  const rel = relatedFor(lead), badge = statusBadge(lead, rel), action = recommendedAction(lead, rel);
+  $("projectPanel").innerHTML = `<p>SELECTED ENQUIRY</p><h2>${esc(lead.customer_name)}</h2>${badgeHtml(badge, esc)}<div class="project-spec"><b>${esc(lead.reference)}</b><br>${esc(p.location)}<br>${esc(p.geometry)}</div><section class="ws-next ws-next-mini"><p>NEXT STEP</p><h3>${esc(action.label)}</h3><small>${esc(action.hint)}</small></section><button type="button" class="ws-primary ws-open-wide" data-open-workspace="${esc(lead.id)}">${badge.key === "new" ? "Open this enquiry" : "Open project workspace"}</button>${finance}${customerActions}`;
 }
 
 const moneyPence = pence => new Intl.NumberFormat("en-GB", { style:"currency", currency:"GBP" }).format(Number(pence || 0) / 100);
@@ -209,7 +215,7 @@ async function loadWorkflows() {
     const [quotes, workOrders, appointments, invoices, invoiceRecords, followUps, activity] = await Promise.all([
       loadBusinessRows(db, "quotes", "created_at"),
       loadBusinessRows(db, "work_orders", "created_at"),
-      db.from("appointments").select("*").gt("ends_at", todayStart.toISOString()).lt("starts_at", plusDays(365, 0).toISOString()).order("starts_at").limit(500),
+      db.from("appointments").select("*").lt("starts_at", plusDays(365, 0).toISOString()).or(`ends_at.gt.${todayStart.toISOString()},status.eq.completed`).order("starts_at").limit(500),
       loadBusinessRows(db, "invoice_balances", "due_date", true),
       loadBusinessRows(db, "invoices", "created_at"),
       db.from("follow_up_tasks").select("*").is("completed_at", null).is("cancelled_at", null).lte("due_at", tomorrowStart.toISOString()).order("due_at").limit(100),
@@ -256,6 +262,15 @@ async function loadWorkflows() {
   }
 }
 
+const relatedFor = lead => relatedRecords(lead, { quotes:liveQuotes, workOrders:liveWorkOrders, appointments:liveAppointments, invoices:liveInvoices });
+function renderLeadList() {
+  const items = currentItems;
+  $("leadList").innerHTML = items.length ? items.map(lead => {
+    const rel = relatedFor(lead), badge = statusBadge(lead, rel), action = recommendedAction(lead, rel);
+    const fresh = badge.key === "new";
+    return `<article class="lead lead-${esc(badge.tone)} ${lead.id === selectedId ? "selected" : ""} ${fresh ? "unopened" : ""}" data-lead-id="${esc(lead.id)}"><div class="lead-top"><div><h3>${esc(lead.customer_name)} <small>· ${esc(lead.reference)}</small></h3><p>${esc(lead.postcode)} · ${esc(lead.email || lead.phone)} · ${esc(lead.wall_width)}</p></div><div class="lead-side">${badgeHtml(badge, esc)}<button type="button" class="ws-open ${fresh ? "ws-primary" : "outline"}" data-open-workspace="${esc(lead.id)}">${fresh ? "Open" : "View"}</button></div></div><p>${esc(lead.message || "No customer note.")}</p><small>${format(lead.created_at)} · ${esc(lead.source)} · guide ${money(lead.guide_low)}–${money(lead.guide_high)}</small><small class="lead-next">Next: ${esc(action.label)}</small></article>`;
+  }).join("") : `<p class="empty">No enquiries yet. New website, chat and booking requests will appear here.</p>`;
+}
 function render(items, blocks, statsItems = items) {
   const allStatuses = ["new","reviewing","date_requested","confirmed","quoted","won","lost","archived"];
   const pipelineCounts = PIPELINE_STAGES.map((_, i) => statsItems.filter(item => pipelineIndexForStatus(item.status) === i).length);
@@ -263,7 +278,8 @@ function render(items, blocks, statsItems = items) {
   if (!items.some(item => item.id === selectedId)) selectedId = items[0]?.id || null;
   renderToday(items);
   liveBlocks = blocks;
-  $("leadList").innerHTML = items.length ? items.map(lead => `<article class="lead ${lead.id === selectedId ? "selected" : ""}" data-lead-id="${esc(lead.id)}"><div class="lead-top"><div><h3>${esc(lead.customer_name)} <small>· ${esc(lead.reference)}</small></h3><p>${esc(lead.postcode)} · ${esc(lead.email || lead.phone)} · ${esc(lead.wall_width)}</p></div><select data-id="${esc(lead.id)}" class="status" aria-label="Status for ${esc(lead.customer_name)}">${allStatuses.map(status => `<option value="${status}" ${lead.status === status ? "selected" : ""}>${status.replace("_", " ")}</option>`).join("")}</select></div><p>${esc(lead.message || "No customer note.")}</p><small>${format(lead.created_at)} · ${esc(lead.source)} · guide ${money(lead.guide_low)}–${money(lead.guide_high)}</small></article>`).join("") : `<p class="empty">No enquiries yet. New website, chat and booking requests will appear here.</p>`;
+  currentItems = items;
+  renderLeadList();
   if (demo) renderCalendar(blocks);
   if (items.length) renderProject(items.find(item => item.id === selectedId));
   else $("projectPanel").innerHTML = `<p>PROJECT BRIEF</p><h2>Select an enquiry</h2><p class="empty">A selected enquiry will show its customer brief and website guide range. Actual job costs, quotes and invoices appear only when recorded.</p>`;
@@ -291,14 +307,10 @@ function renderToday(items) {
   // Only real scheduled follow-up tasks are shown after the business workflow records load.
 
   const enquiryRows = todayNewEnquiries.map(lead => {
-    const na = nextAction(lead.status);
     const rd = relevantDate(lead);
     const dateStr = rd ? ` · ${rd}` : "";
     const timeStr = new Date(lead.created_at).toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit" });
-    const pIdx = pipelineIndexForStatus(lead.status);
-    const stage = pIdx >= 0 ? PIPELINE_STAGES[pIdx] : null;
-    const pipelineBadge = stage ? `<span class="pipeline-badge ${stage.className}">${stage.label}</span>` : "";
-    return `<article class="today-item" data-lead-id="${esc(lead.id)}"><div class="today-meta"><b>${esc(lead.customer_name)} <small>· ${esc(lead.reference)}</small></b><span>${timeStr} · ${esc(lead.postcode)}</span></div><span class="today-status">${esc(lead.status.replaceAll("_", " "))}</span><span class="today-action">${na}${dateStr}</span>${pipelineBadge}<button class="outline" data-open-enquiry="${esc(lead.id)}" aria-label="Open enquiry for ${esc(lead.customer_name)}">Open</button></article>`;
+    return `<article class="today-item" data-lead-id="${esc(lead.id)}"><div class="today-meta"><b>${esc(lead.customer_name)} <small>· ${esc(lead.reference)}</small></b><span>${timeStr} · ${esc(lead.postcode)}</span></div>${badgeHtml(statusBadge(lead, relatedFor(lead)), esc)}<span class="today-action">Next: ${esc(recommendedAction(lead, relatedFor(lead)).label)}</span><button class="outline" data-open-enquiry="${esc(lead.id)}" aria-label="Open enquiry for ${esc(lead.customer_name)}">${lead.status === "new" ? "Open" : "View"}</button></article>`;
   }).join("");
   $("todayEnquiries").innerHTML = enquiryRows || `<p class="today-empty">No enquiries received today.</p>`;
 
@@ -309,23 +321,22 @@ function renderToday(items) {
     const timing = sameDay
       ? `${startsAt.toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit" })}–${endsAt.toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit" })}`
       : `${startsAt.toLocaleString("en-GB", { weekday:"short", day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}–${endsAt.toLocaleString("en-GB", { weekday:"short", day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}`;
-    const na = nextAction(lead.status);
     const rd = relevantDate(lead);
     const dateStr = rd ? ` · ${rd}` : "";
     const timingStr = isConfirmed ? "Visit status confirmed · calendar slot not reserved" : "Preferred visit window · not booked";
-    return `<article class="today-item" data-lead-id="${esc(lead.id)}"><div class="today-meta"><b>${esc(lead.customer_name)} <small>· ${esc(lead.reference)}</small></b><span>${timing} · ${esc(lead.postcode)}</span></div><span class="today-status">${esc(lead.status.replaceAll("_", " "))}</span><span class="today-action">${na}${dateStr}</span><span class="today-visit-state">${timingStr}</span><button class="outline" data-open-enquiry="${esc(lead.id)}" aria-label="Open enquiry for ${esc(lead.customer_name)}">Open</button></article>`;
+    return `<article class="today-item" data-lead-id="${esc(lead.id)}"><div class="today-meta"><b>${esc(lead.customer_name)} <small>· ${esc(lead.reference)}</small></b><span>${timing} · ${esc(lead.postcode)}</span></div>${badgeHtml(statusBadge(lead, relatedFor(lead)), esc)}<span class="today-action">Next: ${esc(recommendedAction(lead, relatedFor(lead)).label)}</span><span class="today-visit-state">${timingStr}</span><button class="outline" data-open-enquiry="${esc(lead.id)}" aria-label="Open enquiry for ${esc(lead.customer_name)}">View</button></article>`;
   }).join("");
   $("todayVisits").innerHTML = visitRows || `<p class="today-empty">No preferred visit windows today.</p>`;
 
   // New sections placeholders
   $("todayAppointments").innerHTML = todayAppointments.length ? todayAppointments.map(a => `<article class="today-item"><div class="today-meta"><b>${esc(a.customer_name)}</b><span>Visit window requested · ${esc(a.postcode)}</span></div><span class="today-status">Not booked</span></article>`).join("") : `<p class="today-empty">Booked appointments appear here once the business calendar is connected.</p>`;
-  $("todayReplies").innerHTML = repliesToday.length ? repliesToday.map(r => `<article class="today-item"><div class="today-meta"><b>${esc(r.customer_name)}</b><span>New enquiry · ${esc(r.postcode)}</span></div><span class="today-status">Reply / assign</span></article>`).join("") : `<p class="today-empty">No new enquiries received today. Follow-up due dates are not tracked yet.</p>`;
+  $("todayReplies").innerHTML = repliesToday.length ? repliesToday.map(r => `<article class="today-item"><div class="today-meta"><b>${esc(r.customer_name)}</b><span>${esc(r.postcode)}</span></div>${badgeHtml(statusBadge(r, relatedFor(r)), esc)}<button class="outline" data-open-enquiry="${esc(r.id)}" aria-label="Open enquiry for ${esc(r.customer_name)}">${r.status === "new" ? "Open" : "View"}</button></article>`).join("") : `<p class="today-empty">No new enquiries received today. Follow-up due dates are not tracked yet.</p>`;
   $("todayPayments").innerHTML = `<p class="today-empty">Scheduled follow-ups appear here once the workflow database is ready.</p>`;
   $("todayBlockers").innerHTML = `<p class="today-empty">Build deadlines appear here once the workflow database is ready.</p>`;
 }
 
 function setBlockDefaults() { $("blockStart").value = local(plusDays(2, 8)); $("blockEnd").value = local(plusDays(3, 18)); $("liveDate").textContent = new Intl.DateTimeFormat("en-GB", { weekday:"long", day:"numeric", month:"long" }).format(new Date()); $("todayDateLabel").textContent = new Intl.DateTimeFormat("en-GB", { weekday:"short", day:"numeric", month:"short" }).format(new Date()).toUpperCase(); }
-function loadDemo() { render(demoLeads, demoBlocks); loadWorkflows(); }
+function loadDemo() { render(demoLeads, demoBlocks); loadWorkflows(); refreshWorkspace(); }
 async function loadInvoiceSettings() {
   const status = $("invoiceSetupStatus");
   $("invoiceSettings").hidden = currentStaffRole !== "owner";
@@ -441,13 +452,16 @@ async function loadLive() {
     const todayLeads = todayLeadResult.data || [];
     const visitLeads = visitLeadResult.data || [];
     liveLeads = [...new Map([...recentLeads, ...todayLeads, ...visitLeads, ...(notifiedLeadResult.data ? [notifiedLeadResult.data] : [])].map(lead => [lead.id, lead])).values()];
+    const openFromNotification = Boolean(notifiedLeadResult.data) && !notifiedHandled;
     if (notifiedLeadResult.data) {
       selectedId = notifiedLeadResult.data.id;
       setMobileView("work");
     }
     render(liveLeads, blockResult.data || [], recentLeads);
-    if (notifiedLeadResult.data) document.querySelector(`[data-lead-id="${CSS.escape(notifiedLeadResult.data.id)}"]`)?.scrollIntoView({ behavior:"smooth", block:"center" });
     const workflowsLoaded = await loadWorkflows();
+    renderLeadList();
+    if (openFromNotification) { notifiedHandled = true; openWorkspace(notifiedLeadResult.data.id); }
+    else refreshWorkspace();
     if (!workflowsLoaded) {
       showNotice("Enquiries loaded, but business records could not be fully refreshed. Use Refresh before making further changes.", "warning");
       return false;
@@ -599,12 +613,197 @@ const openTodayEnquiry = async event => {
   if (!button) return;
   selectedId = button.dataset.openEnquiry;
   await load();
-  document.querySelector(`[data-lead-id="${CSS.escape(selectedId)}"]`)?.scrollIntoView({ behavior:"smooth", block:"center" });
+  openWorkspace(selectedId);
 };
+// ---- Enquiry workspace -------------------------------------------------------
+// The workspace reuses the existing record handlers: forms keep their ids/classes and
+// the delegated listeners below are bound to both the legacy panels and the workspace.
+const dualBus = (element, accept) => ({
+  addEventListener(type, handler) {
+    element.addEventListener(type, handler);
+    $("workspace").addEventListener(type, event => { if (type !== "submit" || accept(event.target)) handler(event); });
+  }
+});
+const panelBus = dualBus($("projectPanel"), form => !form.matches?.(".invoiceDraft,.paymentDraft,#invoiceSettingsForm"));
+const businessBus = dualBus($("business"), form => Boolean(form.matches?.(".invoiceDraft,.paymentDraft")));
+const leadById = id => (demo ? demoLeads : liveLeads).find(item => item.id === id);
+const isTextField = element => Boolean(element?.matches?.("input,textarea,select"));
+
+function updateQuoteTotal() {
+  const form = $("quoteDraft"), output = $("wsQuoteTotal");
+  if (!form || !output) return;
+  const subtotal = poundsToPence(form.elements.subtotal.value), tax = calculateTax(subtotal, form.elements.taxRate.value);
+  output.textContent = subtotal === null || !tax ? "Enter a subtotal and tax rate to see the total." : `Total ${moneyPence(tax.totalPence)} (tax ${moneyPence(tax.taxPence)})`;
+}
+
+function paintPhotos() {
+  const box = $("wsPhotos");
+  if (!box || demo) return;
+  if (wsExtrasFor !== wsOpenId) return;
+  box.innerHTML = wsExtras.photos.length
+    ? wsExtras.photos.map(photo => photo.url ? `<a href="${esc(photo.url)}" target="_blank" rel="noopener noreferrer"><img src="${esc(photo.url)}" alt="${esc(photo.name)}" loading="lazy"></a>` : `<span class="ws-empty">${esc(photo.name)} (not an image)</span>`).join("")
+    : `<p class="ws-empty">No photographs were uploaded with this enquiry.</p>`;
+}
+
+async function loadWorkspaceExtras(lead) {
+  if (demo || !db) return;
+  const rel = relatedFor(lead);
+  const ids = [lead.id, ...rel.quotes.map(item => item.id), ...rel.jobs.map(item => item.id), ...rel.appointments.map(item => item.id), ...rel.invoices.map(item => item.id)];
+  try {
+    const [activity, uploads] = await Promise.all([
+      db.from("workflow_activity").select("*").in("entity_id", ids).order("created_at", { ascending:false }).limit(30),
+      db.from("request_uploads").select("*").eq("request_id", lead.id).order("created_at", { ascending:false }).limit(12)
+    ]);
+    if (activity.error) throw activity.error;
+    if (uploads.error) throw uploads.error;
+    const photos = [];
+    for (const file of uploads.data || []) {
+      if (!/^image\//.test(file.mime_type)) { photos.push({ name:file.file_name, url:null }); continue; }
+      const signed = await db.storage.from("project-uploads").createSignedUrl(file.storage_path, 600);
+      photos.push({ name:file.file_name, url:signed.data?.signedUrl || null });
+    }
+    if (wsOpenId !== lead.id) return;
+    const next = { activity:activity.data || [], photos };
+    const same = wsExtrasFor === lead.id
+      && JSON.stringify(next.activity.map(item => item.id)) === JSON.stringify(wsExtras.activity.map(item => item.id))
+      && JSON.stringify(next.photos.map(item => item.name)) === JSON.stringify(wsExtras.photos.map(item => item.name));
+    wsExtras = next; wsExtrasFor = lead.id;
+    if (same) paintPhotos(); else refreshWorkspace();
+  } catch (error) {
+    console.error("Enquiry history could not be loaded.", error);
+  }
+}
+
+function refreshWorkspace(force = false) {
+  if (!wsOpenId) return;
+  const lead = leadById(wsOpenId);
+  if (!lead) { closeWorkspace(); return; }
+  const root = $("workspace");
+  if (!force && root.contains(document.activeElement) && isTextField(document.activeElement)) { wsDeferred = true; return; }
+  wsDeferred = false;
+  renderProject(lead);
+  const rel = relatedFor(lead);
+  const quoteAllowed = canIssueQuote({ assessmentRequired:Boolean(lead.assessment_required), appointments:liveAppointments, requestId:lead.id });
+  const accepted = rel.quote?.status === "accepted" ? rel.quote : null;
+  const today = new Date(), due = new Date(today); due.setDate(due.getDate() + 14);
+  const invoiceDefaults = accepted && rel.job ? { billName:lead.customer_name || "", subtotal:(Number(accepted.subtotal_pence) / 100).toFixed(2), tax:(Number(accepted.tax_pence) / 100).toFixed(2), issueDate:local(today).slice(0, 10), dueDate:local(due).slice(0, 10) } : null;
+  const wasOpen = ["wsQuoteEditor", "wsInvoiceEditor"].filter(id => $(id)?.open);
+  const moreOpen = document.querySelector(".ws-more")?.open;
+  $("workspaceBody").innerHTML = renderWorkspaceHtml({
+    lead, rel, steps:workflowSteps(lead, rel), badge:statusBadge(lead, rel), action:recommendedAction(lead, rel, { quoteAllowed }),
+    esc, moneyPence, format, legacyTools:legacyToolsHtml, demo, quoteAllowed, invoiceDefaults, today,
+    activity:wsExtrasFor === lead.id ? wsExtras.activity : [], activityText:activityDetailText
+  });
+  for (const id of wasOpen) if ($(id)) $(id).open = true;
+  if (moreOpen && document.querySelector(".ws-more")) document.querySelector(".ws-more").open = true;
+  updateQuoteTotal();
+  paintPhotos();
+  loadWorkspaceExtras(lead);
+}
+
+function closeWorkspace() {
+  const id = wsOpenId;
+  wsOpenId = null; wsDeferred = false;
+  $("workspace").hidden = true;
+  document.body.classList.remove("ws-open");
+  renderLeadList();
+  if (id) document.querySelector(`[data-lead-id="${CSS.escape(id)}"]`)?.scrollIntoView({ block:"center" });
+}
+
+async function openWorkspace(id) {
+  const lead = leadById(id);
+  if (!lead) return;
+  selectedId = id; wsOpenId = id; wsDeferred = false;
+  document.body.classList.add("ws-open");
+  $("workspace").hidden = false;
+  $("workspace").scrollTop = 0;
+  if (lead.status !== "new") { refreshWorkspace(true); return; }
+  // Opening a brand-new enquiry is saved to the database so every staff device sees it as handled.
+  lead.status = "reviewing";
+  refreshWorkspace(true);
+  renderLeadList();
+  if (demo) { loadDemo(); return; }
+  const result = await db.from("consultation_requests").update({ status:"reviewing" }).eq("id", id).eq("status", "new").select("id").maybeSingle();
+  if (result.error) {
+    lead.status = "new";
+    console.error("Could not save the opened state.", result.error);
+    showNotice("We couldn't save that this enquiry was opened, so it still shows as new on other devices. Try again.");
+    renderLeadList(); refreshWorkspace(true);
+    return;
+  }
+  await loadLive();
+}
+
+$("workspace").addEventListener("input", event => { if (event.target.closest("#quoteDraft")) updateQuoteTotal(); });
+$("workspace").addEventListener("focusout", () => {
+  if (!wsDeferred) return;
+  setTimeout(() => { if (!(isTextField(document.activeElement) && $("workspace").contains(document.activeElement))) refreshWorkspace(); }, 0);
+});
+
+$("workspace").addEventListener("click", async event => {
+  const button = event.target.closest("[data-ws-action]");
+  if (!button) return;
+  const action = button.dataset.wsAction, id = button.dataset.id, value = button.dataset.value;
+  const reveal = (element, selector) => {
+    if (!element) return;
+    element.open = true;
+    element.scrollIntoView({ behavior:"smooth", block:"start" });
+    setTimeout(() => element.querySelector(selector)?.focus({ preventScroll:true }), 250);
+  };
+  if (action === "back") return closeWorkspace();
+  if (action === "open-now") return openWorkspace(wsOpenId);
+  if (action === "quote-editor") return reveal($("wsQuoteEditor"), "[name=subtotal]");
+  if (action === "invoice-form") return reveal($("wsInvoiceEditor"), "[name=billAddress]");
+  if (action === "appointment-form") { const more = document.querySelector(".ws-more"); if (more) more.open = true; return reveal($("wsAppointment"), "[name=startsAt]"); }
+  if (action === "payment-form") { const form = document.querySelector(".ws-pay"); form?.scrollIntoView({ behavior:"smooth", block:"center" }); form?.querySelector("input")?.focus({ preventScroll:true }); return; }
+  if (demo) return showNotice("Demo mode does not save business records.", "warning");
+  const lead = leadById(wsOpenId);
+  if (!lead) return;
+  const confirmText = {
+    "quote-status:sent":"Record this quotation as sent?\n\nSend it to the customer yourself first. Form & Frame does not email customers.",
+    "quote-status:accepted":"Record that the customer accepted this quotation?\n\nAccepted quotations are locked.",
+    "quote-status:rejected":"Record that the customer declined this quotation?",
+    "invoice-status:sent":"Record this invoice as issued?\n\nIssue it to the customer yourself. Form & Frame does not email invoices, and sent invoices are locked.",
+    "job-status:completed":"Mark this job as completed?"
+  }[`${action}:${value}`];
+  if (confirmText && !window.confirm(confirmText)) return;
+  const now = new Date().toISOString();
+  let run, message;
+  if (action === "quote-status") {
+    const patch = { status:value };
+    if (value === "sent") patch.sent_at = now;
+    if (value === "accepted") patch.accepted_at = now;
+    const early = ["new", "reviewing", "date_requested", "confirmed"].includes(lead.status);
+    const requestStatus = value === "sent" && early ? "quoted" : value === "accepted" && !["archived", "lost"].includes(lead.status) ? "won" : null;
+    run = async () => {
+      const result = await db.from("quotes").update(patch).eq("id", id).select("id").maybeSingle();
+      requirePersistedRow(result);
+      return requestStatus ? db.from("consultation_requests").update({ status:requestStatus }).eq("id", lead.id).select("id").maybeSingle() : result;
+    };
+    message = value === "sent" ? "Quotation recorded as sent. No email was sent." : value === "accepted" ? "Customer acceptance recorded." : "Quotation marked as declined.";
+  } else if (action === "invoice-status") {
+    run = () => db.from("invoices").update({ status:value, sent_at:now }).eq("id", id).select("id").maybeSingle();
+    message = "Invoice recorded as sent. No email was sent.";
+  } else if (action === "job-status") {
+    const job = liveWorkOrders.find(item => item.id === id);
+    if (!job || nextJobStep(job.status)?.status !== value) return showNotice("Refresh before changing this job.", "warning");
+    const patch = { status:value };
+    if (value === "in_progress" && !job.actual_started_at) patch.actual_started_at = now;
+    if (value === "completed") patch.completed_at = now;
+    run = () => db.from("work_orders").update(patch).eq("id", id).select("id").maybeSingle();
+    message = "Job status updated.";
+  } else return;
+  button.disabled = true;
+  await saveLive(run, message);
+  if (button.isConnected) button.disabled = false;
+});
+
 $("todayEnquiries").addEventListener("click", openTodayEnquiry);
 $("todayVisits").addEventListener("click", openTodayEnquiry);
-$("leadList").addEventListener("click", event => { if (event.target.closest("select")) return; const card = event.target.closest("[data-lead-id]"); if (!card) return; selectedId = card.dataset.leadId; load(); });
-$("leadList").addEventListener("change", async event => {
+$("todayReplies").addEventListener("click", openTodayEnquiry);
+$("leadList").addEventListener("click", event => { const card = event.target.closest("[data-lead-id]"); if (!card) return; openWorkspace(card.dataset.leadId); });
+$("projectPanel").addEventListener("click", event => { const button = event.target.closest("[data-open-workspace]"); if (button) openWorkspace(button.dataset.openWorkspace); });
+document.addEventListener("change", async event => {
   if (!event.target.matches(".status")) return;
   const select = event.target, id = select.dataset.id;
   if (demo) {
@@ -664,7 +863,7 @@ $("blockList").addEventListener("click", async event => {
   const button = event.target.closest("button[data-id]");
   if (button) await removeAvailabilityBlock(button);
 });
-$("projectPanel").addEventListener("click", async event => {
+panelBus.addEventListener("click", async event => {
   const button = event.target.closest("#confirmVisit"), id = button?.dataset.id;
   if (!id) return;
   if (demo) { const lead = demoLeads.find(item => item.id === id); if (lead) lead.status = "confirmed"; loadDemo(); return; }
@@ -673,7 +872,7 @@ $("projectPanel").addEventListener("click", async event => {
   if (button.isConnected) button.disabled = false;
 });
 
-$("projectPanel").addEventListener("click", async event => {
+panelBus.addEventListener("click", async event => {
   const button = event.target.closest("button[data-assessment-toggle]");
   if (!button || demo) return;
   const id = button.dataset.assessmentToggle, required = button.dataset.required !== "true";
@@ -682,7 +881,7 @@ $("projectPanel").addEventListener("click", async event => {
   if (button.isConnected) button.disabled = false;
 });
 
-$("projectPanel").addEventListener("submit", async event => {
+panelBus.addEventListener("submit", async event => {
   const form = event.target;
   if (!(form instanceof HTMLFormElement)) return;
   event.preventDefault();
@@ -829,7 +1028,7 @@ $("business").addEventListener("change", async event => {
   }
 });
 
-$("business").addEventListener("click", async event => {
+businessBus.addEventListener("click", async event => {
   const printInvoice = event.target.closest("button[data-print-invoice]");
   if (printInvoice) {
     const balance = liveInvoices.find(invoice => invoice.id === printInvoice.dataset.printInvoice);
@@ -881,7 +1080,7 @@ $("business").addEventListener("click", async event => {
   await saveLive(() => db.from("work_orders").insert({ request_id:enquiry.id, accepted_quote_id:quote.id, work_order_number:number, title, agreed_total_pence:quote.total_pence, created_by:userResult.data.user.id }).select("id").single(), "Accepted quote converted into a build job.");
 });
 
-$("business").addEventListener("submit", async event => {
+businessBus.addEventListener("submit", async event => {
   const form = event.target;
   if (!(form instanceof HTMLFormElement)) return;
   event.preventDefault();

@@ -4,7 +4,7 @@ import { PIPELINE_STAGES, isConfirmedVisitStatus, isQuoteFollowUp, pipelineIndex
 
 test("pipeline keeps stored enquiry statuses distinct and accurately labelled", () => {
   assert.deepEqual(["new", "reviewing", "date_requested", "confirmed", "quoted", "won"].map(pipelineIndexForStatus), [0, 1, 2, 3, 4, 5]);
-  assert.deepEqual(PIPELINE_STAGES.map(stage => stage.label), ["New enquiry", "Needs review", "Visit requested", "Visit marked confirmed", "Quote sent", "Accepted job"]);
+  assert.deepEqual(PIPELINE_STAGES.map(stage => stage.label), ["New enquiry", "Opened", "Visit requested", "Visit marked confirmed", "Quote sent", "Accepted job"]);
   assert.equal(pipelineIndexForStatus("lost"), -1);
   assert.equal(pipelineIndexForStatus("archived"), -1);
   assert.equal(pipelineIndexForStatus("unexpected"), -1);
