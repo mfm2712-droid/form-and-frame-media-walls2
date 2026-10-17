@@ -1,0 +1,12 @@
+8	audit/final-production-audit-2026-10-17	dc91257	exit=0	tests=186	pass=186	fail=0	skipped=0
+19	frame/17-master-docs	02454b7	exit=0	tests=187	pass=187	fail=0	skipped=0
+20	frame/16-auth-tests	5a19506	exit=0	tests=197	pass=197	fail=0	skipped=0
+22	frame/13-notifications	53c6818	exit=0	tests=201	pass=196	fail=0	skipped=5
+23	frame/9-permissions	c54324f	exit=0	tests=200	pass=189	fail=0	skipped=11
+25	frame/18-stripe-design	3040772	exit=0	tests=186	pass=186	fail=0	skipped=0
+26	frame/12-public-site-main	53c70c8	exit=0	tests=189	pass=189	fail=0	skipped=0
+27	frame/10-csp-sri-main	806e1c2	exit=0	tests=193	pass=193	fail=0	skipped=0
+41	frame/15-server-numbering	e07dfd4	exit=0	tests=199	pass=193	fail=0	skipped=6
+42	frame/28-role-gating	161d0f7	exit=0	tests=213	pass=213	fail=0	skipped=0
+43	frame/14-payment-reversals	1e269ae	exit=0	tests=200	pass=192	fail=0	skipped=8
+done

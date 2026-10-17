@@ -1,0 +1,19 @@
+v24.22.0
+== tests
+exit 0
+== node --check
+check lines=29 fail=0
+== inline scripts
+index.html: parsed 1 inline JavaScript block(s)
+operations/index.html: parsed 0 inline JavaScript block(s)
+exit 0
+== build must fail w/o config
+OK failed as expected
+
+Node.js v24.22.0
+== fictional build
+Built the public website and authenticated staff app shell into dist/public. Server-side data and secrets were excluded.
+exit 0
+== check build
+Verified public build root: assets, index.html, operations, public-config.js
+exit 0

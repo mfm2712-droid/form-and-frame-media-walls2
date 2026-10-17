@@ -1,0 +1,14 @@
+FORM_AND_FRAME_LIVE_MASTER v1.0.0
+Commit analysed: 31a08f6ee1fa507d4f78c30ede78c4b1fda746a4
+
+This folder is a static site: open index.html, or serve the folder with any static file server.
+It makes no network requests and sets a restrictive Content-Security-Policy and noindex robots meta.
+
+IT IS NOT HOSTED ANYWHERE. It contains internal architecture, security findings and product decisions.
+Do not publish it on an open URL and never copy it into the public site's build (dist/public).
+
+Hosting it for the team (choose one, all configured outside this repository):
+ - A separate Vercel project with Deployment Protection (Vercel Authentication or password) enabled.
+ - Cloudflare Access, or any SSO-protected internal static host.
+ - HTTP basic authentication on an internal web server.
+Test, after deploying, that the URL returns a login page when you are signed out.
