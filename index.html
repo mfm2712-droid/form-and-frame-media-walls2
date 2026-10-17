@@ -7,10 +7,10 @@
 <meta property="og:title" content="Form &amp; Frame Ltd — Architectural Media Walls">
 <meta property="og:description" content="Scaled drawings, precision workshop build and clean installation. Estimate your media wall online.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="https://mfm2712-droid.github.io/form-and-frame-media-walls2/assets/cases/burnham-library-after.webp">
+<meta property="og:image" content="https://form-and-frame.vercel.app/assets/cases/burnham-library-after.webp">
 <link rel="icon" type="image/svg+xml" href="/operations/icon.svg">
-<link rel="canonical" href="https://mfm2712-droid.github.io/form-and-frame-media-walls2/">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"Form & Frame Ltd","url":"https://mfm2712-droid.github.io/form-and-frame-media-walls2/","address":{"@type":"PostalAddress","streetAddress":"Unit 4, Buckingham Ave","addressLocality":"Slough","postalCode":"SL1","addressRegion":"Berkshire","addressCountry":"GB"},"areaServed":["SL0","SL1","SL2","SL3","SL4","SL6","SL9","Slough","Windsor","Maidenhead","Burnham","Gerrards Cross"],"priceRange":"£££"}</script>
+<link rel="canonical" href="https://form-and-frame.vercel.app/">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"Form & Frame Ltd","url":"https://form-and-frame.vercel.app/","address":{"@type":"PostalAddress","streetAddress":"Unit 4, Buckingham Ave","addressLocality":"Slough","postalCode":"SL1","addressRegion":"Berkshire","addressCountry":"GB"},"areaServed":["SL0","SL1","SL2","SL3","SL4","SL6","SL9","Slough","Windsor","Maidenhead","Burnham","Gerrards Cross"],"priceRange":"£££"}</script>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
@@ -140,7 +140,7 @@
   .navlinks{display:flex;gap:26px;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.16em}
   .navlinks a{color:var(--pencil);transition:color .12s}
   .navlinks a:hover{color:var(--frame)}
-  .nav-actions{display:flex;align-items:center;gap:14px}.staff-access{font:600 10px/1 "IBM Plex Mono",monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--pencil);white-space:nowrap}.staff-access:hover{color:var(--frame)}
+  .nav-actions{display:flex;align-items:center;gap:14px}.staff-access{display:inline-flex;align-items:center;min-height:24px;font:600 10px/1 "IBM Plex Mono",monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--pencil);white-space:nowrap}.staff-access:hover{color:var(--frame)}
   .nav-toggle{display:none;width:42px;height:40px;padding:0;border:1px solid var(--frame);background:transparent;cursor:pointer;font:600 17px/1 "IBM Plex Mono",monospace}
   .btn{
     display:inline-flex;align-items:center;justify-content:center;gap:.5em;
@@ -422,11 +422,6 @@
   .demo-note{margin-top:13px;font:500 10px/1.5 "IBM Plex Mono",monospace;color:var(--pencil)}
 
   /* ============ TESTIMONIALS ============ */
-  .testimonials{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;border:1px solid var(--frame);background:var(--pencil-2)}
-  .testimonial{min-width:0;background:var(--paper-3);padding:22px;display:flex;flex-direction:column;gap:14px}
-  .testimonial .stars{color:var(--oak);font:600 12px/1 "IBM Plex Mono",monospace;letter-spacing:.12em}
-  .testimonial p{font-size:14px;line-height:1.55}
-  .testimonial span{margin-top:auto;font:600 10px/1.4 "IBM Plex Mono",monospace;letter-spacing:.08em;color:var(--pencil)}
 
   /* ============ PROJECT ASSISTANT ============ */
   .chat-launch{position:fixed;right:22px;bottom:22px;z-index:50;display:inline-flex;align-items:center;gap:9px;padding:13px 15px;border:1px solid var(--frame);background:var(--frame);color:var(--paper-3);box-shadow:4px 4px 0 var(--oak);cursor:pointer;font:600 10px/1 "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
@@ -471,7 +466,6 @@
     .navlinks{display:none}
     .nav-toggle{display:block;margin-left:auto}.nav-actions{gap:10px}
     .nav.open{flex-wrap:wrap}.nav.open .navlinks{order:4;display:flex;flex-basis:100%;padding-top:14px;border-top:1px solid var(--pencil-2);gap:14px;overflow-x:auto}.nav.open .navlinks a{white-space:nowrap}
-    .testimonials{grid-template-columns:1fr 1fr}
   }
   @media (max-width:560px){
     .sheet{margin:6px}
@@ -501,7 +495,6 @@
     .mosaic{grid-template-columns:1fr}
     .tile:first-child{grid-column:auto;grid-row:auto;height:280px}
     .chat-launch{right:14px;bottom:14px}.chat-panel{right:14px;bottom:70px}.chat-launch span{display:none}
-    .testimonials{grid-template-columns:1fr}
   }
   @media (hover:none){
     .btn:hover{transform:none;box-shadow:none}
@@ -520,6 +513,8 @@
   .seg{display:flex;border:1px solid var(--paper-3);flex:none}
   .seg button{appearance:none;-webkit-appearance:none;border:0;border-radius:0;background:transparent;color:var(--paper-3);
     cursor:pointer;font:600 10px/1 "IBM Plex Mono",monospace;letter-spacing:.13em;text-transform:uppercase;padding:10px 15px}
+  .seg button{min-height:24px}
+  .field.num{min-height:24px}
   .seg button+button{border-left:1px solid var(--paper-3)}
   .seg button:active{opacity:.7}
   .seg button[aria-pressed="true"]{background:var(--paper-3);color:var(--frame)}
@@ -690,11 +685,13 @@
     <span><b>Form &amp; Frame Ltd</b></span>
     <span>Media-wall joinery</span>
     <span>Slough · Berkshire</span>
-    <span>Drawing set — <b>7 plates</b></span>
+    <span>Drawing set — <b>6 plates</b></span>
     <span>Issue 2026</span>
   </div>
 
   <div id="top"></div>
+
+  <main id="main">
 
   <!-- A-01 HERO -->
   <section class="plate" id="drawing">
@@ -759,7 +756,7 @@
       </div>
 
       <div class="cfg">
-        <aside class="cfg-controls">
+        <div class="cfg-controls" role="group" aria-label="Configurator controls">
           <div class="ctl budgetctl">
             <label class="tog"><span><b>Do your own budget</b> — design down to a figure</span><input type="checkbox" id="fBudgetMode"></label>
             <div class="budgetbox" id="budgetBox" hidden>
@@ -979,7 +976,7 @@
             <input class="file" type="file" id="fPhoto" aria-label="Overlay on your room photo" accept="image/*">
             <div class="hintline" id="fPhotoMsg" role="alert" hidden></div>
           </div>
-        </aside>
+        </div>
 
         <div class="cfg-stage">
           <div class="cfg-draw" id="cfgDraw">
@@ -1021,7 +1018,7 @@
 
       <div class="cfg-summary" id="rSummary"></div>
 
-      <div class="schedule">
+      <div class="schedule" tabindex="0" role="region" aria-label="Schedule of works, scrollable">
         <table>
           <caption>Schedule of works — indicative</caption>
           <thead><tr><th>Item</th><th>Specification</th><th>Qty</th></tr></thead>
@@ -1064,27 +1061,11 @@
     </div>
   </section>
 
-  <!-- A-06 TESTIMONIALS -->
-  <section class="plate" id="testimonials">
-    <div class="wrap">
-      <div class="plate-head">
-        <div class="eyebrow">A-06 / Client feedback</div>
-        <h2>Proof points, ready to replace with verified reviews.</h2>
-      </div>
-      <div class="testimonials" aria-label="Sample testimonial content for the proposal">
-        <article class="testimonial"><div class="stars" aria-label="Five out of five stars">★★★★★</div><p>“The drawing made the whole decision easy. We could see exactly where the storage, TV and lighting would sit before the build began.”</p><span>Sample review · Windsor</span></article>
-        <article class="testimonial"><div class="stars" aria-label="Five out of five stars">★★★★★</div><p>“Everything was measured properly, the team were tidy and the finish feels part of the room rather than an add-on.”</p><span>Sample review · Burnham</span></article>
-        <article class="testimonial"><div class="stars" aria-label="Five out of five stars">★★★★★</div><p>“We wanted books, hidden cables and a fire without losing floor space. The detail in the proposal gave us confidence.”</p><span>Sample review · Langley</span></article>
-        <article class="testimonial"><div class="stars" aria-label="Five out of five stars">★★★★★</div><p>“A genuinely bespoke solution. The side cabinetry solved the storage problem and the room now feels finished.”</p><span>Sample review · Slough</span></article>
-      </div>
-    </div>
-  </section>
-
-  <!-- A-07 CONTACT -->
+  <!-- A-06 CONTACT -->
   <section class="plate" id="request">
     <div class="wrap contact">
       <div>
-        <div class="eyebrow">A-07 / Request a survey</div>
+        <div class="eyebrow">A-06 / Request a survey</div>
         <h2>Bring the room.<br>We'll bring the drawing.</h2>
         <p class="prose">Send a photo, a rough sketch or just the wall width. We'll call within one working day to book a free measured survey.</p>
         <div class="coverage">
@@ -1148,6 +1129,7 @@
       </div>
     </div>
   </section>
+  </main>
 
   <button class="chat-launch" type="button" id="chatLaunch" aria-expanded="false" aria-controls="chatPanel"><i>?</i><span>Ask the project assistant</span></button>
   <aside class="chat-panel" id="chatPanel" aria-label="Form and Frame project assistant" aria-hidden="true">
@@ -2865,7 +2847,9 @@
     }).catch(function(error){
       status.textContent = error.name === "AbortError"
         ? "This is taking longer than expected. Check your connection and retry; duplicate enquiries are prevented."
-        : (error.message || "We couldn't send your enquiry. Check your connection and try again.");
+        : (error.name === "TypeError"
+          ? "We couldn't reach the server. Check your connection and retry; duplicate enquiries are prevented."
+          : (error.message || "We couldn't send your enquiry. Check your connection and try again."));
     }).finally(function(){ window.clearTimeout(requestTimeout); setFormBusy(false); });
   });
   form.addEventListener("input", function(e){
