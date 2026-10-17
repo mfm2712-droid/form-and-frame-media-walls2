@@ -1,6 +1,6 @@
 import puppeteer from "puppeteer-core";
 import { mkdirSync } from "node:fs";
-const out = "/workspace/frame-scratch/mb/shots"; 
+const out = "/workspace/frame-scratch/mb/shots";
 for (const d of ["public","staff-demo","staff-login"]) mkdirSync(`${out}/${d}`, {recursive:true});
 const browser = await puppeteer.launch({ executablePath:"/usr/bin/google-chrome", headless:true, args:["--no-sandbox","--hide-scrollbars"] });
 const log = [];
@@ -50,7 +50,7 @@ const OPS = "http://127.0.0.1:8802/operations/";
   for (const [id,n] of [["#todayMoney","today-money"],[".today-panel","today-plan"],["#stats","metrics"],["#leads","enquiries"],["#availability","calendar"],["#business","money"]]){ const el=await p.$(id); if(el){ await el.scrollIntoView(); await wait(300); await el.screenshot({path:`${out}/staff-demo/desktop-1440-${n}.png`}); console.log(n);} }
   // enquiry workspace
   const open = await p.$(".lead .ws-open, .lead");
-  if (open){ await open.scrollIntoView(); await open.click(); await wait(1200); await shot(p,"staff-demo/desktop-1440-enquiry-workspace"); 
+  if (open){ await open.scrollIntoView(); await open.click(); await wait(1200); await shot(p,"staff-demo/desktop-1440-enquiry-workspace");
     const wsFull = await p.$("#workspace"); if (wsFull) await wsFull.screenshot({path:`${out}/staff-demo/desktop-1440-enquiry-workspace-full.png`}); }
   await p.close(); }
 { const p = await page(390,844,true); await p.goto(OPS,{waitUntil:"networkidle2"}); await wait(2500);

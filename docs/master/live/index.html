@@ -48,7 +48,7 @@ body{display:flex;min-height:100vh}
 #side nav .open .sub,#side nav .sub.open{display:block}
 #results{margin-top:10px}#results a{color:#F1ECDF;font-weight:600;background:rgba(255,255,255,.07);margin:4px 0;white-space:normal}#results small{display:block;color:#c9d6cf;font-size:.75rem}
 #results mark{background:var(--gold);color:#1D211C;border-radius:2px}
-main{margin-left:310px;max-width:1080px;padding:0 40px 80px;width:100%}
+main{margin-left:310px;max-width:1080px;padding:0 40px 80px;width:calc(100% - 310px);box-sizing:border-box}
 .cover{background:var(--green);color:#F1ECDF;margin:0 -40px 30px;padding:46px 40px}
 .cover h1{color:#F1ECDF;font-size:2.8rem}.cover p{color:#d6e0da;max-width:46em}.cover .tag{display:inline-block;background:var(--gold);color:#1D211C;font:600 .75rem "IBM Plex Mono",monospace;padding:.25em .7em;border-radius:99px}
 section.chapter{padding-top:20px;border-top:6px solid var(--gold);margin-top:44px}
@@ -59,7 +59,7 @@ section.chapter{padding-top:20px;border-top:6px solid var(--gold);margin-top:44p
 #lb .bar{position:fixed;top:10px;right:10px;display:flex;gap:6px;z-index:101}#lb .bar button{font-size:1.1rem;padding:6px 12px;border-radius:6px;border:0;background:#F1ECDF}
 #lb .cap{position:fixed;left:10px;bottom:10px;right:10px;color:#F1ECDF;font-size:.85rem;z-index:101;text-align:center}
 img.zoomable{cursor:zoom-in}
-@media(max-width:900px){#top{display:flex}#side{transform:translateX(-100%);transition:transform .2s;width:84%}#side.open{transform:none}main{margin-left:0;padding:60px 16px 60px}.cover{margin:0 -16px 24px;padding:30px 16px}.cover h1{font-size:2rem}}
+@media(max-width:900px){#top{display:flex}#side{transform:translateX(-100%);transition:transform .2s;width:84%}#side.open{transform:none}main{margin-left:0;width:100%;padding:60px 16px 60px}.cover{margin:0 -16px 24px;padding:30px 16px}.cover h1{font-size:2rem}}
 </style></head><body>
 <div id="top"><button id="menu" aria-label="Menu">&#9776;</button><b>Form &amp; Frame Live Master</b></div>
 <aside id="side"><h1>Form &amp; Frame<br>Live Master</h1><div class="ver">v1.0.0 · commit 31a08f6 · INTERNAL</div>

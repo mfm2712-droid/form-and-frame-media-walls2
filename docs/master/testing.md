@@ -76,4 +76,3 @@ Passing tests in a PR say that PR's code matches its own tests. They say nothing
 | Unreferenced files | 1 diagram now used (Supabase components, chapter 5a); 10 unreferenced screenshots deleted. |
 | Personal data / secrets in screenshots | OCR (RapidOCR, run outside the repository) over all 33 screenshots looking for e-mail addresses, phone numbers, key and token patterns, URLs and postcodes. Only fictional demo data (example.com addresses, the reserved 07700 900 range, demo postcodes) and the public site's own placeholder. No keys or tokens. OCR is not proof; the images were also checked by eye. |
 | PDF size | Screenshots are embedded as JPEG (quality 80) in the PDF only; the repository files stay WebP. |
-
