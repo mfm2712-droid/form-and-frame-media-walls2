@@ -11,6 +11,8 @@ const output = resolve(root, "dist/public");
 await rm(output, { recursive: true, force: true });
 await mkdir(output, { recursive: true });
 await cp(resolve(root, "index.html"), resolve(output, "index.html"));
+await cp(resolve(root, "robots.txt"), resolve(output, "robots.txt"));
+await cp(resolve(root, "sitemap.xml"), resolve(output, "sitemap.xml"));
 await cp(resolve(root, "assets"), resolve(output, "assets"), { recursive: true });
 const operationsOutput = resolve(output, "operations");
 await mkdir(operationsOutput, { recursive: true });

@@ -7,8 +7,8 @@ const root = resolve("dist/public");
 const rootEntries = new Set(await readdir(root));
 assert.deepEqual(
   [...rootEntries].sort(),
-  ["assets", "index.html", "operations", "public-config.js"],
-  "The public build root must contain only the public website, authenticated staff app shell, public config, and assets."
+  ["assets", "index.html", "operations", "public-config.js", "robots.txt", "sitemap.xml"],
+  "The public build root must contain only the public website, authenticated staff app shell, public config, search files and assets."
 );
 
 for (const file of ["index.html", "public-config.js"]) {
@@ -51,6 +51,22 @@ assert.match(publicHtml, /company_website:\s*\$\("cWebsite"\)\.value/, "The publ
 const referenceCheck = publicHtml.indexOf('typeof result.reference !== "string"');
 const successView = publicHtml.indexOf('form.style.display = "none"', referenceCheck);
 assert.ok(referenceCheck >= 0 && successView > referenceCheck, "The public page must only show success after validating the saved enquiry reference.");
+
+// Search and indexing: the staff app must never be indexed, and the public page's canonical must be the production address.
+const robotsTxt = await readFile(resolve(root, "robots.txt"), "utf8");
+assert.match(robotsTxt, /Disallow:\s*\/operations\//, "robots.txt must keep the staff app out of search results.");
+assert.match(robotsTxt, /Sitemap:\s*https:\/\/form-and-frame\.vercel\.app\/sitemap\.xml/, "robots.txt must point at the production sitemap.");
+assert.match(await readFile(resolve(root, "sitemap.xml"), "utf8"), /<loc>https:\/\/form-and-frame\.vercel\.app\/<\/loc>/, "The sitemap must list the production home page.");
+assert.match(publicHtml, /<link rel="canonical" href="https:\/\/form-and-frame\.vercel\.app\/">/, "The canonical URL must be the production address, not a staging host.");
+assert.equal(publicHtml.includes("github.io"), false, "No public metadata may point at the GitHub Pages copy.");
+assert.match(await readFile(resolve(root, "operations/index.html"), "utf8"), /<meta name="robots" content="noindex, nofollow">/, "The staff app shell must be marked noindex.");
+// Unverified reviews: the public page must not present sample testimonials or star ratings as client feedback.
+assert.equal(/class="testimonial/.test(publicHtml) || /Sample review/i.test(publicHtml) || /★{3,}/.test(publicHtml), false, "The public page must not show sample or unverified reviews.");
+// Accessibility landmarks and the friendly network error.
+assert.match(publicHtml, /<main id="main">/, "The public page needs one main landmark.");
+assert.equal((publicHtml.match(/<main[\s>]/g) || []).length, 1, "The public page must have exactly one main landmark.");
+assert.match(publicHtml, /class="schedule" tabindex="0" role="region"/, "The scrollable schedule must be reachable by keyboard.");
+assert.match(publicHtml, /error\.name === "TypeError"/, "A network failure must show a plain-language message, not the browser's raw error.");
 for (const privatePath of ["supabase", "planning", "anthony-roadmap.html"]) {
   assert.equal(rootEntries.has(privatePath), false, `${privatePath} must not enter the public build.`);
 }
