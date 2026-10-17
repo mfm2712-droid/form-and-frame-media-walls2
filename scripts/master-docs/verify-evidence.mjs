@@ -4,7 +4,7 @@
 // stored command log under docs/master/assets/evidence/. No network. Usage: node scripts/master-docs/verify-evidence.mjs
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { execSync } from "node:child_process";
-import { dirname, resolve } from "node:path";
+import { dirname, resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
@@ -12,7 +12,7 @@ const M = "supabase/migrations/";
 const EV = "docs/master/assets/evidence/";
 // [id, chapter, claim, file, regex]
 const rows = [
-  ["E-01", "README", "Version, commit and branch of the analysed code", "git", "rev-parse HEAD"],
+  ["E-01", "README", "Version, commit and branch of the analysed code", "git", "commit analysed (from README); HEAD must descend from it"],
   ["E-02", "Architecture", "Build copies an explicit list of files into dist/public (docs/ is not on it)", "scripts/build-public.mjs", "for \\(const file of"],
   ["E-03", "Architecture", "Vercel builds with node scripts/build-public.mjs and serves dist/public", "vercel.json", "buildCommand"],
   ["E-04", "Website", "Public page sections: drawing, survey, specify, process, works, testimonials, request, footer", "index.html", 'id="request"'],
@@ -85,7 +85,7 @@ const missing = [];
 for (const [id, chapter, claim, file, pattern] of rows) {
   try {
     let loc;
-    if (file === "git") loc = "`git rev-parse HEAD` = `" + execSync("git rev-parse HEAD", { cwd: root }).toString().trim() + "`";
+    if (file === "git") { const sha = (readFileSync(join(root, "docs/master/README.md"), "utf8").match(/`([0-9a-f]{40})`/) || [])[1]; execSync(`git merge-base --is-ancestor ${sha} HEAD`, { cwd: root }); loc = "README states `" + sha + "`; HEAD descends from it (checked with `git merge-base --is-ancestor`)"; }
     else if (file === "command") {
       const hits = execSync(`git grep -n -i -l stripe -- index.html operations supabase/functions scripts/build-public.mjs scripts/public-config.mjs || true`, { cwd: root }).toString().trim();
       loc = "command `git grep -il stripe -- index.html operations supabase/functions scripts/build-*.mjs scripts/public-config.mjs` returned " + (hits ? "`" + hits.replace(/\n/g, ", ") + "`" : "no files");

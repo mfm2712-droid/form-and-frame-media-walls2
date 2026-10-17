@@ -65,3 +65,15 @@ Passing tests in a PR say that PR's code matches its own tests. They say nothing
 - No coverage measurement is configured.
 
 *Evidence: E-22, E-37 to E-40, E-56.*
+
+## 9.6 Quality gate for this book (18 October 2026, local only)
+
+| Check | Result |
+|---|---|
+| Contents page resolves to real pages | Every chapter and section heading was matched to the page where it is printed (the first build matched M1 to M9 to the modules table by mistake; fixed in `scripts/build-master-docs.mjs`). 97 entries checked. |
+| Image-only pages | Pages with little text were rendered and looked at: full-page public site (reduced to a thin strip by design; the sections are shown at full width elsewhere), project assistant on a phone, mobile section views, Today plan, calendar. No blank or cut pages. |
+| Live Master at 1440 px and 390 px | No horizontal overflow, lightbox opens at full opacity, 107 status badges none wrapped, 0 external requests, 0 page errors, search returns results (`scripts/master-docs/capture/live-check.mjs`). |
+| Unreferenced files | 1 diagram now used (Supabase components, chapter 5a); 10 unreferenced screenshots deleted. |
+| Personal data / secrets in screenshots | OCR (RapidOCR, run outside the repository) over all 33 screenshots looking for e-mail addresses, phone numbers, key and token patterns, URLs and postcodes. Only fictional demo data (example.com addresses, the reserved 07700 900 range, demo postcodes) and the public site's own placeholder. No keys or tokens. OCR is not proof; the images were also checked by eye. |
+| PDF size | Screenshots are embedded as JPEG (quality 80) in the PDF only; the repository files stay WebP. |
+

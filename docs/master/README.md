@@ -52,6 +52,25 @@ Other conventions: **DEMO MODE** screenshots use the staff app's built-in fictio
 
 Open Draft PRs at the time of writing (state read from GitHub on 18 Oct 2026): #19 master project doc, #20 auth tests, #22 notification retry cap draft, #23 permission matrix and RLS draft, #25 Stripe design, #26 public site unpublish-unvalidated-works, #27 self-hosted supabase-js and CSP report-only, #41 server-side numbering draft, #42 role-aware money UI, #43 payment reversals draft; plus PR #8 (ready for review, not a draft; audit fixes) and PR #1 (draft, older Today/push fixes). **None of these is merged. This book does not merge, deploy or apply anything.** The roadmap chapter lists what each one adds.
 
+**Baseline statement: this book describes `main` at `31a08f6` and nothing else.** If the PRs below merge, these parts of the book would change (sections affected, from each PR's stated scope; re-check against the diff at merge time):
+
+| PR | Would change in this book |
+|---|---|
+| #8 (audit fixes) | Removes the sample testimonials (feature matrix row currently BROKEN; section 3.6); test counts in chapter 9 (183 on main, 186 on the branch). |
+| #19 | Adds `docs/MASTER_PROJECT.md`; no behavioural change. |
+| #20 | Auth tests: chapter 9 test inventory; auth rows in the feature matrix could move towards VERIFIED. |
+| #22 | Notification retry cap: backend notification delivery, database, and the matrix row on retries. |
+| #23 | Permission matrix and RLS draft: chapters 5b (RLS today) and 8 (roles, financial access, pending weaknesses). Not safe to apply before the app change in #42. |
+| #25 | Stripe design only: chapter 5c (Stripe stays PLANNED, no code). |
+| #26 | Public site: unpublishes "Completed works" and changes some copy: sections 3.5, 3.9, 3.11 and screenshots. |
+| #27 | Self-hosted supabase-js and CSP report-only: section 8.6 and the public build description. |
+| #41 | Server-side document numbering: invoices (M8), database, matrix. |
+| #42 | Role-aware money UI (stacked on #20): M10 Money panel, M14 Roles and access. |
+| #43 | Payment reversals: M9 Payments, database. |
+| #1 (older draft) | Today and push fixes: M1 and M12. |
+
+Owner decision recorded 18 Oct 2026: Thiago and Antonio both hold the Owner role with identical permissions; no Manager role for now. Stripe, production domain and business email are configured on 19 Oct 2026 and are not in this book as done.
+
 ## Hosting the Live Master
 
 The Live Master contains internal architecture, security findings and product decisions. It is **not hosted anywhere** and must not be published on an open URL. It is delivered as a static build in `docs/master/live/`. To use it:

@@ -25,7 +25,7 @@
 | Staff app demo mode, desktop 1440 | 10 |
 | Staff app demo mode, mobile 390 | 7 |
 | Staff sign-in screen (no data), desktop and mobile | 2 |
-| **Total screenshots** | **43** (WebP, about 3 MB) |
+| **Total screenshots** | **33** (WebP, about 2.7 MB; 10 unreferenced captures removed from the repository on 18 Oct 2026) |
 | Diagrams (SVG, generated from `diagrams.mjs`) | 17 |
 
 Public screenshots come from the repository's own build with the CI fictional configuration, served locally. Staff screenshots are DEMO MODE with the built-in fictional data; they are captioned as such.

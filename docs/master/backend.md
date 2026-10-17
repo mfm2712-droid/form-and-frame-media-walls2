@@ -2,6 +2,10 @@
 
 The backend is a Supabase project plus three Edge Functions written in TypeScript/JavaScript for Deno. All handler logic lives in plain `.mjs` files with injected dependencies so that it can be tested offline. **There is no other server code.**
 
+## Supabase components used
+
+![Supabase components used by Form & Frame (main)](assets/diagrams/03-supabase-components.svg)
+
 ## Edge Functions (`supabase/functions/`)
 
 ![Edge Functions: callers, authentication, secrets (names only), data touched](assets/diagrams/07-edge-functions.svg)

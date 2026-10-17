@@ -11,7 +11,7 @@ How a chapter claim is justified:
 
 | ID | Chapter | Claim | Evidence (file:line or command) |
 |---|---|---|---|
-| E-01 | README | Version, commit and branch of the analysed code | `git rev-parse HEAD` = `31a08f6ee1fa507d4f78c30ede78c4b1fda746a4` |
+| E-01 | README | Version, commit and branch of the analysed code | README states `31a08f6ee1fa507d4f78c30ede78c4b1fda746a4`; HEAD descends from it (checked with `git merge-base --is-ancestor`) |
 | E-02 | Architecture | Build copies an explicit list of files into dist/public (docs/ is not on it) | `scripts/build-public.mjs:17` |
 | E-03 | Architecture | Vercel builds with node scripts/build-public.mjs and serves dist/public | `vercel.json:2` |
 | E-04 | Website | Public page sections: drawing, survey, specify, process, works, testimonials, request, footer | `index.html:1084` |

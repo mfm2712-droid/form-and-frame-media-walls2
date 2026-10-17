@@ -137,6 +137,13 @@ const pageTexts = pdf => {
   return t;
 };
 
+const rawPageLines = pdf => {
+  const n = Number((execFileSync("pdfinfo", [pdf]).toString().match(/Pages:\s+(\d+)/) || [])[1]);
+  const t = []; for (let p = 1; p <= n; p++) t.push(execFileSync("pdftotext", ["-f", String(p), "-l", String(p), "-layout", pdf, "-"]).toString().split("\n"));
+  return t;
+};
+
+let pdfShots = null; // set when JPEG copies of the screenshots were made for the PDF only
 function bookHtml(pages) {
   const tocRows = [];
   rendered.forEach(c => {
@@ -145,8 +152,10 @@ function bookHtml(pages) {
   });
   const figs = [...rendered.flatMap(c => [...c.html.matchAll(/<figure class="fig diagram"><img[^>]*alt="([^"]*)"/g)].map(m => ({ alt: m[1], n: c.id })))];
   const figRows = figs.map((f, i) => `<div class="s r"><span>Diagram ${i + 1}: ${f.alt.split(".")[0].slice(0, 90)}</span><i></i><span>${pages?.["fig" + i] ?? "00"}</span></div>`);
-  const shot = existsSync(join(docs, "assets/screenshots/public/fold-desktop-1440.webp")) ? `<img class="shot" src="assets/screenshots/public/fold-desktop-1440.webp" alt="">` : "";
-  const body = rendered.map(c => `<section class="chapter" id="${c.id}-ch"><div class="kick">SECTION ${String(c.n).padStart(2, "0")}</div>${c.html}</section>`).join("\n");
+  const swap = h => pdfShots ? h.replace(/assets\/screenshots\/([^"')]+)\.webp/g, (m, p) => `${pdfShots}/${p}.jpg`) : h;
+  const shot0 = existsSync(join(docs, "assets/screenshots/public/fold-desktop-1440.webp")) ? `<img class="shot" src="assets/screenshots/public/fold-desktop-1440.webp" alt="">` : "";
+  const shot = swap(shot0);
+  const body = swap(rendered.map(c => `<section class="chapter" id="${c.id}-ch"><div class="kick">SECTION ${String(c.n).padStart(2, "0")}</div>${c.html}</section>`).join("\n"));
   return `<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><title>Form &amp; Frame Master Book v${VERSION}</title>
 <meta name="author" content="FRAME for Mark Ferrer Marquez"><meta name="description" content="Form &amp; Frame Master Book v${VERSION}, commit ${SHA}">
 <base href="${pathToFileURL(docs).href}/"><style>${baseCss}${printCss.replace('"Form & Frame Master Book v" var(--v,"1.0.0") " · commit 31a08f6"', `"Form & Frame Master Book v${VERSION} · commit ${SHA.slice(0, 7)} · INTERNAL"`)}</style></head><body>
@@ -164,6 +173,10 @@ function buildPdf() {
   if (!chrome) { console.warn("No Chrome/Chromium found: PDF skipped (set CHROME_BIN)."); return null; }
   mkdirSync(outDir, { recursive: true });
   const htmlPath = join(outDir, "book.html"), pdfPath = join(outDir, "FORM_AND_FRAME_MASTER_BOOK.pdf");
+  // optional size optimisation: JPEG copies for the PDF only (the committed WebP files and the Live Master are untouched)
+  const jpgDir = join(outDir, "pdf-shots");
+  const py = spawnSync("python3", [join(root, "scripts/master-docs/pdf-images.py"), join(docs, "assets/screenshots"), jpgDir], { encoding: "utf8" });
+  if (py.status === 0) pdfShots = pathToFileURL(jpgDir).href; else console.warn("Pillow missing: PDF keeps WebP screenshots (larger file).");
   writeFileSync(htmlPath, bookHtml(null));
   printPdf(chrome, htmlPath, pdfPath);
   let havePoppler = true;
@@ -171,6 +184,7 @@ function buildPdf() {
   if (!havePoppler) { console.warn("poppler-utils missing: contents page has no page numbers."); return pdfPath; }
   // pass 2: find the page of every chapter, heading and diagram, then rebuild with real numbers (contents length is unchanged)
   const texts = pageTexts(pdfPath);
+  const rawLines = rawPageLines(pdfPath);
   const pages = {}; let from = 0;
   const norm = s => s.replace(/[`*]/g, "").replace(/\s+/g, " ").trim();
   rendered.forEach(c => {
@@ -181,7 +195,9 @@ function buildPdf() {
     let q = p;
     tocByChapter(c.id).forEach(h => {
       const needle = norm(h.text.replace(/\(.*$/, "")).slice(0, 40);
-      const k = texts.findIndex((t, i) => i >= q && t.includes(needle));
+      // headings are matched at the start of a line with single spaces, so table rows (padded with runs of spaces) never match
+      const lead = needle.slice(0, 30);
+      const k = rawLines.findIndex((ls, i) => i >= q && ls.some(l => l.trimStart().startsWith(lead)));
       if (k >= 0) { pages[h.id] = k + 1; q = k; } else console.warn("No page found for heading", h.text);
     });
   });
