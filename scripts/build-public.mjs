@@ -13,7 +13,12 @@ await mkdir(output, { recursive: true });
 await cp(resolve(root, "index.html"), resolve(output, "index.html"));
 await cp(resolve(root, "robots.txt"), resolve(output, "robots.txt"));
 await cp(resolve(root, "sitemap.xml"), resolve(output, "sitemap.xml"));
-await cp(resolve(root, "assets"), resolve(output, "assets"), { recursive: true });
+// assets/cases holds before/after photos whose authenticity and publication
+// consent Mark has not yet confirmed (FRAME-005): keep them out of the build.
+await cp(resolve(root, "assets"), resolve(output, "assets"), {
+  recursive: true,
+  filter: source => !/[\\/]assets[\\/]cases([\\/]|$)/.test(source)
+});
 const operationsOutput = resolve(output, "operations");
 await mkdir(operationsOutput, { recursive: true });
 for (const file of ["index.html", "app.js", "styles.css", "today-view.mjs", "project-model.mjs", "mutation-result.mjs", "datetime-local.mjs", "pipeline.mjs", "workflow.mjs", "push-support.mjs", "activity-label.mjs", "assignment.mjs", "availability-list.mjs", "push-target.mjs", "invoice-document.mjs", "payment-idempotency.mjs", "quote-readiness.mjs", "enquiry-workspace.mjs", "enquiry-workspace-view.mjs", "staff-access.mjs", "calendar-records.mjs", "business-records.mjs", "service-worker.js", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "icon-180.png", "notification-badge-ff.png", "notification-centre.mjs", "notification-view.mjs"]) {

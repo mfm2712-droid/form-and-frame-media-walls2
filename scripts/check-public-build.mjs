@@ -22,6 +22,10 @@ assert.equal((await stat(resolve(root, "operations/activity-label.mjs"))).isFile
 assert.equal((await stat(resolve(root, "operations/push-target.mjs"))).isFile(), true, "Push notification links must resolve to the requested enquiry in the staff app.");
 assert.equal((await stat(resolve(root, "operations/invoice-document.mjs"))).isFile(), true, "The mobile Operations app must be able to render safe printable invoices.");
 assert.equal((await stat(resolve(root, "operations/payment-idempotency.mjs"))).isFile(), true, "Manual payment retries must retain their idempotency key across reloads.");
+assert.equal(
+  (await readdir(resolve(root, "assets"))).includes("cases"), false,
+  "Unvalidated before/after case photos must not be deployed until Mark confirms them (FRAME-005)."
+);
 const publicHtml = await readFile(resolve(root, "index.html"), "utf8");
 const publicConfigSource = await readFile(resolve(root, "public-config.js"), "utf8");
 const publicConfigMatch = /^window\.FF_PUBLIC_CONFIG = Object\.freeze\((\{.*\})\);\s*$/.exec(publicConfigSource);
