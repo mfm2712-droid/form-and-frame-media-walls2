@@ -12,6 +12,8 @@ import { CATEGORIES, visibleNotifications, unreadCount, unreadForRequest, normal
 import { bellLabel, listHtml, preferencesHtml, deviceHtml, iconDiagnosticsHtml } from "./notification-view.mjs";
 import { deriveCustomers, filterCustomers } from "./customers.mjs";
 import { customersHtml } from "./customers-view.mjs";
+import { financeOverview } from "./finance-overview.mjs";
+import { financeOverviewHtml } from "./finance-overview-view.mjs";
 import { confirmStatusChange } from "./status-confirm.mjs";
 import { capabilitiesFor, filterActivityForCaps, loadWorkOrdersForCaps, roleAdjustedAction } from "./role-capabilities.mjs";
 import { insertWithNumber } from "./document-number.mjs";
@@ -37,7 +39,7 @@ const pushEnquiryTarget = enquiryTargetFromSearch(window.location.search);
 const pushViewTarget = operationsViewFromSearch(window.location.search);
 let demo = false, db = null, demoLeads = [], demoBlocks = [], liveLeads = [], liveBlocks = [], selectedId = pushEnquiryTarget;
 let liveQuotes = [], liveWorkOrders = [], liveAppointments = [], liveInvoices = [], liveInvoiceDetails = [], liveProfiles = null;
-let invoiceSettings = null, currentStaffRole = null, customerQuery = "";
+let invoiceSettings = null, currentStaffRole = null, customerQuery = "", financePeriod = "this-month";
 const numberingState = {}; // remembers whether the optional server-side numbering RPC exists
 let paymentLedger = { available:false, payments:[], reversals:[] };
 const pendingReversalKeys = new Map();
@@ -173,6 +175,7 @@ function renderWorkflows(data) {
   liveAppointments = data.appointments;
   liveInvoices = data.invoices;
   renderCustomers();
+  renderFinanceOverview();
   liveInvoiceDetails = data.invoiceRecords || [];
   const profiles = Array.isArray(data.profiles) ? data.profiles : null;
   $("invoiceWorkOrder").innerHTML = `<option value="">Choose a work order</option>${liveWorkOrders.filter(job => job.status !== "cancelled").map(job => `<option value="${esc(job.id)}">${esc(job.work_order_number)} · ${esc(job.title)}</option>`).join("")}`;
@@ -873,6 +876,22 @@ $("customerList")?.addEventListener("click", async event => {
   setMobileView("work");
   await load();
   openWorkspace(selectedId);
+});
+
+// ---- Finance overview (owners only; issue #33) ----
+function renderFinanceOverview() {
+  const box = $("financeOverview");
+  if (!box) return;
+  const caps = capabilitiesFor(currentStaffRole);
+  box.hidden = demo || !caps.money;
+  if (box.hidden) { box.innerHTML = ""; return; }
+  const today = local(new Date()).slice(0, 10);
+  box.innerHTML = financeOverviewHtml(financeOverview(liveInvoices, { period:financePeriod, today }), { esc, moneyPence, canSeeMoney:caps.money });
+}
+$("financeOverview")?.addEventListener("change", event => {
+  if (event.target.id !== "financePeriod") return;
+  financePeriod = event.target.value;
+  renderFinanceOverview();
 });
 
 const openTodayEnquiry = async event => {

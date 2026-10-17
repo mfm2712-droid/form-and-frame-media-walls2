@@ -270,3 +270,11 @@ body.nc-open{overflow:hidden}
 .customer-card small{margin-left:6px;font:600 9px "IBM Plex Mono",monospace;letter-spacing:.1em}
 @media(max-width:760px){body[data-mobile-view="today"] #hub>#customers,body[data-mobile-view="calendar"] #hub>#customers,body[data-mobile-view="money"] #hub>#customers{display:none}}
 .customer-card a{color:inherit;text-decoration-thickness:1px;text-underline-offset:3px}
+
+/* Finance overview (issue #33): owners only, hidden by the role gate. */
+.finance-overview{margin:16px 0;padding-top:12px;border-top:1px solid currentColor}
+.finance-overview .finance-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+.finance-period select{min-height:44px;padding:0 10px}
+.finance-aged,.finance-note{display:block;margin-top:10px;font-size:12px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media(max-width:760px){.finance-overview .finance-grid{grid-template-columns:1fr 1fr}}
