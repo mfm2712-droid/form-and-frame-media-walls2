@@ -20,6 +20,7 @@ function makeElement(registry, key) {
       const event = { type, target: proxy, currentTarget: proxy, preventDefault() {}, stopPropagation() {}, submitter: null, ...extra };
       for (const handler of listeners.get(type) || []) await handler(event);
     },
+    insertAdjacentHTML(_where, html) { base.innerHTML = String(base.innerHTML || "") + String(html); },
     setAttribute() {}, removeAttribute() {}, getAttribute: () => null, focus() {}, blur() {}, click() { return proxy.fire("click"); },
     querySelector: selector => registry.get(`${key}>${selector}`), querySelectorAll: () => [],
     closest: () => null, matches: () => false, contains: () => false, append() {}, appendChild() {}, remove() {}, scrollIntoView() {},
