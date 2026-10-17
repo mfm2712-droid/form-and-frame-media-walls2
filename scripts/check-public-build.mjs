@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile, readdir, stat } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { badgeReport, readPng } from "./png-info.mjs";
 
@@ -60,7 +61,18 @@ assert.equal(operationsFiles.includes("config.example.js"), false, "The staff ap
 assert.equal(operationsFiles.some(file => file.endsWith(".test.mjs")), false, "Node tests must not enter the deployment.");
 const operationsAppSource = await readFile(resolve(root, "operations/app.js"), "utf8");
 for (const [, importedModule] of operationsAppSource.matchAll(/from\s+["']\.\/([^"']+\.mjs)["']/g)) {
-  assert.ok(operationsFiles.includes(importedModule), `The staff app dependency ${importedModule} must be copied into the public build.`);
+  if (importedModule.startsWith("vendor/")) {
+    assert.equal((await stat(resolve(root, "operations", importedModule))).isFile(), true, `The vendored dependency ${importedModule} must be copied into the public build.`);
+  } else {
+    assert.ok(operationsFiles.includes(importedModule), `The staff app dependency ${importedModule} must be copied into the public build.`);
+  }
+}
+assert.equal(/from\s+["']https?:\/\//.test(operationsAppSource), false, "The staff app must not import code from a remote host at runtime.");
+{
+  // The deployed vendored module must match the integrity recorded in VENDOR.json.
+  const vendorInfo = JSON.parse(await readFile(resolve("operations/vendor/VENDOR.json"), "utf8"));
+  const deployedVendor = await readFile(resolve(root, "operations/vendor", vendorInfo.vendoredFile));
+  assert.equal(`sha384-${createHash("sha384").update(deployedVendor).digest("base64")}`, vendorInfo.sriSha384, "The deployed vendored supabase-js must match its recorded integrity hash.");
 }
 const operationsConfig = await readFile(resolve(root, "operations/config.js"), "utf8");
 assert.match(operationsConfig, /^window\.FF_OPERATIONS_CONFIG = Object\.freeze\(/, "Operations receives generated browser-safe config.");

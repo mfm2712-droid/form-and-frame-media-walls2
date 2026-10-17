@@ -19,14 +19,15 @@ test("Supabase CLI is pinned to Form & Frame and keeps JWT verification on", asy
   assert.match(retryHandler, /sameSecret/);
 });
 
-test("the staff app and enquiry function pin the same Supabase SDK release", async () => {
-  const [operations, edgeFunction] = await Promise.all([
+test("the staff app (self-hosted bundle) and enquiry function pin the same Supabase SDK release", async () => {
+  const [operations, edgeFunction, vendorInfo] = await Promise.all([
     readFile(new URL("../operations/app.js", import.meta.url), "utf8"),
-    readFile(new URL("./functions/submit-enquiry/index.ts", import.meta.url), "utf8")
+    readFile(new URL("./functions/submit-enquiry/index.ts", import.meta.url), "utf8"),
+    readFile(new URL("../operations/vendor/VENDOR.json", import.meta.url), "utf8").then(JSON.parse)
   ]);
-  for (const source of [operations, edgeFunction]) {
-    assert.match(source, /@supabase\/supabase-js@2\.117\.2/);
-  }
+  assert.match(edgeFunction, /@supabase\/supabase-js@2\.117\.2/);
+  assert.equal(vendorInfo.version, "2.117.2");
+  assert.match(operations, /from "\.\/vendor\/supabase-js-2\.117\.2\.mjs"/);
 });
 
 test("the remote schema audit reads Realtime ownership and membership without writes", async () => {

@@ -2865,7 +2865,9 @@
     }).catch(function(error){
       status.textContent = error.name === "AbortError"
         ? "This is taking longer than expected. Check your connection and retry; duplicate enquiries are prevented."
-        : (error.message || "We couldn't send your enquiry. Check your connection and try again.");
+        : (error.name === "TypeError"
+          ? "We couldn't reach the server. Check your connection and retry; duplicate enquiries are prevented."
+          : (error.message || "We couldn't send your enquiry. Check your connection and try again."));
     }).finally(function(){ window.clearTimeout(requestTimeout); setFormBusy(false); });
   });
   form.addEventListener("input", function(e){

@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
+import { createClient } from "./vendor/supabase-js-2.117.2.mjs";
 import { canIssueQuote, surveyReadiness } from "./quote-readiness.mjs";
 import { getLocalDayBounds, getTodayAgenda, relevantDate } from "./today-view.mjs";
 import { buildFinanceSummary, buildProjectModel } from "./project-model.mjs";
