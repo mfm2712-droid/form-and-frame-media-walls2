@@ -10,6 +10,7 @@ import { isIOSDevice, isInstalledPWA, pushSetupMessage } from "./push-support.mj
 import { activityDetailText } from "./activity-label.mjs";
 import { CATEGORIES, visibleNotifications, unreadCount, unreadForRequest, normalisePreferences, deviceState } from "./notification-centre.mjs";
 import { bellLabel, listHtml, preferencesHtml, deviceHtml, iconDiagnosticsHtml } from "./notification-view.mjs";
+import { canReversePayments, ledgerRows, loadPaymentLedger, paymentLedgerHtml, reversalKeyFor, reversalPayload } from "./payment-reversal.mjs";
 import { enquiryTargetFromSearch, operationsViewFromSearch } from "./push-target.mjs";
 import { assignmentLabel, assignmentOptionsHtml, assignmentUnavailableOptionsHtml } from "./assignment.mjs";
 import { blockListHtml } from "./availability-list.mjs";
@@ -32,6 +33,8 @@ const pushViewTarget = operationsViewFromSearch(window.location.search);
 let demo = false, db = null, demoLeads = [], demoBlocks = [], liveLeads = [], liveBlocks = [], selectedId = pushEnquiryTarget;
 let liveQuotes = [], liveWorkOrders = [], liveAppointments = [], liveInvoices = [], liveInvoiceDetails = [], liveProfiles = null;
 let invoiceSettings = null, currentStaffRole = null;
+let paymentLedger = { available:false, payments:[], reversals:[] };
+const pendingReversalKeys = new Map();
 let calendarMode = "month", calendarDate = new Date();
 let liveRefreshTimer = null, liveChannel = null;
 let calendarBlocks = [], calendarAppointments = [], calendarLoadVersion = 0;
@@ -199,7 +202,7 @@ function renderWorkflows(data) {
 
   $("invoiceList").innerHTML = data.invoices.length ? data.invoices.map(invoice => {
     const canPrint = invoiceSettingsReady(invoiceSettings) && liveInvoiceDetails.some(record => record.id === invoice.id);
-    return `<article class="business-card"><div><b>${esc(invoice.invoice_number)}</b><span>${invoice.status === "sent" ? `Due ${esc(invoice.due_date)} · ${invoice.overdue ? "OVERDUE" : "not overdue"}` : "Draft · not yet billed"}</span></div><strong>${moneyPence(invoice.total_pence)}</strong><small>Received ${moneyPence(invoice.paid_pence)} · outstanding ${moneyPence(invoice.outstanding_pence)}</small><button class="outline" type="button" data-print-invoice="${esc(invoice.id)}" ${canPrint ? "" : "disabled"}>${canPrint ? "Print / save PDF" : "Complete invoice setup first"}</button><label>Invoice status<select data-record-status="invoice" data-id="${esc(invoice.id)}">${optionList(nextRecordStates("invoice", invoice.status), invoice.status)}</select></label>${invoice.status === "sent" && invoice.outstanding_pence > 0 ? `<form class="paymentDraft" data-invoice-id="${esc(invoice.id)}"><label>Record payment (£)<input name="amount" type="number" min="0.01" step="0.01" max="${(invoice.outstanding_pence / 100).toFixed(2)}" required></label><label>Method<select name="method"><option value="bank_transfer">Bank transfer</option><option value="card">Card · record manually</option><option value="cash">Cash</option><option value="other">Other</option></select></label><button>Save payment</button></form>` : ""}<small>Changing status to Sent records an external send. Printing creates the invoice document; delivery remains manual.</small></article>`;
+    return `<article class="business-card"><div><b>${esc(invoice.invoice_number)}</b><span>${invoice.status === "sent" ? `Due ${esc(invoice.due_date)} · ${invoice.overdue ? "OVERDUE" : "not overdue"}` : "Draft · not yet billed"}</span></div><strong>${moneyPence(invoice.total_pence)}</strong><small>Received ${moneyPence(invoice.paid_pence)} · outstanding ${moneyPence(invoice.outstanding_pence)}</small><button class="outline" type="button" data-print-invoice="${esc(invoice.id)}" ${canPrint ? "" : "disabled"}>${canPrint ? "Print / save PDF" : "Complete invoice setup first"}</button><label>Invoice status<select data-record-status="invoice" data-id="${esc(invoice.id)}">${optionList(nextRecordStates("invoice", invoice.status), invoice.status)}</select></label>${invoice.status === "sent" && invoice.outstanding_pence > 0 ? `<form class="paymentDraft" data-invoice-id="${esc(invoice.id)}"><label>Record payment (£)<input name="amount" type="number" min="0.01" step="0.01" max="${(invoice.outstanding_pence / 100).toFixed(2)}" required></label><label>Method<select name="method"><option value="bank_transfer">Bank transfer</option><option value="card">Card · record manually</option><option value="cash">Cash</option><option value="other">Other</option></select></label><button>Save payment</button></form>` : ""}${paymentLedger.available ? paymentLedgerHtml(ledgerRows(invoice.id, paymentLedger.payments, paymentLedger.reversals), { canReverse:canReversePayments(currentStaffRole), esc, money:moneyPence, formatDate:format }) : ""}<small>Changing status to Sent records an external send. Printing creates the invoice document; delivery remains manual.</small></article>`;
   }).join("") : `<p class="today-empty">No invoice balances recorded. Quotes are not invoices.</p>`;
 }
 
@@ -225,6 +228,7 @@ async function loadWorkflows() {
     ]);
     const failure = [quotes, workOrders, appointments, invoices, invoiceRecords, followUps, activity].find(result => result.error);
     if (failure) throw failure.error;
+    paymentLedger = canReversePayments(currentStaffRole) ? await loadPaymentLedger(db) : { available:false, payments:[], reversals:[] };
     renderWorkflows({ quotes:quotes.data || [], workOrders:workOrders.data || [], appointments:appointments.data || [], invoices:invoices.data || [], invoiceRecords:invoiceRecords.data || [], followUps:followUps.data || [], profiles:liveProfiles });
     $("activityList").innerHTML = activity.data?.length ? activity.data.map(item => {
       const detail = activityDetailText(item);
@@ -1246,6 +1250,21 @@ $("business").addEventListener("change", async event => {
 });
 
 businessBus.addEventListener("click", async event => {
+  const reversePayment = event.target.closest("button[data-reverse-payment]");
+  if (reversePayment) {
+    if (!canReversePayments(currentStaffRole)) return showNotice("Only the owner can reverse a payment.");
+    const paymentId = reversePayment.dataset.reversePayment;
+    const entered = window.prompt("Why is this payment being reversed? (5-500 characters; this is permanent and recorded)");
+    if (entered === null) return;
+    const payload = reversalPayload(paymentId, entered, reversalKeyFor(pendingReversalKeys, paymentId));
+    if (!payload) return showNotice("Enter a reason of 5 to 500 characters to reverse a payment.");
+    if (!window.confirm("Reverse this payment? This cannot be undone. Record the correct payment separately if needed.")) return;
+    reversePayment.disabled = true;
+    const result = await saveLive(() => db.from("invoice_payment_reversals").insert(payload).select("id").single(), "Payment reversed. Record the correct payment separately if one is needed.");
+    if (result.saved) pendingReversalKeys.delete(paymentId);
+    else if (reversePayment.isConnected) reversePayment.disabled = false;
+    return;
+  }
   const printInvoice = event.target.closest("button[data-print-invoice]");
   if (printInvoice) {
     const balance = liveInvoices.find(invoice => invoice.id === printInvoice.dataset.printInvoice);
