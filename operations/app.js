@@ -10,6 +10,7 @@ import { isIOSDevice, isInstalledPWA, pushSetupMessage } from "./push-support.mj
 import { activityDetailText } from "./activity-label.mjs";
 import { CATEGORIES, visibleNotifications, unreadCount, unreadForRequest, normalisePreferences, deviceState } from "./notification-centre.mjs";
 import { bellLabel, listHtml, preferencesHtml, deviceHtml, iconDiagnosticsHtml } from "./notification-view.mjs";
+import { capabilitiesFor, filterActivityForCaps, loadWorkOrdersForCaps, roleAdjustedAction } from "./role-capabilities.mjs";
 import { enquiryTargetFromSearch, operationsViewFromSearch } from "./push-target.mjs";
 import { assignmentLabel, assignmentOptionsHtml, assignmentUnavailableOptionsHtml } from "./assignment.mjs";
 import { blockListHtml } from "./availability-list.mjs";
@@ -131,7 +132,7 @@ function renderProject(lead) {
   const editBrief = demo ? "" : `<details class="record-form"><summary>Edit customer enquiry details</summary><form id="enquiryEdit" data-request-id="${esc(lead.id)}"><label>Customer name<input name="customerName" value="${esc(lead.customer_name)}" minlength="2" maxlength="120" required></label><label>Email<input name="email" type="email" value="${esc(lead.email || "")}" maxlength="254"></label><label>Phone<input name="phone" type="tel" value="${esc(lead.phone || "")}" maxlength="60"></label><label>Postcode<input name="postcode" value="${esc(lead.postcode)}" maxlength="24" required></label><label>Wall size / dimensions<input name="wallWidth" value="${esc(lead.wall_width || "")}" maxlength="120"></label><label>Customer brief<textarea name="message" maxlength="4000" rows="4">${esc(lead.message || "")}</textarea></label><button>Save enquiry changes</button><small>Updates the customer record only. The website guide price is not a formal quote.</small></form></details>`;
   const quoteFormless = liveControls.replace(/<details class="record-form"><summary>Create formal quote draft<\/summary>[\s\S]*?<\/form><\/details>/, "").replace('<details class="record-form"><summary>Schedule a real appointment', '<details class="record-form" id="wsAppointment"><summary>Schedule a real appointment');
   legacyToolsHtml = `${editBrief}${assessmentControl}<div class="ws-visit"><button id="confirmVisit" data-id="${esc(lead.id)}">Mark visit status confirmed</button><small class="project-note">This updates the enquiry status only; it does not reserve a calendar slot.</small></div>${quoteFormless}`;
-  const rel = relatedFor(lead), badge = statusBadge(lead, rel), action = recommendedAction(lead, rel);
+  const rel = relatedFor(lead), badge = statusBadge(lead, rel), action = roleAdjustedAction(recommendedAction(lead, rel), rel, capabilitiesFor(currentStaffRole));
   $("projectPanel").innerHTML = `<p>SELECTED ENQUIRY</p><h2>${esc(lead.customer_name)}</h2>${badgeHtml(badge, esc)}<div class="project-spec"><b>${esc(lead.reference)}</b><br>${esc(p.location)}<br>${esc(p.geometry)}</div><section class="ws-next ws-next-mini"><p>NEXT STEP</p><h3>${esc(action.label)}</h3><small>${esc(action.hint)}</small></section><button type="button" class="ws-primary ws-open-wide" data-open-workspace="${esc(lead.id)}">${badge.key === "new" ? "Open this enquiry" : "Open project workspace"}</button>${finance}${customerActions}`;
 }
 
@@ -145,7 +146,20 @@ const assignmentControl = (kind, id, assignedTo) => liveProfiles
 const nextRecordStates = allowedNextStatuses;
 const requestFor = id => liveLeads.find(item => item.id === id);
 
+// Hides money panels for roles without money access (defence in depth; RLS is the real control).
+function applyMoneyVisibility(caps) {
+  const hide = !caps.money;
+  const set = (element, value) => { if (element) element.hidden = value; };
+  set($("todayMoney"), hide);
+  set($("totalBilled")?.closest?.(".business-metrics"), hide);
+  set($("quoteList")?.closest?.("section"), hide);
+  set($("invoiceList")?.closest?.("section"), hide);
+  $("businessTitle").textContent = hide ? "Jobs, appointments & activity" : "Quotes, work & money";
+}
+
 function renderWorkflows(data) {
+  const roleCaps = capabilitiesFor(currentStaffRole);
+  applyMoneyVisibility(roleCaps);
   liveQuotes = data.quotes;
   liveWorkOrders = data.workOrders;
   liveAppointments = data.appointments;
@@ -176,7 +190,7 @@ function renderWorkflows(data) {
   const sentQuoteValuePence = [...latestSentQuoteByRequest.values()].reduce((sum, quote) => sum + Number(quote.total_pence || 0), 0);
   $("todayMoney").innerHTML = `<div class="today-money-heading"><p>YOUR BUSINESS · RECORDED RECORDS</p><h2>Today, at a glance</h2><small>All staff-visible saved invoice and quote records · GBP</small></div><div class="today-money-hero"><span>Received against sent invoices</span><b>${moneyPence(totalReceivedPence)}</b><small>${moneyPence(totalOutstandingPence)} remains outstanding</small></div><div class="today-money-cards"><article><span>Invoiced</span><b>${moneyPence(totalBilledPence)}</b></article><article><span>Still due</span><b>${moneyPence(totalOutstandingPence)}</b></article><article><span>Quotes sent</span><b>${moneyPence(sentQuoteValuePence)}</b></article><article><span>Quote win rate</span><b>${sentCount ? `${Math.round(wins / sentCount * 100)}%` : "—"}</b></article></div><p class="today-money-note">Figures are based on saved business records, not website guide prices. Quote rate is by enquiry, not total revenue.</p>`;
   $("activeBuilds").textContent = liveWorkOrders.filter(item => !["completed", "cancelled"].includes(item.status)).length;
-  $("businessState").textContent = "All saved financial records · GBP";
+  $("businessState").textContent = roleCaps.money ? "All saved financial records · GBP" : "Job and calendar records";
 
   $("quoteList").innerHTML = data.quotes.length ? data.quotes.map(quote => {
     const enquiry = requestFor(quote.request_id);
@@ -186,7 +200,7 @@ function renderWorkflows(data) {
   $("workOrderList").innerHTML = data.workOrders.length ? data.workOrders.map(job => {
     const enquiry = requestFor(job.request_id);
     const hasInvoice = data.invoices.some(invoice => invoice.work_order_id === job.id);
-    return `<article class="business-card"><div><b>${esc(job.work_order_number)}</b><span>${esc(enquiry?.customer_name || job.title)} · ${esc(job.title)}</span></div><strong>${moneyPence(job.agreed_total_pence)}</strong><label>Build status<select data-record-status="work_order" data-id="${esc(job.id)}">${optionList(nextRecordStates("work_order", job.status), job.status)}</select></label><small>Assigned to ${esc(assignmentLabel(job.assigned_to, profiles))}</small>${assignmentControl("work_order", job.id, job.assigned_to)}<small>${job.target_completion ? `Target ${esc(job.target_completion)}` : "No target completion date"}${job.actual_cost_pence == null ? " · actual costs not entered" : ` · actual cost ${moneyPence(job.actual_cost_pence)}`}</small><label>Actual costs (£)<input data-actual-cost="${esc(job.id)}" type="number" min="0" step="0.01" value="${job.actual_cost_pence == null ? "" : (job.actual_cost_pence / 100).toFixed(2)}" placeholder="Enter actual cost"></label>${!hasInvoice && job.status !== "cancelled" ? `<details class="record-form"><summary>Create invoice draft</summary><form class="invoiceDraft" data-work-order-id="${esc(job.id)}"><label>Bill to<input name="billName" required maxlength="160" value="${esc(enquiry?.customer_name || "")}"></label><label>Billing address<textarea name="billAddress" required minlength="5" maxlength="1200" rows="2"></textarea></label><label>Issue date<input name="issueDate" type="date" required value="${local(new Date()).slice(0, 10)}"></label><label>Due date<input name="dueDate" type="date" required></label><label>Subtotal (£)<input name="subtotal" type="number" min="0" step="0.01" required></label><label>Tax amount (£)<input name="tax" type="number" min="0" step="0.01" value="0" required></label><button>Create invoice draft</button><small>Draft only. Enter the approved invoice figures and terms; this does not send an invoice.</small></form></details>` : ""}</article>`;
+    return `<article class="business-card"><div><b>${esc(job.work_order_number)}</b><span>${esc(enquiry?.customer_name || job.title)} · ${esc(job.title)}</span></div>${roleCaps.money ? `<strong>${moneyPence(job.agreed_total_pence)}</strong>` : ""}<label>Build status<select data-record-status="work_order" data-id="${esc(job.id)}">${optionList(nextRecordStates("work_order", job.status), job.status)}</select></label><small>Assigned to ${esc(assignmentLabel(job.assigned_to, profiles))}</small>${assignmentControl("work_order", job.id, job.assigned_to)}<small>${job.target_completion ? `Target ${esc(job.target_completion)}` : "No target completion date"}${!roleCaps.money ? "" : job.actual_cost_pence == null ? " · actual costs not entered" : ` · actual cost ${moneyPence(job.actual_cost_pence)}`}</small>${roleCaps.costEntry ? `<label>Actual costs (£)<input data-actual-cost="${esc(job.id)}" type="number" min="0" step="0.01" value="${job.actual_cost_pence == null ? "" : (job.actual_cost_pence / 100).toFixed(2)}" placeholder="Enter actual cost"></label>` : ""}${roleCaps.money && !hasInvoice && job.status !== "cancelled" ? `<details class="record-form"><summary>Create invoice draft</summary><form class="invoiceDraft" data-work-order-id="${esc(job.id)}"><label>Bill to<input name="billName" required maxlength="160" value="${esc(enquiry?.customer_name || "")}"></label><label>Billing address<textarea name="billAddress" required minlength="5" maxlength="1200" rows="2"></textarea></label><label>Issue date<input name="issueDate" type="date" required value="${local(new Date()).slice(0, 10)}"></label><label>Due date<input name="dueDate" type="date" required></label><label>Subtotal (£)<input name="subtotal" type="number" min="0" step="0.01" required></label><label>Tax amount (£)<input name="tax" type="number" min="0" step="0.01" value="0" required></label><button>Create invoice draft</button><small>Draft only. Enter the approved invoice figures and terms; this does not send an invoice.</small></form></details>` : ""}</article>`;
   }).join("") : `<p class="today-empty">No accepted quotes have been converted into build jobs.</p>`;
   if (data.workOrders.length) {
     $("workOrderList").insertAdjacentHTML("beforeend", `<div class="job-deadlines"><b>Plan build dates</b>${data.workOrders.map(job => `<div class="deadline-row"><span>${esc(job.work_order_number)}</span><label>Start<input type="date" data-job-date="planned_start" data-id="${esc(job.id)}" value="${esc(job.planned_start || "")}"></label><label>Target finish<input type="date" data-job-date="target_completion" data-id="${esc(job.id)}" value="${esc(job.target_completion || "")}"></label></div>`).join("")}</div>`);
@@ -214,19 +228,22 @@ async function loadWorkflows() {
   }
   try {
     const { start:todayStart, end:tomorrowStart } = getLocalDayBounds();
+    const roleCaps = capabilitiesFor(currentStaffRole);
+    const noRows = Promise.resolve({ data:[], error:null });
     const [quotes, workOrders, appointments, invoices, invoiceRecords, followUps, activity] = await Promise.all([
-      loadBusinessRows(db, "quotes", "created_at"),
-      loadBusinessRows(db, "work_orders", "created_at"),
+      roleCaps.money ? loadBusinessRows(db, "quotes", "created_at") : noRows,
+      loadWorkOrdersForCaps(table => loadBusinessRows(db, table, "created_at"), roleCaps),
       db.from("appointments").select("*").lt("starts_at", plusDays(365, 0).toISOString()).or(`ends_at.gt.${todayStart.toISOString()},status.eq.completed`).order("starts_at").limit(500),
-      loadBusinessRows(db, "invoice_balances", "due_date", true),
-      loadBusinessRows(db, "invoices", "created_at"),
+      roleCaps.money ? loadBusinessRows(db, "invoice_balances", "due_date", true) : noRows,
+      roleCaps.money ? loadBusinessRows(db, "invoices", "created_at") : noRows,
       db.from("follow_up_tasks").select("*").is("completed_at", null).is("cancelled_at", null).lte("due_at", tomorrowStart.toISOString()).order("due_at").limit(100),
       db.from("workflow_activity").select("*").order("created_at", { ascending:false }).limit(30)
     ]);
     const failure = [quotes, workOrders, appointments, invoices, invoiceRecords, followUps, activity].find(result => result.error);
     if (failure) throw failure.error;
     renderWorkflows({ quotes:quotes.data || [], workOrders:workOrders.data || [], appointments:appointments.data || [], invoices:invoices.data || [], invoiceRecords:invoiceRecords.data || [], followUps:followUps.data || [], profiles:liveProfiles });
-    $("activityList").innerHTML = activity.data?.length ? activity.data.map(item => {
+    const activityRows = filterActivityForCaps(activity.data || [], roleCaps);
+    $("activityList").innerHTML = activityRows.length ? activityRows.map(item => {
       const detail = activityDetailText(item);
       return `<article class="activity-row"><span>${format(item.created_at)}</span><b>${esc(item.event_type.replaceAll("_", " "))}</b><small>${esc(item.entity_type.replaceAll("_", " "))} · ${esc(item.entity_id.slice(0, 8))}${detail ? ` · ${esc(detail)}` : ""}</small></article>`;
     }).join("") : `<p class="today-empty">No activity recorded yet.</p>`;
@@ -268,7 +285,7 @@ const relatedFor = lead => relatedRecords(lead, { quotes:liveQuotes, workOrders:
 function renderLeadList() {
   const items = currentItems;
   $("leadList").innerHTML = items.length ? items.map(lead => {
-    const rel = relatedFor(lead), badge = statusBadge(lead, rel), action = recommendedAction(lead, rel);
+    const rel = relatedFor(lead), badge = statusBadge(lead, rel), action = roleAdjustedAction(recommendedAction(lead, rel), rel, capabilitiesFor(currentStaffRole));
     const fresh = badge.key === "new";
     return `<article class="lead lead-${esc(badge.tone)} ${lead.id === selectedId ? "selected" : ""} ${fresh ? "unopened" : ""}" data-lead-id="${esc(lead.id)}"><div class="lead-top"><div><h3>${esc(lead.customer_name)} <small>· ${esc(lead.reference)}</small></h3><p>${esc(lead.postcode)} · ${esc(lead.email || lead.phone)} · ${esc(lead.wall_width)}</p></div><div class="lead-side">${badgeHtml(badge, esc)}<button type="button" class="ws-open ${fresh ? "ws-primary" : "outline"}" data-open-workspace="${esc(lead.id)}">${fresh ? "Open" : "View"}</button></div></div><p>${esc(lead.message || "No customer note.")}</p><small>${format(lead.created_at)} · ${esc(lead.source)} · guide ${money(lead.guide_low)}–${money(lead.guide_high)}</small><small class="lead-next">Next: ${esc(action.label)}</small></article>`;
   }).join("") : `<p class="empty">No enquiries yet. New website, chat and booking requests will appear here.</p>`;
@@ -342,6 +359,7 @@ function loadDemo() { render(demoLeads, demoBlocks); loadWorkflows(); refreshWor
 async function loadInvoiceSettings() {
   const status = $("invoiceSetupStatus");
   $("invoiceSettings").hidden = currentStaffRole !== "owner";
+  if (!capabilitiesFor(currentStaffRole).settingsRead) { invoiceSettings = null; return; }
   const { data, error } = await db.from("business_settings").select("*").eq("singleton", true).maybeSingle();
   if (error) {
     invoiceSettings = null;
@@ -906,7 +924,7 @@ function refreshWorkspace(force = false) {
   const wasOpen = ["wsQuoteEditor", "wsInvoiceEditor"].filter(id => $(id)?.open);
   const moreOpen = document.querySelector(".ws-more")?.open;
   $("workspaceBody").innerHTML = renderWorkspaceHtml({
-    lead, rel, steps:workflowSteps(lead, rel), badge:statusBadge(lead, rel), action:recommendedAction(lead, rel, { quoteAllowed }),
+    lead, rel, steps:workflowSteps(lead, rel), badge:statusBadge(lead, rel), action:roleAdjustedAction(recommendedAction(lead, rel, { quoteAllowed }), rel, capabilitiesFor(currentStaffRole)), money:capabilitiesFor(currentStaffRole).money,
     esc, moneyPence, format, legacyTools:legacyToolsHtml, demo, quoteAllowed, invoiceDefaults, today,
     activity:wsExtrasFor === lead.id ? wsExtras.activity : [], activityText:activityDetailText
   });

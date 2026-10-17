@@ -7,7 +7,7 @@ export async function checkStaffAccess(client) {
     if (!data?.user) return { state:"signed_out" };
     const profile = await client.from("profiles").select("role").eq("id", data.user.id).maybeSingle();
     if (profile.error) return { state:"unavailable" };
-    if (!["owner", "staff"].includes(profile.data?.role)) return { state:"unassigned" };
+    if (!["owner", "manager", "staff"].includes(profile.data?.role)) return { state:"unassigned" };
     return { state:"authorized", role:profile.data.role };
   } catch {
     return { state:"unavailable" };
