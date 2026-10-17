@@ -10,6 +10,7 @@ import { isIOSDevice, isInstalledPWA, pushSetupMessage } from "./push-support.mj
 import { activityDetailText } from "./activity-label.mjs";
 import { CATEGORIES, visibleNotifications, unreadCount, unreadForRequest, normalisePreferences, deviceState } from "./notification-centre.mjs";
 import { bellLabel, listHtml, preferencesHtml, deviceHtml, iconDiagnosticsHtml } from "./notification-view.mjs";
+import { insertWithNumber } from "./document-number.mjs";
 import { enquiryTargetFromSearch, operationsViewFromSearch } from "./push-target.mjs";
 import { assignmentLabel, assignmentOptionsHtml, assignmentUnavailableOptionsHtml } from "./assignment.mjs";
 import { blockListHtml } from "./availability-list.mjs";
@@ -32,6 +33,7 @@ const pushViewTarget = operationsViewFromSearch(window.location.search);
 let demo = false, db = null, demoLeads = [], demoBlocks = [], liveLeads = [], liveBlocks = [], selectedId = pushEnquiryTarget;
 let liveQuotes = [], liveWorkOrders = [], liveAppointments = [], liveInvoices = [], liveInvoiceDetails = [], liveProfiles = null;
 let invoiceSettings = null, currentStaffRole = null;
+const numberingState = {}; // remembers whether the optional server-side numbering RPC exists
 let calendarMode = "month", calendarDate = new Date();
 let liveRefreshTimer = null, liveChannel = null;
 let calendarBlocks = [], calendarAppointments = [], calendarLoadVersion = 0;
@@ -1125,9 +1127,8 @@ panelBus.addEventListener("submit", async event => {
     }
     const existingVersions = liveQuotes.filter(quote => quote.request_id === requestId).map(quote => Number(quote.version));
     const version = existingVersions.length ? Math.max(...existingVersions) + 1 : 1;
-    const quoteNo = `FFQ-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${crypto.randomUUID().slice(0, 4).toUpperCase()}`;
-    const payload = { request_id:requestId, quote_number:quoteNo, version, subtotal_pence:subtotalPence, tax_rate_basis_points:tax.taxRateBasisPoints, tax_pence:tax.taxPence, scope:String(fields.get("scope") || "").trim(), valid_until:String(fields.get("validUntil") || "") || null, created_by:userId };
-    const result = await saveLive(() => db.from("quotes").insert(payload).select("id").single(), "Draft quote saved. It has not been sent to the customer.");
+    const payload = { request_id:requestId, version, subtotal_pence:subtotalPence, tax_rate_basis_points:tax.taxRateBasisPoints, tax_pence:tax.taxPence, scope:String(fields.get("scope") || "").trim(), valid_until:String(fields.get("validUntil") || "") || null, created_by:userId };
+    const result = await saveLive(() => insertWithNumber(db, "quote", () => payload, numberingState), "Draft quote saved. It has not been sent to the customer.");
     if (result.saved) form.reset();
   } else if (form.id === "enquiryEdit") {
     const customerName = String(fields.get("customerName") || "").trim();
@@ -1293,8 +1294,7 @@ businessBus.addEventListener("click", async event => {
   const userResult = await db.auth.getUser();
   if (userResult.error || !userResult.data.user) return showNotice("Sign in again before creating a build job.");
   const title = enquiry.project_spec?.title || `Media wall · ${enquiry.reference}`;
-  const number = `FFJ-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${crypto.randomUUID().slice(0, 4).toUpperCase()}`;
-  await saveLive(() => db.from("work_orders").insert({ request_id:enquiry.id, accepted_quote_id:quote.id, work_order_number:number, title, agreed_total_pence:quote.total_pence, created_by:userResult.data.user.id }).select("id").single(), "Accepted quote converted into a build job.");
+  await saveLive(() => insertWithNumber(db, "work_order", () => ({ request_id:enquiry.id, accepted_quote_id:quote.id, title, agreed_total_pence:quote.total_pence, created_by:userResult.data.user.id }), numberingState), "Accepted quote converted into a build job.");
 });
 
 businessBus.addEventListener("submit", async event => {
@@ -1333,8 +1333,7 @@ businessBus.addEventListener("submit", async event => {
     const userResult = await db.auth.getUser();
     if (userResult.error || !userResult.data.user) return showNotice("Sign in again before creating an invoice.");
     const button = form.querySelector("button"); button.disabled = true;
-    const invoiceNo = `FFI-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${crypto.randomUUID().slice(0, 4).toUpperCase()}`;
-    const result = await saveLive(() => db.from("invoices").insert({ work_order_id:form.dataset.workOrderId, invoice_number:invoiceNo, bill_to_name:String(fields.get("billName") || "").trim(), bill_to_address:String(fields.get("billAddress") || "").trim(), issue_date:issueDate, due_date:dueDate, subtotal_pence:subtotal, tax_rate_basis_points:taxRateBasisPoints, tax_pence:tax, created_by:userResult.data.user.id }).select("id").single(), "Invoice draft saved. It has not been sent.");
+    const result = await saveLive(() => insertWithNumber(db, "invoice", () => ({ work_order_id:form.dataset.workOrderId, bill_to_name:String(fields.get("billName") || "").trim(), bill_to_address:String(fields.get("billAddress") || "").trim(), issue_date:issueDate, due_date:dueDate, subtotal_pence:subtotal, tax_rate_basis_points:taxRateBasisPoints, tax_pence:tax, created_by:userResult.data.user.id }), numberingState), "Invoice draft saved. It has not been sent.");
     if (result.saved) form.reset();
     if (button.isConnected) button.disabled = false;
   } else if (form.classList.contains("paymentDraft")) {
