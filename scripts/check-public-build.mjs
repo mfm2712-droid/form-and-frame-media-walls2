@@ -130,4 +130,5 @@ for (const icon of deployedManifest.icons.filter(icon => icon.purpose === "monoc
     `Deployed monochrome icon ${icon.src} must be a transparent white mask, not an opaque image.`);
 }
 
+assert.equal(publicHtml.includes("FF:CONTACT"), false, "The footer contact marker must be replaced at build time.");
 console.log(`Verified public build root: ${[...rootEntries].sort().join(", ")}`);

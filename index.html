@@ -7,9 +7,15 @@
 <meta property="og:title" content="Form &amp; Frame Ltd — Architectural Media Walls">
 <meta property="og:description" content="Scaled drawings, precision workshop build and clean installation. Estimate your media wall online.">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="Form &amp; Frame Ltd">
+<meta property="og:locale" content="en_GB">
+<meta property="og:url" content="https://form-and-frame.vercel.app/">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#E6E1D5">
 <link rel="icon" type="image/svg+xml" href="/operations/icon.svg">
 <link rel="canonical" href="https://form-and-frame.vercel.app/">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"Form & Frame Ltd","url":"https://form-and-frame.vercel.app/","address":{"@type":"PostalAddress","streetAddress":"Unit 4, Buckingham Ave","addressLocality":"Slough","postalCode":"SL1","addressRegion":"Berkshire","addressCountry":"GB"},"areaServed":["SL0","SL1","SL2","SL3","SL4","SL6","SL9","Slough","Windsor","Maidenhead","Burnham","Gerrards Cross"],"priceRange":"£££"}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
@@ -657,6 +663,18 @@
     *{animation-duration:.001ms!important;transition-duration:.001ms!important}
     .ledglow{animation:none;opacity:.42}
   }
+
+  /* ============ FRAME-005 polish: touch targets, footer nav, small-screen rhythm ============ */
+  .foot-nav,.foot-contact{flex:1 0 100%;display:flex;flex-wrap:wrap;align-items:center;gap:0 18px}
+  .foot-nav a,.foot-contact a{color:inherit;text-underline-offset:3px}
+  .foot-nav a:hover,.foot-contact a:hover{color:var(--ink)}
+  @media (pointer:coarse){
+    .nav .btn,.hero-cta .btn,.btn{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+    .staff-access{min-height:44px}
+    .chip{min-height:44px}
+    .foot-nav a,.foot-contact a{display:inline-flex;align-items:center;min-height:44px;padding:0 4px}
+    .mark{display:inline-flex;align-items:center;min-height:44px}
+  }
 </style>
 
 <a class="skip-link" href="#main">Skip to main content</a>
@@ -1156,6 +1174,8 @@
     <span><b>Form &amp; Frame Ltd</b></span>
     <span>Unit 4, Buckingham Ave, Slough SL1</span>
     <span>Serving Slough (SL1–SL3), Langley, Burnham, Windsor (SL4), Maidenhead (SL6) &amp; Gerrards Cross (SL9)</span>
+    <nav class="foot-nav" aria-label="Footer"><a href="#drawing">Drawing</a><a href="#survey">Survey · Proposal</a><a href="#specify">Specify</a><a href="#process">Process</a><a href="/operations/">Staff access</a></nav>
+    <!--FF:CONTACT-->
     <span>Drawings &copy; 2026</span>
     <span>Sheet 1 / 1</span>
   </footer>
