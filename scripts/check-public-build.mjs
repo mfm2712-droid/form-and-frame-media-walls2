@@ -3,6 +3,8 @@ import { readFile, readdir, stat } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { resolveSiteUrl } from "../site-config.mjs";
+import { SAMPLE_WORKS, sampleWorksEnabled } from "../site-works.mjs";
+import { SAMPLE_INTRO, SAMPLE_LABEL } from "./works-section.mjs";
 import { badgeReport, readPng } from "./png-info.mjs";
 
 const root = resolve("dist/public");
@@ -25,11 +27,21 @@ assert.equal((await stat(resolve(root, "operations/activity-label.mjs"))).isFile
 assert.equal((await stat(resolve(root, "operations/push-target.mjs"))).isFile(), true, "Push notification links must resolve to the requested enquiry in the staff app.");
 assert.equal((await stat(resolve(root, "operations/invoice-document.mjs"))).isFile(), true, "The mobile Operations app must be able to render safe printable invoices.");
 assert.equal((await stat(resolve(root, "operations/payment-idempotency.mjs"))).isFile(), true, "Manual payment retries must retain their idempotency key across reloads.");
+const worksOn = sampleWorksEnabled(process.env);
 assert.equal(
-  (await readdir(resolve(root, "assets"))).includes("cases"), false,
-  "Unvalidated before/after case photos must not be deployed until Mark confirms them (FRAME-005)."
+  (await readdir(resolve(root, "assets"))).includes("cases"), worksOn,
+  "assets/cases (fictitious sample photos) must be deployed only while SHOW_SAMPLE_WORKS is on."
 );
 const publicHtml = await readFile(resolve(root, "index.html"), "utf8");
+assert.equal(publicHtml.includes("FF:WORKS"), false, "The works marker must be replaced at build time.");
+if (worksOn) {
+  assert.equal((publicHtml.match(/class="sample-tag">/g) || []).length, SAMPLE_WORKS.length, "Every sample project card must carry a visible 'Sample project' tag.");
+  assert.ok(publicHtml.includes(SAMPLE_INTRO), "The works section must state that the projects are illustrative samples.");
+  assert.equal(publicHtml.includes("Completed works"), false, "The section must not be presented as completed works.");
+  for (const work of SAMPLE_WORKS) for (const image of [work.before, work.after]) assert.equal((await stat(resolve(root, image))).isFile(), true, `${image} must be deployed.`);
+} else {
+  assert.equal(/id="works"|id="rWorks"|assets\/cases\//.test(publicHtml), false, "With the flag off no works section may remain.");
+}
 const publicConfigSource = await readFile(resolve(root, "public-config.js"), "utf8");
 const publicConfigMatch = /^window\.FF_PUBLIC_CONFIG = Object\.freeze\((\{.*\})\);\s*$/.exec(publicConfigSource);
 assert.ok(publicConfigMatch, "The generated public config must be a valid frozen JSON object.");
