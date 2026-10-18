@@ -1,4 +1,6 @@
 -- DRAFT — NOT APPLIED, NOT in supabase/migrations on purpose (so `supabase db push` cannot pick it up).
+-- DO NOT APPLY without Mark's/an owner's explicit approval. Requires is_owner() from the least-privilege draft (20261017180000) to be applied first.
+-- App side: operations/customer-store.mjs already reads/writes this table and falls back to the enquiry-derived list while it is absent.
 -- Issue #32 (G7). Needs Mark's approval of the data model; ship in a SEPARATE PR with a real timestamp.
 -- The staff app already shows a customer list DERIVED from enquiries (operations/customers.mjs) and does
 -- NOT need this table; this is the persistent form, so later features (notes, GDPR export/erase) have a home.

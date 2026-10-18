@@ -12,6 +12,7 @@ import { CATEGORIES, visibleNotifications, unreadCount, unreadForRequest, normal
 import { bellLabel, listHtml, preferencesHtml, deviceHtml, iconDiagnosticsHtml } from "./notification-view.mjs";
 import { deriveCustomers, filterCustomers } from "./customers.mjs";
 import { customersHtml } from "./customers-view.mjs";
+import { canWriteCustomers, loadCustomerRecords, mergeStoredCustomers, saveCustomerRecord } from "./customer-store.mjs";
 import { financeOverview } from "./finance-overview.mjs";
 import { financeOverviewHtml } from "./finance-overview-view.mjs";
 import { confirmStatusChange } from "./status-confirm.mjs";
@@ -39,6 +40,7 @@ const pushEnquiryTarget = enquiryTargetFromSearch(window.location.search);
 const pushViewTarget = operationsViewFromSearch(window.location.search);
 let demo = false, db = null, demoLeads = [], demoBlocks = [], liveLeads = [], liveBlocks = [], selectedId = pushEnquiryTarget;
 let liveQuotes = [], liveWorkOrders = [], liveAppointments = [], liveInvoices = [], liveInvoiceDetails = [], liveProfiles = null;
+let customerStore = { available:false, rows:[] };
 let invoiceSettings = null, currentStaffRole = null, customerQuery = "", financePeriod = "this-month";
 const numberingState = {}; // remembers whether the optional server-side numbering RPC exists
 let paymentLedger = { available:false, payments:[], reversals:[] };
@@ -406,7 +408,7 @@ async function showStaffAccessIssue(access) {
   liveLeads = []; liveBlocks = []; liveQuotes = []; liveWorkOrders = [];
   liveAppointments = []; liveInvoices = []; liveInvoiceDetails = [];
   calendarBlocks = []; calendarAppointments = []; calendarLoadVersion++;
-  liveProfiles = null; invoiceSettings = null; currentStaffRole = null;
+  liveProfiles = null; invoiceSettings = null; currentStaffRole = null; customerStore = { available:false, rows:[] };
   clearTimeout(liveRefreshTimer);
   if (liveChannel) { await db.removeChannel(liveChannel); liveChannel = null; }
 }
@@ -493,6 +495,10 @@ async function loadLive() {
     }
     render(liveLeads, blockResult.data || [], recentLeads);
     const workflowsLoaded = await loadWorkflows();
+    // Saved customer records are optional: until the database draft is applied this resolves to { available:false } and the derived list is used.
+    customerStore = await loadCustomerRecords(db);
+    if (customerStore.error) console.error("Saved customer records could not be loaded; showing customers derived from enquiries.", customerStore.error);
+    renderCustomers();
     renderLeadList();
     if (openFromNotification) { notifiedHandled = true; openWorkspace(notifiedLeadResult.data.id); }
     else refreshWorkspace();
@@ -858,17 +864,32 @@ $("calendarNext").addEventListener("click", () => { calendarDate = new Date(cale
 $("calendarToday").addEventListener("click", () => { calendarDate = new Date(); refreshCalendar(); });
 $("calendarRetry").addEventListener("click", refreshCalendar);
 document.querySelectorAll(".calendar-mode").forEach(button => button.addEventListener("click", () => { calendarMode = button.dataset.calendarMode; refreshCalendar(); }));
-// ---- Customers (derived from enquiries; no customers table yet — see issue #32) ----
+// ---- Customers (derived from enquiries; saved records are optional until the customers draft is applied — issue #32) ----
 function renderCustomers() {
   const box = $("customerList");
   if (!box) return;
   const caps = capabilitiesFor(currentStaffRole);
-  const customers = deriveCustomers(demo ? demoLeads : liveLeads, demo ? {} : { quotes:liveQuotes, workOrders:liveWorkOrders, invoices:liveInvoices });
+  const derived = deriveCustomers(demo ? demoLeads : liveLeads, demo ? {} : { quotes:liveQuotes, workOrders:liveWorkOrders, invoices:liveInvoices });
+  const storeOn = !demo && customerStore.available;
+  const customers = storeOn ? mergeStoredCustomers(derived, customerStore.rows) : derived;
   const shown = filterCustomers(customers, customerQuery);
-  $("customerCount").textContent = `${customers.length} customer${customers.length === 1 ? "" : "s"} from recent enquiries`;
-  box.innerHTML = customersHtml(shown, { esc, moneyPence, canSeeMoney: !demo && caps.money });
+  $("customerCount").textContent = `${customers.length} customer${customers.length === 1 ? "" : "s"} ${storeOn ? "(saved records and recent enquiries)" : "from recent enquiries"}`;
+  box.innerHTML = customersHtml(shown, { esc, moneyPence, canSeeMoney: !demo && caps.money, store: storeOn ? { available:true, canWrite:canWriteCustomers(currentStaffRole) } : null });
 }
 $("customerSearch")?.addEventListener("input", event => { customerQuery = event.target.value; renderCustomers(); });
+$("customerList")?.addEventListener("submit", async event => {
+  const form = event.target.closest?.("form.customer-record-form");
+  if (!form) return;
+  event.preventDefault();
+  if (demo || !customerStore.available) return;
+  const derived = deriveCustomers(liveLeads, { quotes:liveQuotes, workOrders:liveWorkOrders, invoices:liveInvoices });
+  const customer = mergeStoredCustomers(derived, customerStore.rows).find(item => item.key === form.dataset.customerKey);
+  if (!customer) { showNotice("That customer is no longer in the list. Refresh and try again.", "warning"); return; }
+  const result = await saveCustomerRecord(db, currentStaffRole, customer, { fullName: form.elements.fullName.value, notes: form.elements.notes.value });
+  if (!result.saved) { showNotice(result.error || "The customer record could not be saved.", "warning"); return; }
+  const refreshed = await loadLive();
+  showNotice(refreshed ? "Customer record saved." : "Customer record saved. The latest data could not be refreshed; use Refresh to verify it.", refreshed ? "success" : "warning");
+});
 $("customerList")?.addEventListener("click", async event => {
   const button = event.target.closest("button[data-open-enquiry]");
   if (!button) return;
