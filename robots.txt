@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /operations/
+
+Sitemap: https://form-and-frame.vercel.app/sitemap.xml

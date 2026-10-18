@@ -3,14 +3,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Form &amp; Frame Ltd | Bespoke Media Walls &amp; Fitted Joinery | Slough &amp; Berkshire</title>
-<meta name="description" content="Architectural media walls, fitted joinery and linear electric fireplace surrounds across Slough, Windsor, Maidenhead and Berkshire. Scaled drawings before build and a free site survey.">
+<meta name="description" content="Architectural media walls, fitted joinery and linear electric fireplace surrounds across Slough, Windsor, Maidenhead and Berkshire. Scaled drawings before build and a measured site survey.">
 <meta property="og:title" content="Form &amp; Frame Ltd — Architectural Media Walls">
 <meta property="og:description" content="Scaled drawings, precision workshop build and clean installation. Estimate your media wall online.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="https://mfm2712-droid.github.io/form-and-frame-media-walls2/assets/cases/burnham-library-after.webp">
+<meta property="og:site_name" content="Form &amp; Frame Ltd">
+<meta property="og:locale" content="en_GB">
+<meta property="og:url" content="https://form-and-frame.vercel.app/">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#E6E1D5">
 <link rel="icon" type="image/svg+xml" href="/operations/icon.svg">
-<link rel="canonical" href="https://mfm2712-droid.github.io/form-and-frame-media-walls2/">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"Form & Frame Ltd","url":"https://mfm2712-droid.github.io/form-and-frame-media-walls2/","address":{"@type":"PostalAddress","streetAddress":"Unit 4, Buckingham Ave","addressLocality":"Slough","postalCode":"SL1","addressRegion":"Berkshire","addressCountry":"GB"},"areaServed":["SL0","SL1","SL2","SL3","SL4","SL6","SL9","Slough","Windsor","Maidenhead","Burnham","Gerrards Cross"],"priceRange":"£££"}</script>
+<link rel="canonical" href="https://form-and-frame.vercel.app/">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"Form & Frame Ltd","url":"https://form-and-frame.vercel.app/","address":{"@type":"PostalAddress","streetAddress":"Unit 4, Buckingham Ave","addressLocality":"Slough","postalCode":"SL1","addressRegion":"Berkshire","addressCountry":"GB"},"areaServed":["SL0","SL1","SL2","SL3","SL4","SL6","SL9","Slough","Windsor","Maidenhead","Burnham","Gerrards Cross"],"priceRange":"£££"}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
@@ -86,6 +91,8 @@
   }
   p{margin:0;text-wrap:pretty}
   a{color:inherit;text-decoration:none}
+  .skip-link{position:absolute;left:8px;top:-60px;z-index:1000;padding:10px 14px;background:var(--ink);color:var(--paper-3);font:600 12px "IBM Plex Mono",monospace;text-decoration:none}
+  .skip-link:focus{top:8px}
   :focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:2px}
   ::selection{background:var(--ink);color:var(--paper-3)}
   .plate{scroll-margin-top:80px}
@@ -140,7 +147,7 @@
   .navlinks{display:flex;gap:26px;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.16em}
   .navlinks a{color:var(--pencil);transition:color .12s}
   .navlinks a:hover{color:var(--frame)}
-  .nav-actions{display:flex;align-items:center;gap:14px}.staff-access{font:600 10px/1 "IBM Plex Mono",monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--pencil);white-space:nowrap}.staff-access:hover{color:var(--frame)}
+  .nav-actions{display:flex;align-items:center;gap:14px}.staff-access{display:inline-flex;align-items:center;min-height:24px;font:600 10px/1 "IBM Plex Mono",monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--pencil);white-space:nowrap}.staff-access:hover{color:var(--frame)}
   .nav-toggle{display:none;width:42px;height:40px;padding:0;border:1px solid var(--frame);background:transparent;cursor:pointer;font:600 17px/1 "IBM Plex Mono",monospace}
   .btn{
     display:inline-flex;align-items:center;justify-content:center;gap:.5em;
@@ -422,11 +429,6 @@
   .demo-note{margin-top:13px;font:500 10px/1.5 "IBM Plex Mono",monospace;color:var(--pencil)}
 
   /* ============ TESTIMONIALS ============ */
-  .testimonials{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;border:1px solid var(--frame);background:var(--pencil-2)}
-  .testimonial{min-width:0;background:var(--paper-3);padding:22px;display:flex;flex-direction:column;gap:14px}
-  .testimonial .stars{color:var(--oak);font:600 12px/1 "IBM Plex Mono",monospace;letter-spacing:.12em}
-  .testimonial p{font-size:14px;line-height:1.55}
-  .testimonial span{margin-top:auto;font:600 10px/1.4 "IBM Plex Mono",monospace;letter-spacing:.08em;color:var(--pencil)}
 
   /* ============ PROJECT ASSISTANT ============ */
   .chat-launch{position:fixed;right:22px;bottom:22px;z-index:50;display:inline-flex;align-items:center;gap:9px;padding:13px 15px;border:1px solid var(--frame);background:var(--frame);color:var(--paper-3);box-shadow:4px 4px 0 var(--oak);cursor:pointer;font:600 10px/1 "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
@@ -471,7 +473,6 @@
     .navlinks{display:none}
     .nav-toggle{display:block;margin-left:auto}.nav-actions{gap:10px}
     .nav.open{flex-wrap:wrap}.nav.open .navlinks{order:4;display:flex;flex-basis:100%;padding-top:14px;border-top:1px solid var(--pencil-2);gap:14px;overflow-x:auto}.nav.open .navlinks a{white-space:nowrap}
-    .testimonials{grid-template-columns:1fr 1fr}
   }
   @media (max-width:560px){
     .sheet{margin:6px}
@@ -501,7 +502,6 @@
     .mosaic{grid-template-columns:1fr}
     .tile:first-child{grid-column:auto;grid-row:auto;height:280px}
     .chat-launch{right:14px;bottom:14px}.chat-panel{right:14px;bottom:70px}.chat-launch span{display:none}
-    .testimonials{grid-template-columns:1fr}
   }
   @media (hover:none){
     .btn:hover{transform:none;box-shadow:none}
@@ -520,6 +520,8 @@
   .seg{display:flex;border:1px solid var(--paper-3);flex:none}
   .seg button{appearance:none;-webkit-appearance:none;border:0;border-radius:0;background:transparent;color:var(--paper-3);
     cursor:pointer;font:600 10px/1 "IBM Plex Mono",monospace;letter-spacing:.13em;text-transform:uppercase;padding:10px 15px}
+  .seg button{min-height:24px}
+  .field.num{min-height:24px}
   .seg button+button{border-left:1px solid var(--paper-3)}
   .seg button:active{opacity:.7}
   .seg button[aria-pressed="true"]{background:var(--paper-3);color:var(--frame)}
@@ -661,8 +663,21 @@
     *{animation-duration:.001ms!important;transition-duration:.001ms!important}
     .ledglow{animation:none;opacity:.42}
   }
+
+  /* ============ FRAME-005 polish: touch targets, footer nav, small-screen rhythm ============ */
+  .foot-nav,.foot-contact{flex:1 0 100%;display:flex;flex-wrap:wrap;align-items:center;gap:0 18px}
+  .foot-nav a,.foot-contact a{color:inherit;text-underline-offset:3px;display:inline-flex;align-items:center;min-height:28px}
+  .foot-nav a:hover,.foot-contact a:hover{color:var(--ink)}
+  @media (pointer:coarse){
+    .nav .btn,.hero-cta .btn,.btn{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+    .staff-access{min-height:44px}
+    .chip{min-height:44px}
+    .foot-nav a,.foot-contact a{display:inline-flex;align-items:center;min-height:44px;padding:0 4px}
+    .mark{display:inline-flex;align-items:center;min-height:44px}
+  }
 </style>
 
+<a class="skip-link" href="#main">Skip to main content</a>
 <div class="deck" id="deck" data-view="desktop">
   <div class="viewbar">
     <div class="viewbar-in">
@@ -681,20 +696,21 @@
       <a href="#drawing">DRAWING</a>
       <a href="#survey">SURVEY&nbsp;·&nbsp;PROPOSAL</a>
       <a href="#specify">SPECIFY</a>
-      <a href="#works">WORKS</a>
     </div>
-    <div class="nav-actions"><a class="staff-access" href="https://form-and-frame.vercel.app/operations/" aria-label="Open staff operations">Staff access</a><a class="btn" href="#request">Book a survey</a></div>
+    <div class="nav-actions"><a class="staff-access" href="/operations/" aria-label="Staff access: open staff operations">Staff access</a><a class="btn" href="#request">Book a survey</a></div>
   </nav>
 
   <div class="titlestrip">
     <span><b>Form &amp; Frame Ltd</b></span>
     <span>Media-wall joinery</span>
     <span>Slough · Berkshire</span>
-    <span>Drawing set — <b>7 plates</b></span>
+    <span>Drawing set — <b>5 plates</b></span>
     <span>Issue 2026</span>
   </div>
 
   <div id="top"></div>
+
+  <main id="main">
 
   <!-- A-01 HERO -->
   <section class="plate" id="drawing">
@@ -734,7 +750,7 @@
       <div class="plate-head">
         <div class="eyebrow">A-02 / Same wall, two states</div>
         <h2>Drag from what's there to what's drawn.</h2>
-        <p class="prose">A real Burnham job: chimney breast with a bracket TV and trailing cables on the left, the signed-off proposal on the right — recessed screen, 1.0&nbsp;kW linear fire, soft-close cabinets and a concealed warm-white reveal.</p>
+        <p class="prose">Illustrative example: chimney breast with a bracket TV and trailing cables on the left, the signed-off proposal on the right — recessed screen, 1.0&nbsp;kW linear fire, soft-close cabinets and a concealed warm-white reveal.</p>
       </div>
       <div class="compare-frame" id="cmp">
         <div class="cmp-svg-survey" id="cmpSurvey"></div>
@@ -759,7 +775,7 @@
       </div>
 
       <div class="cfg">
-        <aside class="cfg-controls">
+        <div class="cfg-controls" role="group" aria-label="Configurator controls">
           <div class="ctl budgetctl">
             <label class="tog"><span><b>Do your own budget</b> — design down to a figure</span><input type="checkbox" id="fBudgetMode"></label>
             <div class="budgetbox" id="budgetBox" hidden>
@@ -979,7 +995,7 @@
             <input class="file" type="file" id="fPhoto" aria-label="Overlay on your room photo" accept="image/*">
             <div class="hintline" id="fPhotoMsg" role="alert" hidden></div>
           </div>
-        </aside>
+        </div>
 
         <div class="cfg-stage">
           <div class="cfg-draw" id="cfgDraw">
@@ -1021,7 +1037,7 @@
 
       <div class="cfg-summary" id="rSummary"></div>
 
-      <div class="schedule">
+      <div class="schedule" tabindex="0" role="region" aria-label="Schedule of works, scrollable">
         <table>
           <caption>Schedule of works — indicative</caption>
           <thead><tr><th>Item</th><th>Specification</th><th>Qty</th></tr></thead>
@@ -1048,45 +1064,13 @@
     </div>
   </section>
 
-  <!-- A-05 WORKS -->
-  <section class="plate" id="works">
-    <div class="wrap">
-      <div class="plate-head">
-        <div class="eyebrow">A-05 / Completed works</div>
-        <h2>Recent drawings, off the wall and into rooms.</h2>
-      </div>
-      <div class="works" id="rWorks">
-        <article class="work"><div class="case-split" style="background-image:url('assets/cases/burnham-library-before.webp')"><div class="case-before" style="background-image:url('assets/cases/burnham-library-after.webp')"></div><span class="case-label before">BEFORE</span><span class="case-label after">AFTER</span><div class="case-line"></div></div><div class="wc"><b>BURNHAM · 4.2 M WALL</b><span>65&quot; recessed TV · oak library wings · linear fire · warm LED</span></div></article>
-        <article class="work"><div class="case-split" style="background-image:url('assets/cases/langley-chimney-before.webp')"><div class="case-before" style="background-image:url('assets/cases/langley-chimney-after.webp')"></div><span class="case-label before">BEFORE</span><span class="case-label after">AFTER</span><div class="case-line"></div></div><div class="wc"><b>LANGLEY · CHIMNEY BREAST</b><span>55&quot; flush TV · microcement chimney · smoked oak alcove joinery</span></div></article>
-        <article class="work"><div class="case-split" style="background-image:url('assets/cases/slough-cinema-before.webp')"><div class="case-before" style="background-image:url('assets/cases/slough-cinema-after.webp')"></div><span class="case-label before">BEFORE</span><span class="case-label after">AFTER</span><div class="case-line"></div></div><div class="wc"><b>SLOUGH · FULL-WIDTH CINEMA WALL</b><span>75&quot; recessed TV · charcoal cabinetry · bronze display · 1.5 m fire</span></div></article>
-        <article class="work"><div class="case-split" style="background-image:url('assets/cases/windsor-compact-before.webp')"><div class="case-before" style="background-image:url('assets/cases/windsor-compact-after.webp')"></div><span class="case-label before">BEFORE</span><span class="case-label after">AFTER</span><div class="case-line"></div></div><div class="wc"><b>WINDSOR · COMPACT TOWNHOUSE</b><span>55&quot; TV recess · pale ash storage · floating shelf · halo LED</span></div></article>
-      </div>
-    </div>
-  </section>
-
-  <!-- A-06 TESTIMONIALS -->
-  <section class="plate" id="testimonials">
-    <div class="wrap">
-      <div class="plate-head">
-        <div class="eyebrow">A-06 / Client feedback</div>
-        <h2>Proof points, ready to replace with verified reviews.</h2>
-      </div>
-      <div class="testimonials" aria-label="Sample testimonial content for the proposal">
-        <article class="testimonial"><div class="stars" aria-label="Five out of five stars">★★★★★</div><p>“The drawing made the whole decision easy. We could see exactly where the storage, TV and lighting would sit before the build began.”</p><span>Sample review · Windsor</span></article>
-        <article class="testimonial"><div class="stars" aria-label="Five out of five stars">★★★★★</div><p>“Everything was measured properly, the team were tidy and the finish feels part of the room rather than an add-on.”</p><span>Sample review · Burnham</span></article>
-        <article class="testimonial"><div class="stars" aria-label="Five out of five stars">★★★★★</div><p>“We wanted books, hidden cables and a fire without losing floor space. The detail in the proposal gave us confidence.”</p><span>Sample review · Langley</span></article>
-        <article class="testimonial"><div class="stars" aria-label="Five out of five stars">★★★★★</div><p>“A genuinely bespoke solution. The side cabinetry solved the storage problem and the room now feels finished.”</p><span>Sample review · Slough</span></article>
-      </div>
-    </div>
-  </section>
-
-  <!-- A-07 CONTACT -->
+  <!-- A-06 CONTACT -->
   <section class="plate" id="request">
     <div class="wrap contact">
       <div>
-        <div class="eyebrow">A-07 / Request a survey</div>
+        <div class="eyebrow">A-05 / Request a survey</div>
         <h2>Bring the room.<br>We'll bring the drawing.</h2>
-        <p class="prose">Send a photo, a rough sketch or just the wall width. We'll call within one working day to book a free measured survey.</p>
+        <p class="prose">Send a photo, a rough sketch or just the wall width. We'll be in touch to arrange a measured survey.</p>
         <div class="coverage">
           <b>Coverage.</b> Slough <b>SL1–SL3</b>, Langley <b>SL3</b>, Iver <b>SL0</b>, Burnham <b>SL1/SL2</b>, Windsor <b>SL4</b>, Maidenhead <b>SL6</b>, and streets between.
         </div>
@@ -1096,43 +1080,43 @@
         <form class="form" id="form" novalidate>
           <div class="row">
             <label for="cName">Your name</label>
-            <input id="cName" name="name" autocomplete="name">
-            <div class="err">Please tell us who to ask for.</div>
+            <input id="cName" aria-required="true" aria-describedby="cName-err" name="name" autocomplete="name">
+            <div class="err" id="cName-err">Please tell us who to ask for.</div>
           </div>
           <div class="row">
             <label for="cContact">Phone or email</label>
-            <input id="cContact" name="contact" autocomplete="email">
-            <div class="err">We need one way to reach you.</div>
+            <input id="cContact" aria-required="true" aria-describedby="cContact-err" name="contact" autocomplete="email">
+            <div class="err" id="cContact-err">We need one way to reach you.</div>
           </div>
           <div class="row">
             <label for="cPost">Postcode</label>
-            <input id="cPost" name="postcode" autocomplete="postal-code" placeholder="e.g. SL1 3XE">
-            <div class="err">A postcode helps us check the diary for your area.</div>
+            <input id="cPost" aria-required="true" aria-describedby="cPost-err" name="postcode" autocomplete="postal-code" placeholder="e.g. SL1 3XE">
+            <div class="err" id="cPost-err">A postcode helps us check the diary for your area.</div>
           </div>
           <div class="row">
             <label for="cWidth">Wall width, roughly</label>
-            <select id="cWidth" name="width">
+            <select id="cWidth" aria-required="true" aria-describedby="cWidth-err" name="width">
               <option value="">Choose one</option>
               <option>Under 3.5 m</option>
               <option>3.5 – 4.5 m</option>
               <option>Over 4.5 m</option>
               <option>Not sure — please measure</option>
             </select>
-            <div class="err">Pick the closest option.</div>
+            <div class="err" id="cWidth-err">Pick the closest option.</div>
           </div>
           <div class="row">
             <label for="cMsg">What goes either side of the TV?</label>
-            <textarea id="cMsg" name="message" placeholder="Books and a couple of closed cupboards for the console clutter..."></textarea>
-            <div class="err">A line or two is plenty.</div>
+            <textarea id="cMsg" aria-required="true" aria-describedby="cMsg-err" name="message" placeholder="Books and a couple of closed cupboards for the console clutter..."></textarea>
+            <div class="err" id="cMsg-err">A line or two is plenty.</div>
           </div>
-          <div class="row" id="preferredWindowRow">
-            <label>Preferred visit window · optional</label>
+          <div class="row" id="preferredWindowRow" role="group" aria-labelledby="preferredWindowLabel" aria-describedby="preferredWindowRow-err">
+            <label id="preferredWindowLabel">Preferred visit window · optional</label>
             <div class="visit-window">
               <div><label for="cPreferredStart">From</label><input id="cPreferredStart" name="preferred_start" type="datetime-local" step="900"></div>
               <div><label for="cPreferredEnd">Until</label><input id="cPreferredEnd" name="preferred_end" type="datetime-local" step="900"></div>
             </div>
             <small class="hint">A request only. We’ll confirm availability before adding a visit to the calendar.</small>
-            <div class="err">Choose both times, and make sure “Until” is later than “From”.</div>
+            <div class="err" id="preferredWindowRow-err">Choose both times, and make sure “Until” is later than “From”.</div>
           </div>
           <div class="form-trap" aria-hidden="true"><label for="cWebsite">Leave this field empty</label><input id="cWebsite" name="company_website" type="text" tabindex="-1" autocomplete="off"></div>
           <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
@@ -1148,6 +1132,7 @@
       </div>
     </div>
   </section>
+  </main>
 
   <button class="chat-launch" type="button" id="chatLaunch" aria-expanded="false" aria-controls="chatPanel"><i>?</i><span>Ask the project assistant</span></button>
   <aside class="chat-panel" id="chatPanel" aria-label="Form and Frame project assistant" aria-hidden="true">
@@ -1189,6 +1174,8 @@
     <span><b>Form &amp; Frame Ltd</b></span>
     <span>Unit 4, Buckingham Ave, Slough SL1</span>
     <span>Serving Slough (SL1–SL3), Langley, Burnham, Windsor (SL4), Maidenhead (SL6) &amp; Gerrards Cross (SL9)</span>
+    <nav class="foot-nav" aria-label="Footer"><a href="#drawing">Drawing</a><a href="#survey">Survey · Proposal</a><a href="#specify">Specify</a><a href="#process">Process</a><a href="/operations/">Staff access</a></nav>
+    <!--FF:CONTACT-->
     <span>Drawings &copy; 2026</span>
     <span>Sheet 1 / 1</span>
   </footer>
@@ -2865,7 +2852,9 @@
     }).catch(function(error){
       status.textContent = error.name === "AbortError"
         ? "This is taking longer than expected. Check your connection and retry; duplicate enquiries are prevented."
-        : (error.message || "We couldn't send your enquiry. Check your connection and try again.");
+        : (error.name === "TypeError"
+          ? "We couldn't reach the server. Check your connection and retry; duplicate enquiries are prevented."
+          : (error.message || "We couldn't send your enquiry. Check your connection and try again."));
     }).finally(function(){ window.clearTimeout(requestTimeout); setFormBusy(false); });
   });
   form.addEventListener("input", function(e){
