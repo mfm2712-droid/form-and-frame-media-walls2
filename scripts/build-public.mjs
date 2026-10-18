@@ -2,6 +2,8 @@ import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { resolvePublicConfig } from "./public-config.mjs";
 import { CONTACT_MARKER, parseContact, renderContactBlock } from "./contact-block.mjs";
+import { SAMPLE_WORKS, sampleWorksEnabled } from "../site-works.mjs";
+import { WORKS_MARKER, renderWorksSection } from "./works-section.mjs";
 import { DEFAULT_SITE_URL, resolveSiteUrl } from "../site-config.mjs";
 
 // Publish the public website and authenticated staff app shell. Operations
@@ -15,12 +17,19 @@ await mkdir(output, { recursive: true });
 await cp(resolve(root, "index.html"), resolve(output, "index.html"));
 await cp(resolve(root, "robots.txt"), resolve(output, "robots.txt"));
 await cp(resolve(root, "sitemap.xml"), resolve(output, "sitemap.xml"));
-// assets/cases holds before/after photos whose authenticity and publication
-// consent Mark has not yet confirmed (FRAME-005): keep them out of the build.
+// assets/cases holds before/after photos that are FICTITIOUS samples (Mark, 18 Oct 2026). They ship only
+// while the single flag SHOW_SAMPLE_WORKS (site-works.mjs) is on, and the page labels them as samples.
+const showSampleWorks = sampleWorksEnabled(process.env);
 await cp(resolve(root, "assets"), resolve(output, "assets"), {
   recursive: true,
-  filter: source => !/[\\/]assets[\\/]cases([\\/]|$)/.test(source)
+  filter: source => showSampleWorks || !/[\\/]assets[\\/]cases([\\/]|$)/.test(source)
 });
+{
+  const target = resolve(output, "index.html");
+  const html = await readFile(target, "utf8");
+  if (!html.includes(WORKS_MARKER)) throw new Error("index.html lost the <!--FF:WORKS--> marker.");
+  await writeFile(target, html.replace(WORKS_MARKER, renderWorksSection(SAMPLE_WORKS, showSampleWorks)));
+}
 // Canonical origin: sources use DEFAULT_SITE_URL; FF_SITE_URL (set when Mark's domain is live) rewrites it.
 const siteUrl = resolveSiteUrl(process.env);
 if (siteUrl !== DEFAULT_SITE_URL) {
