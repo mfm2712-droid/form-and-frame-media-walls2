@@ -41,9 +41,10 @@ test("the staff app imports no script from a remote host (esm.sh removed) so scr
 test("every external origin the pages really use is allowed, and nothing broader than needed", () => {
   const externalLinks = [...(publicHtml + staffHtml).matchAll(/<link\b[^>]*\bhref\s*=\s*"(https:\/\/[^"/]+)[^"]*"[^>]*>/gi)]
     .filter(([tag]) => !/rel="(?:canonical|preconnect)"/.test(tag)).map(match => match[1]);
-  assert.deepEqual([...new Set(externalLinks)], ["https://fonts.googleapis.com"], "unexpected external stylesheet/resource host: extend the CSP deliberately");
-  assert.ok(policy["style-src"].includes("https://fonts.googleapis.com"));
-  assert.deepEqual(policy["font-src"], ["https://fonts.gstatic.com"]);
+  assert.deepEqual([...new Set(externalLinks)], [], "unexpected external stylesheet/resource host: extend the CSP deliberately");
+  assert.deepEqual(policy["style-src"], ["'self'", "'unsafe-inline'"], "fonts are self-hosted: no third-party style origin");
+  assert.deepEqual(policy["font-src"], ["'self'"], "fonts are self-hosted: no fonts.gstatic.com");
+  assert.equal(JSON.stringify(config).includes("googleapis") || JSON.stringify(config).includes("gstatic"), false);
   assert.ok(policy["connect-src"].includes("https://*.supabase.co") && policy["connect-src"].includes("wss://*.supabase.co"), "Supabase REST/auth/functions and realtime");
   assert.ok(policy["img-src"].includes("data:") && policy["img-src"].includes("blob:"), "configurator photo preview uses a data URL");
   assert.deepEqual(policy["frame-ancestors"], ["'self'"]);

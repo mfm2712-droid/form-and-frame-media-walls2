@@ -59,6 +59,17 @@ assert.deepEqual(
 for (const unverifiedClaim of ["VAT at 20%", "VAT @ 20%", " ex VAT", "+ VAT", "INDICATIVE COST ALLOCATION", "INDICATIVE<br>PRO FORMA"]) {
   assert.equal(publicHtml.includes(unverifiedClaim), false, `The public page must not state unverified tax/cost claim: ${unverifiedClaim}`);
 }
+for (const page of ["index.html", "operations/index.html", "operations/styles.css"]) {
+  assert.equal(/fonts\.(googleapis|gstatic)\.com/.test(await readFile(resolve(root, page), "utf8")), false, `${page} must not request Google Fonts.`);
+}
+{
+  const fontRecord = JSON.parse(await readFile(resolve("assets/fonts/FONTS.json"), "utf8"));
+  for (const entry of fontRecord.files) {
+    const deployed = await readFile(resolve(root, "assets/fonts", entry.file));
+    assert.equal(createHash("sha256").update(deployed).digest("hex"), entry.sha256, `Deployed font ${entry.file} must match FONTS.json.`);
+    assert.equal((await stat(resolve(root, "assets/fonts", entry.licenceFile))).isFile(), true, `Licence for ${entry.file} must be deployed.`);
+  }
+}
 assert.match(publicHtml, /<html lang="en-GB">/, "The public page must declare its language for screen readers and search engines.");
 for (const controlId of ["fWall", "fFinish", "fHandle", "fFire", "fLed", "fPhoto"]) {
   assert.match(publicHtml, new RegExp(`id="${controlId}"[^>]*aria-label="[^"]+"`), `Configurator control ${controlId} must have an accessible name.`);

@@ -1,0 +1,159 @@
+{
+  "source": "Fontsource npm packages (official redistribution of Google Fonts open-licence fonts), latin subset, woff2, downloaded 2026-10-18",
+  "files": [
+    {
+      "file": "bricolage-grotesque-latin-opsz-normal.woff2",
+      "family": "Bricolage Grotesque",
+      "package": "@fontsource-variable/bricolage-grotesque",
+      "packageVersion": "5.3.0",
+      "subset": "latin",
+      "licence": "SIL OFL 1.1",
+      "licenceFile": "licenses/OFL-bricolage-grotesque.txt",
+      "bytes": 76888,
+      "sha256": "a79fdb52d4a5c76552452f69202add96e287401fff03d3e8c0e38b4dcb5a99cd"
+    },
+    {
+      "file": "dm-mono-latin-400-normal.woff2",
+      "family": "DM Mono",
+      "package": "@fontsource/dm-mono",
+      "packageVersion": "5.3.0",
+      "subset": "latin",
+      "licence": "SIL OFL 1.1",
+      "licenceFile": "licenses/OFL-dm-mono.txt",
+      "bytes": 14820,
+      "sha256": "e1896b13b2b1bb112fac2f9571bd6c40e118746e77a4511edbf43fbb41bf3e1e"
+    },
+    {
+      "file": "dm-mono-latin-500-normal.woff2",
+      "family": "DM Mono",
+      "package": "@fontsource/dm-mono",
+      "packageVersion": "5.3.0",
+      "subset": "latin",
+      "licence": "SIL OFL 1.1",
+      "licenceFile": "licenses/OFL-dm-mono.txt",
+      "bytes": 14988,
+      "sha256": "9964608a849396bd00c4bfd7034afe03486469dcf20b4f6b8cbdfdd310369951"
+    },
+    {
+      "file": "dm-sans-latin-400-normal.woff2",
+      "family": "DM Sans",
+      "package": "@fontsource/dm-sans",
+      "packageVersion": "5.3.0",
+      "subset": "latin",
+      "licence": "SIL OFL 1.1",
+      "licenceFile": "licenses/OFL-dm-sans.txt",
+      "bytes": 14200,
+      "sha256": "4ab51eb2cd7305d177187908d6397474d4520663f6c6e572feb0a64f4fa80006"
+    },
+    {
+      "file": "dm-sans-latin-500-normal.woff2",
+      "family": "DM Sans",
+      "package": "@fontsource/dm-sans",
+      "packageVersion": "5.3.0",
+      "subset": "latin",
+      "licence": "SIL OFL 1.1",
+      "licenceFile": "licenses/OFL-dm-sans.txt",
+      "bytes": 14304,
+      "sha256": "19bf1984956517c35c2bd35b6cdedac12a21d6fcd3596c614ecdfb88b648909d"
+    },
+    {
+      "file": "dm-sans-latin-600-normal.woff2",
+      "family": "DM Sans",
+      "package": "@fontsource/dm-sans",
+      "packageVersion": "5.3.0",
+      "subset": "latin",
+      "licence": "SIL OFL 1.1",
+      "licenceFile": "licenses/OFL-dm-sans.txt",
+      "bytes": 14144,
+      "sha256": "6bb2b2645ba5eeaecf56322c543fa3a75b87b927977b9c03b1dabc4205089120"
+    },
+    {
+      "file": "ibm-plex-mono-latin-400-normal.woff2",
+      "family": "IBM Plex Mono",
+      "package": "@fontsource/ibm-plex-mono",
+      "packageVersion": "5.3.0",
+      "subset": "latin",
+      "licence": "SIL OFL 1.1",
+      "licenceFile": "licenses/OFL-ibm-plex-mono.txt",
+      "bytes": 14708,
+      "sha256": "08949f728dc52d528e69b1667d15c89a5686a4ee9a296ff90983985f99c380f7"
+    },
+    {
+      "file": "ibm-plex-mono-latin-500-normal.woff2",
+      "family": "IBM Plex Mono",
+      "package": "@fontsource/ibm-plex-mono",
+      "packageVersion": "5.3.0",
+      "subset": "latin",
+      "licence": "SIL OFL 1.1",
+      "licenceFile": "licenses/OFL-ibm-plex-mono.txt",
+      "bytes": 14888,
+      "sha256": "01d285447409c8a588692162439a038b8cbd7871309ee20267b0d2d91c6e8e22"
+    },
+    {
+      "file": "ibm-plex-mono-latin-600-normal.woff2",
+      "family": "IBM Plex Mono",
+      "package": "@fontsource/ibm-plex-mono",
+      "packageVersion": "5.3.0",
+      "subset": "latin",
+      "licence": "SIL OFL 1.1",
+      "licenceFile": "licenses/OFL-ibm-plex-mono.txt",
+      "bytes": 15620,
+      "sha256": "0d1f0b8d0722224e32e9f28261bdc86c79115be73444ae5eceb73976a1bcdf83"
+    },
+    {
+      "file": "ibm-plex-sans-latin-400-normal.woff2",
+      "family": "IBM Plex Sans",
+      "package": "@fontsource/ibm-plex-sans",
+      "packageVersion": "5.3.0",
+      "subset": "latin",
+      "licence": "SIL OFL 1.1",
+      "licenceFile": "licenses/OFL-ibm-plex-sans.txt",
+      "bytes": 22588,
+      "sha256": "3b646991d30055a93a4ecc499713d4347953a74a947ecab435ab72070cbdab0e"
+    },
+    {
+      "file": "ibm-plex-sans-latin-500-normal.woff2",
+      "family": "IBM Plex Sans",
+      "package": "@fontsource/ibm-plex-sans",
+      "packageVersion": "5.3.0",
+      "subset": "latin",
+      "licence": "SIL OFL 1.1",
+      "licenceFile": "licenses/OFL-ibm-plex-sans.txt",
+      "bytes": 24184,
+      "sha256": "0717336fb31fcdcde4b8deb3675bb4a0f7f6d484864afcd6751ac29975962203"
+    },
+    {
+      "file": "ibm-plex-sans-latin-600-normal.woff2",
+      "family": "IBM Plex Sans",
+      "package": "@fontsource/ibm-plex-sans",
+      "packageVersion": "5.3.0",
+      "subset": "latin",
+      "licence": "SIL OFL 1.1",
+      "licenceFile": "licenses/OFL-ibm-plex-sans.txt",
+      "bytes": 24252,
+      "sha256": "8960851d691c054ed38e259bdcf1a6190d157b4203ed5bb32c632a863fb8ec2f"
+    },
+    {
+      "file": "playfair-display-latin-600-normal.woff2",
+      "family": "Playfair Display",
+      "package": "@fontsource/playfair-display",
+      "packageVersion": "5.3.0",
+      "subset": "latin",
+      "licence": "SIL OFL 1.1",
+      "licenceFile": "licenses/OFL-playfair-display.txt",
+      "bytes": 23228,
+      "sha256": "5d2286941a6b02a29387efa94809a064f8917598eafa67b938261cf13bb887cd"
+    },
+    {
+      "file": "playfair-display-latin-700-normal.woff2",
+      "family": "Playfair Display",
+      "package": "@fontsource/playfair-display",
+      "packageVersion": "5.3.0",
+      "subset": "latin",
+      "licence": "SIL OFL 1.1",
+      "licenceFile": "licenses/OFL-playfair-display.txt",
+      "bytes": 23224,
+      "sha256": "28453852ea165c47b5a941be00e418402e1407002ed87507f062a1e316328fe6"
+    }
+  ]
+}
