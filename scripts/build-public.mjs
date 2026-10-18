@@ -1,6 +1,7 @@
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { resolvePublicConfig } from "./public-config.mjs";
+import { DEFAULT_SITE_URL, resolveSiteUrl } from "../site-config.mjs";
 
 // Publish the public website and authenticated staff app shell. Operations
 // records stay behind Supabase Auth + RLS; never include staff data or server
@@ -11,12 +12,30 @@ const output = resolve(root, "dist/public");
 await rm(output, { recursive: true, force: true });
 await mkdir(output, { recursive: true });
 await cp(resolve(root, "index.html"), resolve(output, "index.html"));
-await cp(resolve(root, "assets"), resolve(output, "assets"), { recursive: true });
+await cp(resolve(root, "robots.txt"), resolve(output, "robots.txt"));
+await cp(resolve(root, "sitemap.xml"), resolve(output, "sitemap.xml"));
+// assets/cases holds before/after photos whose authenticity and publication
+// consent Mark has not yet confirmed (FRAME-005): keep them out of the build.
+await cp(resolve(root, "assets"), resolve(output, "assets"), {
+  recursive: true,
+  filter: source => !/[\\/]assets[\\/]cases([\\/]|$)/.test(source)
+});
+// Canonical origin: sources use DEFAULT_SITE_URL; FF_SITE_URL (set when Mark's domain is live) rewrites it.
+const siteUrl = resolveSiteUrl(process.env);
+if (siteUrl !== DEFAULT_SITE_URL) {
+  for (const file of ["index.html", "robots.txt", "sitemap.xml"]) {
+    const target = resolve(output, file);
+    await writeFile(target, (await readFile(target, "utf8")).split(DEFAULT_SITE_URL).join(siteUrl));
+  }
+}
 const operationsOutput = resolve(output, "operations");
 await mkdir(operationsOutput, { recursive: true });
-for (const file of ["index.html", "app.js", "styles.css", "today-view.mjs", "project-model.mjs", "mutation-result.mjs", "datetime-local.mjs", "pipeline.mjs", "workflow.mjs", "push-support.mjs", "activity-label.mjs", "assignment.mjs", "availability-list.mjs", "push-target.mjs", "invoice-document.mjs", "payment-idempotency.mjs", "quote-readiness.mjs", "enquiry-workspace.mjs", "enquiry-workspace-view.mjs", "staff-access.mjs", "calendar-records.mjs", "business-records.mjs", "service-worker.js", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "icon-180.png", "notification-badge-ff.png", "notification-centre.mjs", "notification-view.mjs"]) {
+for (const file of ["index.html", "app.js", "styles.css", "today-view.mjs", "project-model.mjs", "mutation-result.mjs", "datetime-local.mjs", "pipeline.mjs", "workflow.mjs", "push-support.mjs", "activity-label.mjs", "assignment.mjs", "availability-list.mjs", "push-target.mjs", "invoice-document.mjs", "payment-idempotency.mjs", "quote-readiness.mjs", "enquiry-workspace.mjs", "enquiry-workspace-view.mjs", "staff-access.mjs", "role-capabilities.mjs", "document-number.mjs", "payment-reversal.mjs", "calendar-records.mjs", "business-records.mjs", "service-worker.js", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "icon-180.png", "notification-badge-ff.png", "notification-centre.mjs", "notification-view.mjs"]) {
   await cp(resolve(root, "operations", file), resolve(operationsOutput, file));
 }
+// Self-hosted third-party code (see operations/vendor/VENDOR.md); only the module ships.
+await mkdir(resolve(operationsOutput, "vendor"), { recursive: true });
+await cp(resolve(root, "operations/vendor/supabase-js-2.117.2.mjs"), resolve(operationsOutput, "vendor/supabase-js-2.117.2.mjs"));
 // Every icon the manifest or the service worker names must ship. Deriving the
 // list (instead of remembering it) prevents a notification icon from being
 // left out of a deployment again.

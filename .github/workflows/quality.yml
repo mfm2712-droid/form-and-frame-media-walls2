@@ -48,10 +48,15 @@ jobs:
           node --check operations/enquiry-workspace-view.mjs
           node --check operations/notification-centre.mjs
           node --check operations/notification-view.mjs
+          node --check operations/payment-idempotency.mjs
+          node --check operations/calendar-records.mjs
+          node --check operations/business-records.mjs
+          node --check operations/staff-access.mjs
           node --check scripts/public-config.mjs
           node --check scripts/build-public.mjs
           node --check scripts/check-public-build.mjs
           node --check scripts/check-inline-scripts.mjs
+          node --check scripts/vercel-config.test.mjs
           node --check supabase/config.test.mjs
           node --check supabase/functions/submit-enquiry/handler.mjs
           node --check supabase/functions/push-new-enquiry/handler.mjs

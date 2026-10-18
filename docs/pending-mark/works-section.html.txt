@@ -1,0 +1,21 @@
+PENDING MARK'S VALIDATION - NOT PUBLISHED.
+Archived verbatim from index.html (PR #8 head). Do not restore until Mark confirms, for each of Burnham, Langley, Slough, Windsor:
+real job? accurate specs? photos owned by Form & Frame? client consent to publish?
+Photos remain in assets/cases/ in the repo but are no longer copied into the public build.
+
+  <!-- A-05 WORKS -->
+  <section class="plate" id="works">
+    <div class="wrap">
+      <div class="plate-head">
+        <div class="eyebrow">A-05 / Completed works</div>
+        <h2>Recent drawings, off the wall and into rooms.</h2>
+      </div>
+      <div class="works" id="rWorks">
+        <article class="work"><div class="case-split" style="background-image:url('assets/cases/burnham-library-before.webp')"><div class="case-before" style="background-image:url('assets/cases/burnham-library-after.webp')"></div><span class="case-label before">BEFORE</span><span class="case-label after">AFTER</span><div class="case-line"></div></div><div class="wc"><b>BURNHAM · 4.2 M WALL</b><span>65&quot; recessed TV · oak library wings · linear fire · warm LED</span></div></article>
+        <article class="work"><div class="case-split" style="background-image:url('assets/cases/langley-chimney-before.webp')"><div class="case-before" style="background-image:url('assets/cases/langley-chimney-after.webp')"></div><span class="case-label before">BEFORE</span><span class="case-label after">AFTER</span><div class="case-line"></div></div><div class="wc"><b>LANGLEY · CHIMNEY BREAST</b><span>55&quot; flush TV · microcement chimney · smoked oak alcove joinery</span></div></article>
+        <article class="work"><div class="case-split" style="background-image:url('assets/cases/slough-cinema-before.webp')"><div class="case-before" style="background-image:url('assets/cases/slough-cinema-after.webp')"></div><span class="case-label before">BEFORE</span><span class="case-label after">AFTER</span><div class="case-line"></div></div><div class="wc"><b>SLOUGH · FULL-WIDTH CINEMA WALL</b><span>75&quot; recessed TV · charcoal cabinetry · bronze display · 1.5 m fire</span></div></article>
+        <article class="work"><div class="case-split" style="background-image:url('assets/cases/windsor-compact-before.webp')"><div class="case-before" style="background-image:url('assets/cases/windsor-compact-after.webp')"></div><span class="case-label before">BEFORE</span><span class="case-label after">AFTER</span><div class="case-line"></div></div><div class="wc"><b>WINDSOR · COMPACT TOWNHOUSE</b><span>55&quot; TV recess · pale ash storage · floating shelf · halo LED</span></div></article>
+      </div>
+    </div>
+  </section>
+

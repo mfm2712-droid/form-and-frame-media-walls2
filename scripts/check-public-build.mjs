@@ -1,14 +1,17 @@
 import assert from "node:assert/strict";
 import { readFile, readdir, stat } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { resolve } from "node:path";
+import { resolveSiteUrl } from "../site-config.mjs";
 import { badgeReport, readPng } from "./png-info.mjs";
 
 const root = resolve("dist/public");
+const site = resolveSiteUrl(process.env).replace(/[.*+?^${}()|[\]\\\/]/g, "\\$&");
 const rootEntries = new Set(await readdir(root));
 assert.deepEqual(
   [...rootEntries].sort(),
-  ["assets", "index.html", "operations", "public-config.js"],
-  "The public build root must contain only the public website, authenticated staff app shell, public config, and assets."
+  ["assets", "index.html", "operations", "public-config.js", "robots.txt", "sitemap.xml"],
+  "The public build root must contain only the public website, authenticated staff app shell, public config, search files and assets."
 );
 
 for (const file of ["index.html", "public-config.js"]) {
@@ -22,6 +25,10 @@ assert.equal((await stat(resolve(root, "operations/activity-label.mjs"))).isFile
 assert.equal((await stat(resolve(root, "operations/push-target.mjs"))).isFile(), true, "Push notification links must resolve to the requested enquiry in the staff app.");
 assert.equal((await stat(resolve(root, "operations/invoice-document.mjs"))).isFile(), true, "The mobile Operations app must be able to render safe printable invoices.");
 assert.equal((await stat(resolve(root, "operations/payment-idempotency.mjs"))).isFile(), true, "Manual payment retries must retain their idempotency key across reloads.");
+assert.equal(
+  (await readdir(resolve(root, "assets"))).includes("cases"), false,
+  "Unvalidated before/after case photos must not be deployed until Mark confirms them (FRAME-005)."
+);
 const publicHtml = await readFile(resolve(root, "index.html"), "utf8");
 const publicConfigSource = await readFile(resolve(root, "public-config.js"), "utf8");
 const publicConfigMatch = /^window\.FF_PUBLIC_CONFIG = Object\.freeze\((\{.*\})\);\s*$/.exec(publicConfigSource);
@@ -51,6 +58,22 @@ assert.match(publicHtml, /company_website:\s*\$\("cWebsite"\)\.value/, "The publ
 const referenceCheck = publicHtml.indexOf('typeof result.reference !== "string"');
 const successView = publicHtml.indexOf('form.style.display = "none"', referenceCheck);
 assert.ok(referenceCheck >= 0 && successView > referenceCheck, "The public page must only show success after validating the saved enquiry reference.");
+
+// Search and indexing: the staff app must never be indexed, and the public page's canonical must be the production address.
+const robotsTxt = await readFile(resolve(root, "robots.txt"), "utf8");
+assert.match(robotsTxt, /Disallow:\s*\/operations\//, "robots.txt must keep the staff app out of search results.");
+assert.match(robotsTxt, new RegExp(`Sitemap:\\s*${site}/sitemap\\.xml`), "robots.txt must point at the production sitemap.");
+assert.match(await readFile(resolve(root, "sitemap.xml"), "utf8"), new RegExp(`<loc>${site}/</loc>`), "The sitemap must list the production home page.");
+assert.match(publicHtml, new RegExp(`<link rel="canonical" href="${site}/">`), "The canonical URL must be the production address, not a staging host.");
+assert.equal(publicHtml.includes("github.io"), false, "No public metadata may point at the GitHub Pages copy.");
+assert.match(await readFile(resolve(root, "operations/index.html"), "utf8"), /<meta name="robots" content="noindex, nofollow">/, "The staff app shell must be marked noindex.");
+// Unverified reviews: the public page must not present sample testimonials or star ratings as client feedback.
+assert.equal(/class="testimonial/.test(publicHtml) || /Sample review/i.test(publicHtml) || /★{3,}/.test(publicHtml), false, "The public page must not show sample or unverified reviews.");
+// Accessibility landmarks and the friendly network error.
+assert.match(publicHtml, /<main id="main">/, "The public page needs one main landmark.");
+assert.equal((publicHtml.match(/<main[\s>]/g) || []).length, 1, "The public page must have exactly one main landmark.");
+assert.match(publicHtml, /class="schedule" tabindex="0" role="region"/, "The scrollable schedule must be reachable by keyboard.");
+assert.match(publicHtml, /error\.name === "TypeError"/, "A network failure must show a plain-language message, not the browser's raw error.");
 for (const privatePath of ["supabase", "planning", "anthony-roadmap.html"]) {
   assert.equal(rootEntries.has(privatePath), false, `${privatePath} must not enter the public build.`);
 }
@@ -60,7 +83,18 @@ assert.equal(operationsFiles.includes("config.example.js"), false, "The staff ap
 assert.equal(operationsFiles.some(file => file.endsWith(".test.mjs")), false, "Node tests must not enter the deployment.");
 const operationsAppSource = await readFile(resolve(root, "operations/app.js"), "utf8");
 for (const [, importedModule] of operationsAppSource.matchAll(/from\s+["']\.\/([^"']+\.mjs)["']/g)) {
-  assert.ok(operationsFiles.includes(importedModule), `The staff app dependency ${importedModule} must be copied into the public build.`);
+  if (importedModule.startsWith("vendor/")) {
+    assert.equal((await stat(resolve(root, "operations", importedModule))).isFile(), true, `The vendored dependency ${importedModule} must be copied into the public build.`);
+  } else {
+    assert.ok(operationsFiles.includes(importedModule), `The staff app dependency ${importedModule} must be copied into the public build.`);
+  }
+}
+assert.equal(/from\s+["']https?:\/\//.test(operationsAppSource), false, "The staff app must not import code from a remote host at runtime.");
+{
+  // The deployed vendored module must match the integrity recorded in VENDOR.json.
+  const vendorInfo = JSON.parse(await readFile(resolve("operations/vendor/VENDOR.json"), "utf8"));
+  const deployedVendor = await readFile(resolve(root, "operations/vendor", vendorInfo.vendoredFile));
+  assert.equal(`sha384-${createHash("sha384").update(deployedVendor).digest("base64")}`, vendorInfo.sriSha384, "The deployed vendored supabase-js must match its recorded integrity hash.");
 }
 const operationsConfig = await readFile(resolve(root, "operations/config.js"), "utf8");
 assert.match(operationsConfig, /^window\.FF_OPERATIONS_CONFIG = Object\.freeze\(/, "Operations receives generated browser-safe config.");
