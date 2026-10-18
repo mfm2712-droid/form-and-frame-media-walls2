@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
+import { createClient } from "./vendor/supabase-js-2.117.2.mjs";
 import { canIssueQuote, surveyReadiness } from "./quote-readiness.mjs";
 import { getLocalDayBounds, getTodayAgenda, relevantDate } from "./today-view.mjs";
 import { buildFinanceSummary, buildProjectModel } from "./project-model.mjs";
@@ -10,6 +10,14 @@ import { isIOSDevice, isInstalledPWA, pushSetupMessage } from "./push-support.mj
 import { activityDetailText } from "./activity-label.mjs";
 import { CATEGORIES, visibleNotifications, unreadCount, unreadForRequest, normalisePreferences, deviceState } from "./notification-centre.mjs";
 import { bellLabel, listHtml, preferencesHtml, deviceHtml, iconDiagnosticsHtml } from "./notification-view.mjs";
+import { deriveCustomers, filterCustomers } from "./customers.mjs";
+import { customersHtml } from "./customers-view.mjs";
+import { financeOverview } from "./finance-overview.mjs";
+import { financeOverviewHtml } from "./finance-overview-view.mjs";
+import { confirmStatusChange } from "./status-confirm.mjs";
+import { capabilitiesFor, filterActivityForCaps, loadWorkOrdersForCaps, roleAdjustedAction } from "./role-capabilities.mjs";
+import { insertWithNumber } from "./document-number.mjs";
+import { canReversePayments, ledgerRows, loadPaymentLedger, paymentLedgerHtml, reversalKeyFor, reversalPayload } from "./payment-reversal.mjs";
 import { enquiryTargetFromSearch, operationsViewFromSearch } from "./push-target.mjs";
 import { assignmentLabel, assignmentOptionsHtml, assignmentUnavailableOptionsHtml } from "./assignment.mjs";
 import { blockListHtml } from "./availability-list.mjs";
@@ -31,7 +39,10 @@ const pushEnquiryTarget = enquiryTargetFromSearch(window.location.search);
 const pushViewTarget = operationsViewFromSearch(window.location.search);
 let demo = false, db = null, demoLeads = [], demoBlocks = [], liveLeads = [], liveBlocks = [], selectedId = pushEnquiryTarget;
 let liveQuotes = [], liveWorkOrders = [], liveAppointments = [], liveInvoices = [], liveInvoiceDetails = [], liveProfiles = null;
-let invoiceSettings = null, currentStaffRole = null;
+let invoiceSettings = null, currentStaffRole = null, customerQuery = "", financePeriod = "this-month";
+const numberingState = {}; // remembers whether the optional server-side numbering RPC exists
+let paymentLedger = { available:false, payments:[], reversals:[] };
+const pendingReversalKeys = new Map();
 let calendarMode = "month", calendarDate = new Date();
 let liveRefreshTimer = null, liveChannel = null;
 let calendarBlocks = [], calendarAppointments = [], calendarLoadVersion = 0;
@@ -131,7 +142,7 @@ function renderProject(lead) {
   const editBrief = demo ? "" : `<details class="record-form"><summary>Edit customer enquiry details</summary><form id="enquiryEdit" data-request-id="${esc(lead.id)}"><label>Customer name<input name="customerName" value="${esc(lead.customer_name)}" minlength="2" maxlength="120" required></label><label>Email<input name="email" type="email" value="${esc(lead.email || "")}" maxlength="254"></label><label>Phone<input name="phone" type="tel" value="${esc(lead.phone || "")}" maxlength="60"></label><label>Postcode<input name="postcode" value="${esc(lead.postcode)}" maxlength="24" required></label><label>Wall size / dimensions<input name="wallWidth" value="${esc(lead.wall_width || "")}" maxlength="120"></label><label>Customer brief<textarea name="message" maxlength="4000" rows="4">${esc(lead.message || "")}</textarea></label><button>Save enquiry changes</button><small>Updates the customer record only. The website guide price is not a formal quote.</small></form></details>`;
   const quoteFormless = liveControls.replace(/<details class="record-form"><summary>Create formal quote draft<\/summary>[\s\S]*?<\/form><\/details>/, "").replace('<details class="record-form"><summary>Schedule a real appointment', '<details class="record-form" id="wsAppointment"><summary>Schedule a real appointment');
   legacyToolsHtml = `${editBrief}${assessmentControl}<div class="ws-visit"><button id="confirmVisit" data-id="${esc(lead.id)}">Mark visit status confirmed</button><small class="project-note">This updates the enquiry status only; it does not reserve a calendar slot.</small></div>${quoteFormless}`;
-  const rel = relatedFor(lead), badge = statusBadge(lead, rel), action = recommendedAction(lead, rel);
+  const rel = relatedFor(lead), badge = statusBadge(lead, rel), action = roleAdjustedAction(recommendedAction(lead, rel), rel, capabilitiesFor(currentStaffRole));
   $("projectPanel").innerHTML = `<p>SELECTED ENQUIRY</p><h2>${esc(lead.customer_name)}</h2>${badgeHtml(badge, esc)}<div class="project-spec"><b>${esc(lead.reference)}</b><br>${esc(p.location)}<br>${esc(p.geometry)}</div><section class="ws-next ws-next-mini"><p>NEXT STEP</p><h3>${esc(action.label)}</h3><small>${esc(action.hint)}</small></section><button type="button" class="ws-primary ws-open-wide" data-open-workspace="${esc(lead.id)}">${badge.key === "new" ? "Open this enquiry" : "Open project workspace"}</button>${finance}${customerActions}`;
 }
 
@@ -145,11 +156,26 @@ const assignmentControl = (kind, id, assignedTo) => liveProfiles
 const nextRecordStates = allowedNextStatuses;
 const requestFor = id => liveLeads.find(item => item.id === id);
 
+// Hides money panels for roles without money access (defence in depth; RLS is the real control).
+function applyMoneyVisibility(caps) {
+  const hide = !caps.money;
+  const set = (element, value) => { if (element) element.hidden = value; };
+  set($("todayMoney"), hide);
+  set($("totalBilled")?.closest?.(".business-metrics"), hide);
+  set($("quoteList")?.closest?.("section"), hide);
+  set($("invoiceList")?.closest?.("section"), hide);
+  $("businessTitle").textContent = hide ? "Jobs, appointments & activity" : "Quotes, work & money";
+}
+
 function renderWorkflows(data) {
+  const roleCaps = capabilitiesFor(currentStaffRole);
+  applyMoneyVisibility(roleCaps);
   liveQuotes = data.quotes;
   liveWorkOrders = data.workOrders;
   liveAppointments = data.appointments;
   liveInvoices = data.invoices;
+  renderCustomers();
+  renderFinanceOverview();
   liveInvoiceDetails = data.invoiceRecords || [];
   const profiles = Array.isArray(data.profiles) ? data.profiles : null;
   $("invoiceWorkOrder").innerHTML = `<option value="">Choose a work order</option>${liveWorkOrders.filter(job => job.status !== "cancelled").map(job => `<option value="${esc(job.id)}">${esc(job.work_order_number)} · ${esc(job.title)}</option>`).join("")}`;
@@ -176,7 +202,7 @@ function renderWorkflows(data) {
   const sentQuoteValuePence = [...latestSentQuoteByRequest.values()].reduce((sum, quote) => sum + Number(quote.total_pence || 0), 0);
   $("todayMoney").innerHTML = `<div class="today-money-heading"><p>YOUR BUSINESS · RECORDED RECORDS</p><h2>Today, at a glance</h2><small>All staff-visible saved invoice and quote records · GBP</small></div><div class="today-money-hero"><span>Received against sent invoices</span><b>${moneyPence(totalReceivedPence)}</b><small>${moneyPence(totalOutstandingPence)} remains outstanding</small></div><div class="today-money-cards"><article><span>Invoiced</span><b>${moneyPence(totalBilledPence)}</b></article><article><span>Still due</span><b>${moneyPence(totalOutstandingPence)}</b></article><article><span>Quotes sent</span><b>${moneyPence(sentQuoteValuePence)}</b></article><article><span>Quote win rate</span><b>${sentCount ? `${Math.round(wins / sentCount * 100)}%` : "—"}</b></article></div><p class="today-money-note">Figures are based on saved business records, not website guide prices. Quote rate is by enquiry, not total revenue.</p>`;
   $("activeBuilds").textContent = liveWorkOrders.filter(item => !["completed", "cancelled"].includes(item.status)).length;
-  $("businessState").textContent = "All saved financial records · GBP";
+  $("businessState").textContent = roleCaps.money ? "All saved financial records · GBP" : "Job and calendar records";
 
   $("quoteList").innerHTML = data.quotes.length ? data.quotes.map(quote => {
     const enquiry = requestFor(quote.request_id);
@@ -186,7 +212,7 @@ function renderWorkflows(data) {
   $("workOrderList").innerHTML = data.workOrders.length ? data.workOrders.map(job => {
     const enquiry = requestFor(job.request_id);
     const hasInvoice = data.invoices.some(invoice => invoice.work_order_id === job.id);
-    return `<article class="business-card"><div><b>${esc(job.work_order_number)}</b><span>${esc(enquiry?.customer_name || job.title)} · ${esc(job.title)}</span></div><strong>${moneyPence(job.agreed_total_pence)}</strong><label>Build status<select data-record-status="work_order" data-id="${esc(job.id)}">${optionList(nextRecordStates("work_order", job.status), job.status)}</select></label><small>Assigned to ${esc(assignmentLabel(job.assigned_to, profiles))}</small>${assignmentControl("work_order", job.id, job.assigned_to)}<small>${job.target_completion ? `Target ${esc(job.target_completion)}` : "No target completion date"}${job.actual_cost_pence == null ? " · actual costs not entered" : ` · actual cost ${moneyPence(job.actual_cost_pence)}`}</small><label>Actual costs (£)<input data-actual-cost="${esc(job.id)}" type="number" min="0" step="0.01" value="${job.actual_cost_pence == null ? "" : (job.actual_cost_pence / 100).toFixed(2)}" placeholder="Enter actual cost"></label>${!hasInvoice && job.status !== "cancelled" ? `<details class="record-form"><summary>Create invoice draft</summary><form class="invoiceDraft" data-work-order-id="${esc(job.id)}"><label>Bill to<input name="billName" required maxlength="160" value="${esc(enquiry?.customer_name || "")}"></label><label>Billing address<textarea name="billAddress" required minlength="5" maxlength="1200" rows="2"></textarea></label><label>Issue date<input name="issueDate" type="date" required value="${local(new Date()).slice(0, 10)}"></label><label>Due date<input name="dueDate" type="date" required></label><label>Subtotal (£)<input name="subtotal" type="number" min="0" step="0.01" required></label><label>Tax amount (£)<input name="tax" type="number" min="0" step="0.01" value="0" required></label><button>Create invoice draft</button><small>Draft only. Enter the approved invoice figures and terms; this does not send an invoice.</small></form></details>` : ""}</article>`;
+    return `<article class="business-card"><div><b>${esc(job.work_order_number)}</b><span>${esc(enquiry?.customer_name || job.title)} · ${esc(job.title)}</span></div>${roleCaps.money ? `<strong>${moneyPence(job.agreed_total_pence)}</strong>` : ""}<label>Build status<select data-record-status="work_order" data-id="${esc(job.id)}">${optionList(nextRecordStates("work_order", job.status), job.status)}</select></label><small>Assigned to ${esc(assignmentLabel(job.assigned_to, profiles))}</small>${assignmentControl("work_order", job.id, job.assigned_to)}<small>${job.target_completion ? `Target ${esc(job.target_completion)}` : "No target completion date"}${!roleCaps.money ? "" : job.actual_cost_pence == null ? " · actual costs not entered" : ` · actual cost ${moneyPence(job.actual_cost_pence)}`}</small>${roleCaps.costEntry ? `<label>Actual costs (£)<input data-actual-cost="${esc(job.id)}" type="number" min="0" step="0.01" value="${job.actual_cost_pence == null ? "" : (job.actual_cost_pence / 100).toFixed(2)}" placeholder="Enter actual cost"></label>` : ""}${roleCaps.money && !hasInvoice && job.status !== "cancelled" ? `<details class="record-form"><summary>Create invoice draft</summary><form class="invoiceDraft" data-work-order-id="${esc(job.id)}"><label>Bill to<input name="billName" required maxlength="160" value="${esc(enquiry?.customer_name || "")}"></label><label>Billing address<textarea name="billAddress" required minlength="5" maxlength="1200" rows="2"></textarea></label><label>Issue date<input name="issueDate" type="date" required value="${local(new Date()).slice(0, 10)}"></label><label>Due date<input name="dueDate" type="date" required></label><label>Subtotal (£)<input name="subtotal" type="number" min="0" step="0.01" required></label><label>Tax amount (£)<input name="tax" type="number" min="0" step="0.01" value="0" required></label><button>Create invoice draft</button><small>Draft only. Enter the approved invoice figures and terms; this does not send an invoice.</small></form></details>` : ""}</article>`;
   }).join("") : `<p class="today-empty">No accepted quotes have been converted into build jobs.</p>`;
   if (data.workOrders.length) {
     $("workOrderList").insertAdjacentHTML("beforeend", `<div class="job-deadlines"><b>Plan build dates</b>${data.workOrders.map(job => `<div class="deadline-row"><span>${esc(job.work_order_number)}</span><label>Start<input type="date" data-job-date="planned_start" data-id="${esc(job.id)}" value="${esc(job.planned_start || "")}"></label><label>Target finish<input type="date" data-job-date="target_completion" data-id="${esc(job.id)}" value="${esc(job.target_completion || "")}"></label></div>`).join("")}</div>`);
@@ -199,7 +225,7 @@ function renderWorkflows(data) {
 
   $("invoiceList").innerHTML = data.invoices.length ? data.invoices.map(invoice => {
     const canPrint = invoiceSettingsReady(invoiceSettings) && liveInvoiceDetails.some(record => record.id === invoice.id);
-    return `<article class="business-card"><div><b>${esc(invoice.invoice_number)}</b><span>${invoice.status === "sent" ? `Due ${esc(invoice.due_date)} · ${invoice.overdue ? "OVERDUE" : "not overdue"}` : "Draft · not yet billed"}</span></div><strong>${moneyPence(invoice.total_pence)}</strong><small>Received ${moneyPence(invoice.paid_pence)} · outstanding ${moneyPence(invoice.outstanding_pence)}</small><button class="outline" type="button" data-print-invoice="${esc(invoice.id)}" ${canPrint ? "" : "disabled"}>${canPrint ? "Print / save PDF" : "Complete invoice setup first"}</button><label>Invoice status<select data-record-status="invoice" data-id="${esc(invoice.id)}">${optionList(nextRecordStates("invoice", invoice.status), invoice.status)}</select></label>${invoice.status === "sent" && invoice.outstanding_pence > 0 ? `<form class="paymentDraft" data-invoice-id="${esc(invoice.id)}"><label>Record payment (£)<input name="amount" type="number" min="0.01" step="0.01" max="${(invoice.outstanding_pence / 100).toFixed(2)}" required></label><label>Method<select name="method"><option value="bank_transfer">Bank transfer</option><option value="card">Card · record manually</option><option value="cash">Cash</option><option value="other">Other</option></select></label><button>Save payment</button></form>` : ""}<small>Changing status to Sent records an external send. Printing creates the invoice document; delivery remains manual.</small></article>`;
+    return `<article class="business-card"><div><b>${esc(invoice.invoice_number)}</b><span>${invoice.status === "sent" ? `Due ${esc(invoice.due_date)} · ${invoice.overdue ? "OVERDUE" : "not overdue"}` : "Draft · not yet billed"}</span></div><strong>${moneyPence(invoice.total_pence)}</strong><small>Received ${moneyPence(invoice.paid_pence)} · outstanding ${moneyPence(invoice.outstanding_pence)}</small><button class="outline" type="button" data-print-invoice="${esc(invoice.id)}" ${canPrint ? "" : "disabled"}>${canPrint ? "Print / save PDF" : "Complete invoice setup first"}</button><label>Invoice status<select data-record-status="invoice" data-id="${esc(invoice.id)}">${optionList(nextRecordStates("invoice", invoice.status), invoice.status)}</select></label>${invoice.status === "sent" && invoice.outstanding_pence > 0 ? `<form class="paymentDraft" data-invoice-id="${esc(invoice.id)}"><label>Record payment (£)<input name="amount" type="number" min="0.01" step="0.01" max="${(invoice.outstanding_pence / 100).toFixed(2)}" required></label><label>Method<select name="method"><option value="bank_transfer">Bank transfer</option><option value="card">Card · record manually</option><option value="cash">Cash</option><option value="other">Other</option></select></label><button>Save payment</button></form>` : ""}${paymentLedger.available ? paymentLedgerHtml(ledgerRows(invoice.id, paymentLedger.payments, paymentLedger.reversals), { canReverse:canReversePayments(currentStaffRole), esc, money:moneyPence, formatDate:format }) : ""}<small>Changing status to Sent records an external send. Printing creates the invoice document; delivery remains manual.</small></article>`;
   }).join("") : `<p class="today-empty">No invoice balances recorded. Quotes are not invoices.</p>`;
 }
 
@@ -214,19 +240,23 @@ async function loadWorkflows() {
   }
   try {
     const { start:todayStart, end:tomorrowStart } = getLocalDayBounds();
+    const roleCaps = capabilitiesFor(currentStaffRole);
+    const noRows = Promise.resolve({ data:[], error:null });
     const [quotes, workOrders, appointments, invoices, invoiceRecords, followUps, activity] = await Promise.all([
-      loadBusinessRows(db, "quotes", "created_at"),
-      loadBusinessRows(db, "work_orders", "created_at"),
+      roleCaps.money ? loadBusinessRows(db, "quotes", "created_at") : noRows,
+      loadWorkOrdersForCaps(table => loadBusinessRows(db, table, "created_at"), roleCaps),
       db.from("appointments").select("*").lt("starts_at", plusDays(365, 0).toISOString()).or(`ends_at.gt.${todayStart.toISOString()},status.eq.completed`).order("starts_at").limit(500),
-      loadBusinessRows(db, "invoice_balances", "due_date", true),
-      loadBusinessRows(db, "invoices", "created_at"),
+      roleCaps.money ? loadBusinessRows(db, "invoice_balances", "due_date", true) : noRows,
+      roleCaps.money ? loadBusinessRows(db, "invoices", "created_at") : noRows,
       db.from("follow_up_tasks").select("*").is("completed_at", null).is("cancelled_at", null).lte("due_at", tomorrowStart.toISOString()).order("due_at").limit(100),
       db.from("workflow_activity").select("*").order("created_at", { ascending:false }).limit(30)
     ]);
     const failure = [quotes, workOrders, appointments, invoices, invoiceRecords, followUps, activity].find(result => result.error);
     if (failure) throw failure.error;
+    paymentLedger = canReversePayments(currentStaffRole) ? await loadPaymentLedger(db) : { available:false, payments:[], reversals:[] };
     renderWorkflows({ quotes:quotes.data || [], workOrders:workOrders.data || [], appointments:appointments.data || [], invoices:invoices.data || [], invoiceRecords:invoiceRecords.data || [], followUps:followUps.data || [], profiles:liveProfiles });
-    $("activityList").innerHTML = activity.data?.length ? activity.data.map(item => {
+    const activityRows = filterActivityForCaps(activity.data || [], roleCaps);
+    $("activityList").innerHTML = activityRows.length ? activityRows.map(item => {
       const detail = activityDetailText(item);
       return `<article class="activity-row"><span>${format(item.created_at)}</span><b>${esc(item.event_type.replaceAll("_", " "))}</b><small>${esc(item.entity_type.replaceAll("_", " "))} · ${esc(item.entity_id.slice(0, 8))}${detail ? ` · ${esc(detail)}` : ""}</small></article>`;
     }).join("") : `<p class="today-empty">No activity recorded yet.</p>`;
@@ -268,7 +298,7 @@ const relatedFor = lead => relatedRecords(lead, { quotes:liveQuotes, workOrders:
 function renderLeadList() {
   const items = currentItems;
   $("leadList").innerHTML = items.length ? items.map(lead => {
-    const rel = relatedFor(lead), badge = statusBadge(lead, rel), action = recommendedAction(lead, rel);
+    const rel = relatedFor(lead), badge = statusBadge(lead, rel), action = roleAdjustedAction(recommendedAction(lead, rel), rel, capabilitiesFor(currentStaffRole));
     const fresh = badge.key === "new";
     return `<article class="lead lead-${esc(badge.tone)} ${lead.id === selectedId ? "selected" : ""} ${fresh ? "unopened" : ""}" data-lead-id="${esc(lead.id)}"><div class="lead-top"><div><h3>${esc(lead.customer_name)} <small>· ${esc(lead.reference)}</small></h3><p>${esc(lead.postcode)} · ${esc(lead.email || lead.phone)} · ${esc(lead.wall_width)}</p></div><div class="lead-side">${badgeHtml(badge, esc)}<button type="button" class="ws-open ${fresh ? "ws-primary" : "outline"}" data-open-workspace="${esc(lead.id)}">${fresh ? "Open" : "View"}</button></div></div><p>${esc(lead.message || "No customer note.")}</p><small>${format(lead.created_at)} · ${esc(lead.source)} · guide ${money(lead.guide_low)}–${money(lead.guide_high)}</small><small class="lead-next">Next: ${esc(action.label)}</small></article>`;
   }).join("") : `<p class="empty">No enquiries yet. New website, chat and booking requests will appear here.</p>`;
@@ -285,6 +315,7 @@ function render(items, blocks, statsItems = items) {
   if (demo) renderCalendar(blocks);
   if (items.length) renderProject(items.find(item => item.id === selectedId));
   else $("projectPanel").innerHTML = `<p>PROJECT BRIEF</p><h2>Select an enquiry</h2><p class="empty">A selected enquiry will show its customer brief and website guide range. Actual job costs, quotes and invoices appear only when recorded.</p>`;
+  renderCustomers();
 }
 
 function renderToday(items) {
@@ -342,6 +373,7 @@ function loadDemo() { render(demoLeads, demoBlocks); loadWorkflows(); refreshWor
 async function loadInvoiceSettings() {
   const status = $("invoiceSetupStatus");
   $("invoiceSettings").hidden = currentStaffRole !== "owner";
+  if (!capabilitiesFor(currentStaffRole).settingsRead) { invoiceSettings = null; return; }
   const { data, error } = await db.from("business_settings").select("*").eq("singleton", true).maybeSingle();
   if (error) {
     invoiceSettings = null;
@@ -490,6 +522,8 @@ function startDemo() {
     { id:"d2", reference:"FF-DEMO-1041", customer_name:"Hugo Clarke", phone:"07700 900 441", postcode:"SL1 5QJ", wall_width:"5.8 m wall", message:"Full-width cinema wall with walnut shelving. Room photos attached.", status:"reviewing", source:"website enquiry", guide_low:9800, guide_high:11600, created_at:plusDays(-1).toISOString(), project:{ title:"Slough cinema wall", location:"SLOUGH · SL1 5QJ", image:"../assets/cases/slough-cinema-after.webp", geometry:"5.8 m wall · 85” recessed TV · 1.5 m linear fire", system:"Charcoal lacquer carcasses · smoked bronze display doors · RGB scene lighting", materials:["#242826", "#7c573b", "#c29156"], materialLabel:"Charcoal lacquer · smoked oak · aged bronze", materialsCost:5100, equipmentCost:2280, labourCost:4220, total:11600, sampleCosts:true } },
     { id:"d3", reference:"FF-DEMO-1040", customer_name:"Saira Patel", email:"saira.patel@example.com", postcode:"SL3 8LA", wall_width:"3.1 m chimney breast", message:"Compact chimney breast, existing fire to remove, pale oak finish.", status:"date_requested", source:"website enquiry", guide_low:4900, guide_high:6100, created_at:plusDays(-2).toISOString(), project:{ title:"Langley chimney breast", location:"LANGLEY · SL3 8LA", image:"../assets/cases/langley-chimney-after.webp", geometry:"3.1 m chimney breast · 55” flush TV · compact fire", system:"Microcement feature · pale oak alcove storage · dimmable warm LED", materials:["#c6b293", "#8c8c80", "#382e26"], materialLabel:"Pale oak · mineral microcement · black steel", materialsCost:2620, equipmentCost:1040, labourCost:2440, total:6100, sampleCosts:true } }
   ];
+  // Fictional second enquiry from the same fictional customer (email differs only by case): shows repeat-customer matching.
+  demoLeads.push({ ...demoLeads[0], id:"d4", reference:"FF-DEMO-1039", email:"AMELIA.GRANT@example.com", status:"quoted", created_at:plusDays(-4).toISOString(), message:"DEMO: second enquiry from the same fictional customer.", project:{ ...demoLeads[0].project, title:"Windsor hallway storage" } });
   demoBlocks = [{ id:"b1", title:"HOLIDAY — family break", kind:"holiday", starts_at:plusDays(2, 0).toISOString(), ends_at:plusDays(3, 23).toISOString() }, { id:"b2", title:"Workshop installation", kind:"blocked", starts_at:plusDays(6, 8).toISOString(), ends_at:plusDays(7, 18).toISOString() }, { id:"b3", title:"Extra survey availability", kind:"available", starts_at:plusDays(9, 10).toISOString(), ends_at:plusDays(9, 16).toISOString() }];
   setBlockDefaults(); loadDemo();
 }
@@ -824,6 +858,42 @@ $("calendarNext").addEventListener("click", () => { calendarDate = new Date(cale
 $("calendarToday").addEventListener("click", () => { calendarDate = new Date(); refreshCalendar(); });
 $("calendarRetry").addEventListener("click", refreshCalendar);
 document.querySelectorAll(".calendar-mode").forEach(button => button.addEventListener("click", () => { calendarMode = button.dataset.calendarMode; refreshCalendar(); }));
+// ---- Customers (derived from enquiries; no customers table yet — see issue #32) ----
+function renderCustomers() {
+  const box = $("customerList");
+  if (!box) return;
+  const caps = capabilitiesFor(currentStaffRole);
+  const customers = deriveCustomers(demo ? demoLeads : liveLeads, demo ? {} : { quotes:liveQuotes, workOrders:liveWorkOrders, invoices:liveInvoices });
+  const shown = filterCustomers(customers, customerQuery);
+  $("customerCount").textContent = `${customers.length} customer${customers.length === 1 ? "" : "s"} from recent enquiries`;
+  box.innerHTML = customersHtml(shown, { esc, moneyPence, canSeeMoney: !demo && caps.money });
+}
+$("customerSearch")?.addEventListener("input", event => { customerQuery = event.target.value; renderCustomers(); });
+$("customerList")?.addEventListener("click", async event => {
+  const button = event.target.closest("button[data-open-enquiry]");
+  if (!button) return;
+  selectedId = button.dataset.openEnquiry;
+  setMobileView("work");
+  await load();
+  openWorkspace(selectedId);
+});
+
+// ---- Finance overview (owners only; issue #33) ----
+function renderFinanceOverview() {
+  const box = $("financeOverview");
+  if (!box) return;
+  const caps = capabilitiesFor(currentStaffRole);
+  box.hidden = demo || !caps.money;
+  if (box.hidden) { box.innerHTML = ""; return; }
+  const today = local(new Date()).slice(0, 10);
+  box.innerHTML = financeOverviewHtml(financeOverview(liveInvoices, { period:financePeriod, today }), { esc, moneyPence, canSeeMoney:caps.money });
+}
+$("financeOverview")?.addEventListener("change", event => {
+  if (event.target.id !== "financePeriod") return;
+  financePeriod = event.target.value;
+  renderFinanceOverview();
+});
+
 const openTodayEnquiry = async event => {
   const button = event.target.closest("button[data-open-enquiry]");
   if (!button) return;
@@ -906,7 +976,7 @@ function refreshWorkspace(force = false) {
   const wasOpen = ["wsQuoteEditor", "wsInvoiceEditor"].filter(id => $(id)?.open);
   const moreOpen = document.querySelector(".ws-more")?.open;
   $("workspaceBody").innerHTML = renderWorkspaceHtml({
-    lead, rel, steps:workflowSteps(lead, rel), badge:statusBadge(lead, rel), action:recommendedAction(lead, rel, { quoteAllowed }),
+    lead, rel, steps:workflowSteps(lead, rel), badge:statusBadge(lead, rel), action:roleAdjustedAction(recommendedAction(lead, rel, { quoteAllowed }), rel, capabilitiesFor(currentStaffRole)), money:capabilitiesFor(currentStaffRole).money,
     esc, moneyPence, format, legacyTools:legacyToolsHtml, demo, quoteAllowed, invoiceDefaults, today,
     activity:wsExtrasFor === lead.id ? wsExtras.activity : [], activityText:activityDetailText
   });
@@ -976,14 +1046,8 @@ $("workspace").addEventListener("click", async event => {
   if (demo) return showNotice("Demo mode does not save business records.", "warning");
   const lead = leadById(wsOpenId);
   if (!lead) return;
-  const confirmText = {
-    "quote-status:sent":"Record this quotation as sent?\n\nSend it to the customer yourself first. Form & Frame does not email customers.",
-    "quote-status:accepted":"Record that the customer accepted this quotation?\n\nAccepted quotations are locked.",
-    "quote-status:rejected":"Record that the customer declined this quotation?",
-    "invoice-status:sent":"Record this invoice as issued?\n\nIssue it to the customer yourself. Form & Frame does not email invoices, and sent invoices are locked.",
-    "job-status:completed":"Mark this job as completed?"
-  }[`${action}:${value}`];
-  if (confirmText && !window.confirm(confirmText)) return;
+  const confirmKind = { "quote-status":"quote", "invoice-status":"invoice", "job-status":"work_order" }[action];
+  if (confirmKind && !confirmStatusChange(confirmKind, value, text => window.confirm(text))) return;
   const now = new Date().toISOString();
   let run, message;
   if (action === "quote-status") {
@@ -1125,9 +1189,8 @@ panelBus.addEventListener("submit", async event => {
     }
     const existingVersions = liveQuotes.filter(quote => quote.request_id === requestId).map(quote => Number(quote.version));
     const version = existingVersions.length ? Math.max(...existingVersions) + 1 : 1;
-    const quoteNo = `FFQ-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${crypto.randomUUID().slice(0, 4).toUpperCase()}`;
-    const payload = { request_id:requestId, quote_number:quoteNo, version, subtotal_pence:subtotalPence, tax_rate_basis_points:tax.taxRateBasisPoints, tax_pence:tax.taxPence, scope:String(fields.get("scope") || "").trim(), valid_until:String(fields.get("validUntil") || "") || null, created_by:userId };
-    const result = await saveLive(() => db.from("quotes").insert(payload).select("id").single(), "Draft quote saved. It has not been sent to the customer.");
+    const payload = { request_id:requestId, version, subtotal_pence:subtotalPence, tax_rate_basis_points:tax.taxRateBasisPoints, tax_pence:tax.taxPence, scope:String(fields.get("scope") || "").trim(), valid_until:String(fields.get("validUntil") || "") || null, created_by:userId };
+    const result = await saveLive(() => insertWithNumber(db, "quote", () => payload, numberingState), "Draft quote saved. It has not been sent to the customer.");
     if (result.saved) form.reset();
   } else if (form.id === "enquiryEdit") {
     const customerName = String(fields.get("customerName") || "").trim();
@@ -1207,6 +1270,7 @@ $("business").addEventListener("change", async event => {
     const table = { quote:"quotes", work_order:"work_orders", appointment:"appointments", invoice:"invoices" }[kind];
     const previous = { quote:liveQuotes, work_order:liveWorkOrders, appointment:liveAppointments, invoice:liveInvoices }[kind].find(item => item.id === id);
     if (!table || !previous) return;
+    if (!confirmStatusChange(kind, value, text => window.confirm(text))) { status.value = previous.status; return; }
     const patch = { status:value };
     if (kind === "quote" && value === "sent") patch.sent_at = new Date().toISOString();
     if (kind === "quote" && value === "accepted") patch.accepted_at = new Date().toISOString();
@@ -1246,6 +1310,21 @@ $("business").addEventListener("change", async event => {
 });
 
 businessBus.addEventListener("click", async event => {
+  const reversePayment = event.target.closest("button[data-reverse-payment]");
+  if (reversePayment) {
+    if (!canReversePayments(currentStaffRole)) return showNotice("Only the owner can reverse a payment.");
+    const paymentId = reversePayment.dataset.reversePayment;
+    const entered = window.prompt("Why is this payment being reversed? (5-500 characters; this is permanent and recorded)");
+    if (entered === null) return;
+    const payload = reversalPayload(paymentId, entered, reversalKeyFor(pendingReversalKeys, paymentId));
+    if (!payload) return showNotice("Enter a reason of 5 to 500 characters to reverse a payment.");
+    if (!window.confirm("Reverse this payment? This cannot be undone. Record the correct payment separately if needed.")) return;
+    reversePayment.disabled = true;
+    const result = await saveLive(() => db.from("invoice_payment_reversals").insert(payload).select("id").single(), "Payment reversed. Record the correct payment separately if one is needed.");
+    if (result.saved) pendingReversalKeys.delete(paymentId);
+    else if (reversePayment.isConnected) reversePayment.disabled = false;
+    return;
+  }
   const printInvoice = event.target.closest("button[data-print-invoice]");
   if (printInvoice) {
     const balance = liveInvoices.find(invoice => invoice.id === printInvoice.dataset.printInvoice);
@@ -1293,8 +1372,7 @@ businessBus.addEventListener("click", async event => {
   const userResult = await db.auth.getUser();
   if (userResult.error || !userResult.data.user) return showNotice("Sign in again before creating a build job.");
   const title = enquiry.project_spec?.title || `Media wall · ${enquiry.reference}`;
-  const number = `FFJ-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${crypto.randomUUID().slice(0, 4).toUpperCase()}`;
-  await saveLive(() => db.from("work_orders").insert({ request_id:enquiry.id, accepted_quote_id:quote.id, work_order_number:number, title, agreed_total_pence:quote.total_pence, created_by:userResult.data.user.id }).select("id").single(), "Accepted quote converted into a build job.");
+  await saveLive(() => insertWithNumber(db, "work_order", () => ({ request_id:enquiry.id, accepted_quote_id:quote.id, title, agreed_total_pence:quote.total_pence, created_by:userResult.data.user.id }), numberingState), "Accepted quote converted into a build job.");
 });
 
 businessBus.addEventListener("submit", async event => {
@@ -1333,8 +1411,7 @@ businessBus.addEventListener("submit", async event => {
     const userResult = await db.auth.getUser();
     if (userResult.error || !userResult.data.user) return showNotice("Sign in again before creating an invoice.");
     const button = form.querySelector("button"); button.disabled = true;
-    const invoiceNo = `FFI-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${crypto.randomUUID().slice(0, 4).toUpperCase()}`;
-    const result = await saveLive(() => db.from("invoices").insert({ work_order_id:form.dataset.workOrderId, invoice_number:invoiceNo, bill_to_name:String(fields.get("billName") || "").trim(), bill_to_address:String(fields.get("billAddress") || "").trim(), issue_date:issueDate, due_date:dueDate, subtotal_pence:subtotal, tax_rate_basis_points:taxRateBasisPoints, tax_pence:tax, created_by:userResult.data.user.id }).select("id").single(), "Invoice draft saved. It has not been sent.");
+    const result = await saveLive(() => insertWithNumber(db, "invoice", () => ({ work_order_id:form.dataset.workOrderId, bill_to_name:String(fields.get("billName") || "").trim(), bill_to_address:String(fields.get("billAddress") || "").trim(), issue_date:issueDate, due_date:dueDate, subtotal_pence:subtotal, tax_rate_basis_points:taxRateBasisPoints, tax_pence:tax, created_by:userResult.data.user.id }), numberingState), "Invoice draft saved. It has not been sent.");
     if (result.saved) form.reset();
     if (button.isConnected) button.disabled = false;
   } else if (form.classList.contains("paymentDraft")) {

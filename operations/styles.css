@@ -260,3 +260,21 @@ body.nc-open{overflow:hidden}
 .nc button,.bell{-webkit-tap-highlight-color:transparent;touch-action:manipulation}.nc{-webkit-user-select:none;user-select:none}.nc-list,.nc-text{-webkit-user-select:text;user-select:text}
 .nc,.nc *{-webkit-tap-highlight-color:transparent}
 .nc-icon-demo{display:flex;align-items:center;gap:12px;margin:10px 0}.nc-chip{flex:none;display:grid;place-items:center;width:48px;height:48px;border-radius:10px;background:#141414}.nc-mask{display:block;width:24px;height:24px;background:#fff;-webkit-mask:var(--mask) center/contain no-repeat;mask:var(--mask) center/contain no-repeat}
+
+.login p,.section-head p{color:#85612c}
+
+/* Customers panel (issue #32): shown on desktop with the work area; on mobile only in the Work view. */
+.customer-search{display:grid;gap:6px;margin:12px 0;font:600 10px/1.4 "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
+.customer-search input{min-height:44px;padding:0 12px;border:1px solid currentColor;background:transparent;font:500 14px "IBM Plex Sans",sans-serif;letter-spacing:0;text-transform:none}
+.customer-list{display:grid;gap:10px}
+.customer-card small{margin-left:6px;font:600 9px "IBM Plex Mono",monospace;letter-spacing:.1em}
+@media(max-width:760px){body[data-mobile-view="today"] #hub>#customers,body[data-mobile-view="calendar"] #hub>#customers,body[data-mobile-view="money"] #hub>#customers{display:none}}
+.customer-card a{color:inherit;text-decoration-thickness:1px;text-underline-offset:3px}
+
+/* Finance overview (issue #33): owners only, hidden by the role gate. */
+.finance-overview{margin:16px 0;padding-top:12px;border-top:1px solid currentColor}
+.finance-overview .finance-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+.finance-period select{min-height:44px;padding:0 10px}
+.finance-aged,.finance-note{display:block;margin-top:10px;font-size:12px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media(max-width:760px){.finance-overview .finance-grid{grid-template-columns:1fr 1fr}}
