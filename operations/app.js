@@ -10,6 +10,9 @@ import { isIOSDevice, isInstalledPWA, pushSetupMessage } from "./push-support.mj
 import { activityDetailText } from "./activity-label.mjs";
 import { CATEGORIES, visibleNotifications, unreadCount, unreadForRequest, normalisePreferences, deviceState } from "./notification-centre.mjs";
 import { bellLabel, listHtml, preferencesHtml, deviceHtml, iconDiagnosticsHtml } from "./notification-view.mjs";
+import { deriveCustomers, filterCustomers } from "./customers.mjs";
+import { customersHtml } from "./customers-view.mjs";
+import { confirmStatusChange } from "./status-confirm.mjs";
 import { capabilitiesFor, filterActivityForCaps, loadWorkOrdersForCaps, roleAdjustedAction } from "./role-capabilities.mjs";
 import { insertWithNumber } from "./document-number.mjs";
 import { canReversePayments, ledgerRows, loadPaymentLedger, paymentLedgerHtml, reversalKeyFor, reversalPayload } from "./payment-reversal.mjs";
@@ -34,7 +37,7 @@ const pushEnquiryTarget = enquiryTargetFromSearch(window.location.search);
 const pushViewTarget = operationsViewFromSearch(window.location.search);
 let demo = false, db = null, demoLeads = [], demoBlocks = [], liveLeads = [], liveBlocks = [], selectedId = pushEnquiryTarget;
 let liveQuotes = [], liveWorkOrders = [], liveAppointments = [], liveInvoices = [], liveInvoiceDetails = [], liveProfiles = null;
-let invoiceSettings = null, currentStaffRole = null;
+let invoiceSettings = null, currentStaffRole = null, customerQuery = "";
 const numberingState = {}; // remembers whether the optional server-side numbering RPC exists
 let paymentLedger = { available:false, payments:[], reversals:[] };
 const pendingReversalKeys = new Map();
@@ -169,6 +172,7 @@ function renderWorkflows(data) {
   liveWorkOrders = data.workOrders;
   liveAppointments = data.appointments;
   liveInvoices = data.invoices;
+  renderCustomers();
   liveInvoiceDetails = data.invoiceRecords || [];
   const profiles = Array.isArray(data.profiles) ? data.profiles : null;
   $("invoiceWorkOrder").innerHTML = `<option value="">Choose a work order</option>${liveWorkOrders.filter(job => job.status !== "cancelled").map(job => `<option value="${esc(job.id)}">${esc(job.work_order_number)} · ${esc(job.title)}</option>`).join("")}`;
@@ -308,6 +312,7 @@ function render(items, blocks, statsItems = items) {
   if (demo) renderCalendar(blocks);
   if (items.length) renderProject(items.find(item => item.id === selectedId));
   else $("projectPanel").innerHTML = `<p>PROJECT BRIEF</p><h2>Select an enquiry</h2><p class="empty">A selected enquiry will show its customer brief and website guide range. Actual job costs, quotes and invoices appear only when recorded.</p>`;
+  renderCustomers();
 }
 
 function renderToday(items) {
@@ -514,6 +519,8 @@ function startDemo() {
     { id:"d2", reference:"FF-DEMO-1041", customer_name:"Hugo Clarke", phone:"07700 900 441", postcode:"SL1 5QJ", wall_width:"5.8 m wall", message:"Full-width cinema wall with walnut shelving. Room photos attached.", status:"reviewing", source:"website enquiry", guide_low:9800, guide_high:11600, created_at:plusDays(-1).toISOString(), project:{ title:"Slough cinema wall", location:"SLOUGH · SL1 5QJ", image:"../assets/cases/slough-cinema-after.webp", geometry:"5.8 m wall · 85” recessed TV · 1.5 m linear fire", system:"Charcoal lacquer carcasses · smoked bronze display doors · RGB scene lighting", materials:["#242826", "#7c573b", "#c29156"], materialLabel:"Charcoal lacquer · smoked oak · aged bronze", materialsCost:5100, equipmentCost:2280, labourCost:4220, total:11600, sampleCosts:true } },
     { id:"d3", reference:"FF-DEMO-1040", customer_name:"Saira Patel", email:"saira.patel@example.com", postcode:"SL3 8LA", wall_width:"3.1 m chimney breast", message:"Compact chimney breast, existing fire to remove, pale oak finish.", status:"date_requested", source:"website enquiry", guide_low:4900, guide_high:6100, created_at:plusDays(-2).toISOString(), project:{ title:"Langley chimney breast", location:"LANGLEY · SL3 8LA", image:"../assets/cases/langley-chimney-after.webp", geometry:"3.1 m chimney breast · 55” flush TV · compact fire", system:"Microcement feature · pale oak alcove storage · dimmable warm LED", materials:["#c6b293", "#8c8c80", "#382e26"], materialLabel:"Pale oak · mineral microcement · black steel", materialsCost:2620, equipmentCost:1040, labourCost:2440, total:6100, sampleCosts:true } }
   ];
+  // Fictional second enquiry from the same fictional customer (email differs only by case): shows repeat-customer matching.
+  demoLeads.push({ ...demoLeads[0], id:"d4", reference:"FF-DEMO-1039", email:"AMELIA.GRANT@example.com", status:"quoted", created_at:plusDays(-4).toISOString(), message:"DEMO: second enquiry from the same fictional customer.", project:{ ...demoLeads[0].project, title:"Windsor hallway storage" } });
   demoBlocks = [{ id:"b1", title:"HOLIDAY — family break", kind:"holiday", starts_at:plusDays(2, 0).toISOString(), ends_at:plusDays(3, 23).toISOString() }, { id:"b2", title:"Workshop installation", kind:"blocked", starts_at:plusDays(6, 8).toISOString(), ends_at:plusDays(7, 18).toISOString() }, { id:"b3", title:"Extra survey availability", kind:"available", starts_at:plusDays(9, 10).toISOString(), ends_at:plusDays(9, 16).toISOString() }];
   setBlockDefaults(); loadDemo();
 }
@@ -848,6 +855,26 @@ $("calendarNext").addEventListener("click", () => { calendarDate = new Date(cale
 $("calendarToday").addEventListener("click", () => { calendarDate = new Date(); refreshCalendar(); });
 $("calendarRetry").addEventListener("click", refreshCalendar);
 document.querySelectorAll(".calendar-mode").forEach(button => button.addEventListener("click", () => { calendarMode = button.dataset.calendarMode; refreshCalendar(); }));
+// ---- Customers (derived from enquiries; no customers table yet — see issue #32) ----
+function renderCustomers() {
+  const box = $("customerList");
+  if (!box) return;
+  const caps = capabilitiesFor(currentStaffRole);
+  const customers = deriveCustomers(demo ? demoLeads : liveLeads, demo ? {} : { quotes:liveQuotes, workOrders:liveWorkOrders, invoices:liveInvoices });
+  const shown = filterCustomers(customers, customerQuery);
+  $("customerCount").textContent = `${customers.length} customer${customers.length === 1 ? "" : "s"} from recent enquiries`;
+  box.innerHTML = customersHtml(shown, { esc, moneyPence, canSeeMoney: !demo && caps.money });
+}
+$("customerSearch")?.addEventListener("input", event => { customerQuery = event.target.value; renderCustomers(); });
+$("customerList")?.addEventListener("click", async event => {
+  const button = event.target.closest("button[data-open-enquiry]");
+  if (!button) return;
+  selectedId = button.dataset.openEnquiry;
+  setMobileView("work");
+  await load();
+  openWorkspace(selectedId);
+});
+
 const openTodayEnquiry = async event => {
   const button = event.target.closest("button[data-open-enquiry]");
   if (!button) return;
@@ -1000,14 +1027,8 @@ $("workspace").addEventListener("click", async event => {
   if (demo) return showNotice("Demo mode does not save business records.", "warning");
   const lead = leadById(wsOpenId);
   if (!lead) return;
-  const confirmText = {
-    "quote-status:sent":"Record this quotation as sent?\n\nSend it to the customer yourself first. Form & Frame does not email customers.",
-    "quote-status:accepted":"Record that the customer accepted this quotation?\n\nAccepted quotations are locked.",
-    "quote-status:rejected":"Record that the customer declined this quotation?",
-    "invoice-status:sent":"Record this invoice as issued?\n\nIssue it to the customer yourself. Form & Frame does not email invoices, and sent invoices are locked.",
-    "job-status:completed":"Mark this job as completed?"
-  }[`${action}:${value}`];
-  if (confirmText && !window.confirm(confirmText)) return;
+  const confirmKind = { "quote-status":"quote", "invoice-status":"invoice", "job-status":"work_order" }[action];
+  if (confirmKind && !confirmStatusChange(confirmKind, value, text => window.confirm(text))) return;
   const now = new Date().toISOString();
   let run, message;
   if (action === "quote-status") {
@@ -1230,6 +1251,7 @@ $("business").addEventListener("change", async event => {
     const table = { quote:"quotes", work_order:"work_orders", appointment:"appointments", invoice:"invoices" }[kind];
     const previous = { quote:liveQuotes, work_order:liveWorkOrders, appointment:liveAppointments, invoice:liveInvoices }[kind].find(item => item.id === id);
     if (!table || !previous) return;
+    if (!confirmStatusChange(kind, value, text => window.confirm(text))) { status.value = previous.status; return; }
     const patch = { status:value };
     if (kind === "quote" && value === "sent") patch.sent_at = new Date().toISOString();
     if (kind === "quote" && value === "accepted") patch.accepted_at = new Date().toISOString();
