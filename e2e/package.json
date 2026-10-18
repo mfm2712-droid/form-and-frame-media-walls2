@@ -1,0 +1,8 @@
+{
+  "name": "form-and-frame-e2e",
+  "private": true,
+  "type": "module",
+  "description": "Real-browser end-to-end tests (puppeteer-core driving the installed Chrome). Separate from the production package: nothing here ships to Vercel.",
+  "scripts": { "test": "node --test --test-concurrency=1 --test-timeout=120000 \"tests/**/*.e2e.mjs\"" },
+  "devDependencies": { "puppeteer-core": "25.14.0" }
+}
