@@ -1,6 +1,7 @@
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { resolvePublicConfig } from "./public-config.mjs";
+import { CONTACT_MARKER, parseContact, renderContactBlock } from "./contact-block.mjs";
 import { DEFAULT_SITE_URL, resolveSiteUrl } from "../site-config.mjs";
 
 // Publish the public website and authenticated staff app shell. Operations
@@ -27,6 +28,11 @@ if (siteUrl !== DEFAULT_SITE_URL) {
     const target = resolve(output, file);
     await writeFile(target, (await readFile(target, "utf8")).split(DEFAULT_SITE_URL).join(siteUrl));
   }
+}
+// Footer contact block: nothing published unless Mark supplies FF_CONTACT_PHONE / FF_CONTACT_EMAIL.
+{
+  const target = resolve(output, "index.html");
+  await writeFile(target, (await readFile(target, "utf8")).replace(CONTACT_MARKER, renderContactBlock(parseContact(process.env))));
 }
 const operationsOutput = resolve(output, "operations");
 await mkdir(operationsOutput, { recursive: true });
