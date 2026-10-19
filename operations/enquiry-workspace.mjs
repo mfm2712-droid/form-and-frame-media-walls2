@@ -121,7 +121,7 @@ export function recommendedAction(lead, rel, { quoteAllowed = true } = {}) {
   if (lead?.status === "new") return { id: "open", label: "Open this enquiry", hint: "Opening marks it as being handled for everyone on the team.", primary: true };
   if (!rel.quote && !quoteAllowed) return { id: "book-survey", label: "Book the site survey", hint: "A site assessment is required before a formal quotation.", primary: true };
   if (!rel.quote) return { id: "create-quote", label: "Create quotation", hint: "Opens the quotation form with this enquiry's details already filled in.", primary: true };
-  if (rel.quote.status === "draft") return { id: "send-quote", label: "Record quotation as sent", hint: "Send the quotation to the customer yourself, then record it here. The app never emails customers.", primary: true };
+  if (rel.quote.status === "draft") return { id: "send-quote", label: "Send quotation", hint: "Create the secure link and email the quotation to the customer.", primary: true };
   if (rel.quote.status === "sent") return { id: "accept-quote", label: "Record customer acceptance", hint: "Use this once the customer has agreed. You can also record a rejection.", primary: true };
   if (rel.quote.status === "accepted" && !rel.job) return { id: "create-job", label: "Create build job", hint: "Turns the accepted quotation into a job at the agreed price.", primary: true };
   if (rel.job && rel.job.status !== "completed") {

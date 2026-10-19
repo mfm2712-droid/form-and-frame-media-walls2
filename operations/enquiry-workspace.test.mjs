@@ -49,12 +49,12 @@ test("payment step needs every sent invoice fully paid", () => {
   assert.equal(paid.find(item => item.id === "payment").state, "done");
 });
 
-test("recommended action follows the workflow and never emails or issues anything itself", () => {
+test("recommended action follows the workflow and only sends quotations through the secure email flow", () => {
   assert.equal(recommendedAction(lead(), rel()).id, "open");
   assert.equal(recommendedAction(lead({ status: "reviewing" }), rel()).id, "create-quote");
   assert.equal(recommendedAction(lead({ status: "reviewing" }), rel(), { quoteAllowed: false }).id, "book-survey");
   assert.equal(recommendedAction(lead({ status: "quoted" }), rel({ quotes: [quote()] })).id, "send-quote");
-  assert.match(recommendedAction(lead({ status: "quoted" }), rel({ quotes: [quote()] })).hint, /never emails/);
+  assert.match(recommendedAction(lead({ status: "quoted" }), rel({ quotes: [quote()] })).hint, /secure link and email/);
   assert.equal(recommendedAction(lead({ status: "quoted" }), rel({ quotes: [quote({ status: "sent", sent_at: "x" })] })).id, "accept-quote");
   assert.equal(recommendedAction(lead({ status: "won" }), rel({ quotes: [quote({ status: "accepted" })] })).id, "create-job");
   const withJob = { quotes: [quote({ status: "accepted" })], workOrders: [job()] };

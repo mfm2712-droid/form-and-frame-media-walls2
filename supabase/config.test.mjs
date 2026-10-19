@@ -11,12 +11,17 @@ test("Supabase CLI is pinned to Form & Frame and keeps JWT verification on", asy
   assert.match(config, /^verify_jwt = false$/m);
   assert.match(config, /^\[functions\.retry-notifications\]$/m);
   assert.match(config, /^verify_jwt = false$/m);
+  assert.match(config, /^\[functions\.send-quote-email\]$/m);
+  assert.match(config, /^verify_jwt = true$/m);
   const handler = await readFile(new URL("./functions/push-new-enquiry/handler.mjs", import.meta.url), "utf8");
   assert.match(handler, /PUSH_DISPATCH_TOKEN/);
   assert.match(handler, /sameSecret/);
   const retryHandler = await readFile(new URL("./functions/retry-notifications/handler.mjs", import.meta.url), "utf8");
   assert.match(retryHandler, /NOTIFICATION_RETRY_TOKEN/);
   assert.match(retryHandler, /sameSecret/);
+  const quoteEmailHandler = await readFile(new URL("./functions/send-quote-email/handler.mjs", import.meta.url), "utf8");
+  assert.match(quoteEmailHandler, /RESEND_API_KEY/);
+  assert.match(quoteEmailHandler, /Staff access is required/);
 });
 
 test("the staff app and enquiry function pin the same Supabase SDK release", async () => {

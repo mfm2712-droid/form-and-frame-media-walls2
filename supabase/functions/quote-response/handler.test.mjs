@@ -76,3 +76,33 @@ test("an unknown, used or reused link cannot be answered and reveals nothing", a
   assert.equal(view.status, 404);
   assert.doesNotMatch(await view.text(), /Invalid or expired link|P0001/);
 });
+
+test("a customer decision confirms by email and alerts the owner", async () => {
+  const sent = [];
+  const tokenHash = await hashToken(token);
+  const rows = {
+    quote_response_links:[{ token_hash:tokenHash, quote_id:"quote-1" }],
+    quotes:[{ id:"quote-1", request_id:"request-1", quote_number:"FFQ-TEST-1" }],
+    consultation_requests:[{ id:"request-1", customer_name:"Fictional Customer", email:"customer@example.test", reference:"FF-TEST-1" }]
+  };
+  const find = (table, filters) => (rows[table] || []).find(row => Object.entries(filters).every(([key, value]) => row[key] === value)) || null;
+  const admin = {
+    from(table) {
+      const query = { filters:{} };
+      const chain = { select:() => chain, eq:(key, value) => { query.filters[key] = value; return chain; }, maybeSingle:async () => ({ data:find(table, query.filters), error:null }) };
+      return chain;
+    },
+    rpc:async () => ({ data:{ ok:true, decision:"accepted" }, error:null })
+  };
+  const handler = createQuoteResponseHandler({
+    env:name => ({ SUPABASE_URL:"https://otqzhocismdjbvvsjnpe.supabase.co", SUPABASE_SERVICE_ROLE_KEY:"server-only", RESEND_API_KEY:"fictional-resend-key", NOTIFICATION_EMAIL:"owner@example.test", NOTIFICATION_FROM:"Form & Frame <noreply@example.test>" })[name],
+    createAdmin:() => admin,
+    fetcher:async (url, options) => { sent.push({ url, options }); return new Response("{}", { status:200 }); }
+  });
+  const response = await handler(new Request("https://example.test/quote-response", { method:"POST", headers:{ origin:ORIGIN, "content-type":"application/json" }, body:JSON.stringify({ token, decision:"accepted" }) }));
+  assert.equal(response.status, 200);
+  assert.equal(sent.length, 2);
+  const emails = sent.map(item => JSON.parse(item.options.body));
+  assert.deepEqual(emails.map(email => email.to[0]).sort(), ["customer@example.test", "owner@example.test"]);
+  assert.match(emails.find(email => email.to[0] === "customer@example.test").html, /Quotation update received/);
+});
