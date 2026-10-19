@@ -30,7 +30,7 @@ assert.ok(publicConfigMatch, "The generated public config must be a valid frozen
 const publicConfig = JSON.parse(publicConfigMatch[1]);
 const publicSupabaseRef = /^https:\/\/([a-z0-9-]+)\.supabase\.co$/i.exec(publicConfig.supabaseUrl || "")?.[1]?.toLowerCase();
 assert.equal(publicSupabaseRef, "otqzhocismdjbvvsjnpe", "The public build must use the dedicated Form & Frame Supabase project.");
-assert.ok(/<script src="\/public-config\.js"><\/script>/.test(publicHtml), "The public page must load the generated Supabase config before its enquiry handler.");
+assert.ok(/<script src="(?:\.\/)?public-config\.js"><\/script>/.test(publicHtml), "The public page must load the generated Supabase config before its enquiry handler.");
 assert.ok(/\/functions\/v1\/submit-enquiry/.test(publicHtml), "The public enquiry flow must call the server-side persistence function.");
 const localStorageKeys = [...publicHtml.matchAll(/localStorage\.setItem\(\s*["']([^"']+)["']/g)].map(match => match[1]);
 assert.deepEqual(
