@@ -159,6 +159,7 @@ a{color:var(--green)}img{max-width:100%}button,input,select,textarea{font:inheri
 .form textarea{resize:vertical}.form input:focus,.form select:focus,.form textarea:focus{border-color:var(--green);outline:2px solid var(--gold-soft)}
 .two{display:grid;gap:12px}.check{display:flex!important;grid-template-columns:none!important;align-items:center;gap:10px!important;font-weight:500!important}.check input{width:22px;height:22px;accent-color:var(--green)}
 .form-errors{margin:0;padding:10px 12px;border-radius:10px;background:var(--red-soft);color:var(--red);font-weight:600}
+.success-box{margin:0;padding:10px 12px;border-radius:10px;background:var(--green-soft);color:var(--green);font-weight:600}
 .dialog-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;padding-top:6px}.dialog-actions.sticky{position:sticky;bottom:-18px;margin:0 -18px -18px;padding:12px 18px calc(12px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line)}
 .choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.choice-card{display:grid;gap:8px;padding:16px;border:1px solid var(--line-2);border-radius:12px;background:#fff}.choice-card h3{margin:0;color:var(--green);font:700 19px var(--serif)}.choice-card p{margin:0}.choice-card small{min-height:38px;color:var(--muted)}.choice-card .btn{justify-self:start}.choice-kicker{font:600 11px var(--mono);letter-spacing:.12em;color:var(--amber)}
 fieldset{margin:0;padding:12px;border:1px solid var(--line);border-radius:10px}legend{padding:0 6px;font-weight:700}

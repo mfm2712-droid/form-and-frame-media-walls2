@@ -1,6 +1,6 @@
 // Form & Frame Owner Desk. One controller: routing, loading, and every action.
 // Business records stay behind Supabase Auth + row-level security; this file only
-// uses the public anon key. Nothing here emails a customer or takes a payment.
+// uses the public anon key. Customer email delivery happens in a server function.
 import { checkStaffAccess, staffAccessMessage } from "./staff-access.mjs";
 import { loadBusinessRows } from "./business-records.mjs";
 import { requirePersistedRow } from "./mutation-result.mjs";
@@ -424,10 +424,17 @@ function showInvoicePdf(invoiceId) {
 const randomToken = () => Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => byte.toString(16).padStart(2, "0")).join("");
 const sha256 = async text => Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text))), byte => byte.toString(16).padStart(2, "0")).join("");
 
-function openSendQuote(quote, link = "") {
+function openSendQuote(quote, link = "", options = {}) {
   const lead = leadById(quote.request_id);
   const fresh = quoteById(quote.id) || quote;
-  openDialog(sendQuoteHtml({ lead, quote:fresh, link, emailHref:link ? quotationEmail(fresh, lead, link) || "" : "" }));
+  openDialog(sendQuoteHtml({ lead, quote:fresh, link, emailHref:link ? quotationEmail(fresh, lead, link) || "" : "", ...options }));
+}
+
+async function sendQuoteEmail(token, responseUrl) {
+  const result = await db.functions.invoke("send-quote-email", { body:{ token, response_url:responseUrl } });
+  if (result.error) throw result.error;
+  if (result.data?.status !== "sent") throw new Error(result.data?.error || "The quotation email could not be delivered.");
+  return result.data;
 }
 
 // ---- Actions ---------------------------------------------------------------------------------
@@ -478,8 +485,13 @@ const ACTIONS = {
       if (result.error) throw result.error;
       await loadAll(); render();
       const link = new URL("../quote-response.html", location.href); link.searchParams.set("token", token);
-      openSendQuote(quoteById(quote.id), link.href);
-      toast(quote.status === "draft" ? "Link created and quotation marked as sent. Email it to the customer now." : "New link created. The previous link no longer works.");
+      let emailSent = false, emailError = "";
+      try { await sendQuoteEmail(token, link.href); emailSent = true; }
+      catch (error) { emailError = error?.message || "The quotation email could not be delivered."; }
+      openSendQuote(quoteById(quote.id), link.href, { emailSent, emailError });
+      toast(emailSent
+        ? (quote.status === "draft" ? "Link created, quotation marked as sent and emailed to the customer." : "New link created and emailed to the customer.")
+        : "Link created, but the customer email could not be delivered. Use the draft fallback in this window.", emailSent ? "success" : "error");
     } catch (error) { button.disabled = false; toast(friendlyError(error), "error"); }
   },
   "copy-link":async () => { const input = $("responseLink"); try { await navigator.clipboard.writeText(input.value); toast("Link copied."); } catch { input.select(); toast("Select the link and copy it.", "error"); } },
