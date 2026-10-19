@@ -3,6 +3,16 @@
 // by the server role alone. No payment is ever taken here.
 const DEFAULT_ORIGINS = ["https://form-and-frame.vercel.app"];
 const DECISIONS = ["accepted", "rejected", "changes_requested"];
+const CLOSED_STATES = ["answered", "replaced", "expired", "closed"];
+
+// A closed link may only reveal why it is closed and how to contact Form & Frame:
+// never the customer's details, prices or terms, even if more were returned.
+export function closedView(data) {
+  const view = { open:false, state:CLOSED_STATES.includes(data?.state) ? data.state : "closed" };
+  if (DECISIONS.includes(data?.decision)) view.decision = data.decision;
+  for (const key of ["seller_name", "seller_email", "seller_phone"]) if (typeof data?.[key] === "string" && data[key]) view[key] = data[key];
+  return view;
+}
 
 export async function hashToken(token) {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
@@ -32,8 +42,8 @@ export function createQuoteResponseHandler({ env, createAdmin, logError = () => 
 
     if (action === "view") {
       const result = await db.rpc("get_quote_for_response", { p_token_hash:tokenHash });
-      if (result.error || !result.data) return respond({ error:"This link has expired or is no longer valid. Please contact Form & Frame." }, 404);
-      return respond({ ok:true, quote:result.data });
+      if (result.error || !result.data || typeof result.data !== "object") return respond({ error:"This link has expired or is no longer valid. Please contact Form & Frame." }, 404);
+      return respond({ ok:true, quote:result.data.open === true ? result.data : closedView(result.data) });
     }
     if (action !== "respond") return respond({ error:"Invalid request" }, 400);
     const decision = String(body?.decision || "");

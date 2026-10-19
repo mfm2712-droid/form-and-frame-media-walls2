@@ -43,3 +43,36 @@ test("a used, expired or replaced link gets a clear refusal without database det
   assert.match(body.error, /can no longer be answered online/);
   assert.doesNotMatch(JSON.stringify(body), /P0001|Invalid or expired/);
 });
+
+test("a valid link returns the quotation; a closed one returns only its state, even if the database sent more", async () => {
+  const open = { open:true, state:"open", quote_number:"FFQ-1", customer_name:"Fictional Customer", total_pence:120000, terms:"Fictional terms" };
+  let { post } = setup({ data:open, error:null });
+  let body = await (await post({ token, action:"view" })).json();
+  assert.equal(body.quote.customer_name, "Fictional Customer");
+  for (const state of ["answered", "replaced", "expired", "closed"]) {
+    const leaky = { open:false, state, decision:"accepted", seller_email:"hello@example.com", quote_number:"FFQ-1", customer_name:"Fictional Customer", total_pence:120000, line_items:[{}], terms:"x", scope:"x", reference:"FF-1" };
+    ({ post } = setup({ data:leaky, error:null }));
+    const response = await post({ token, action:"view" });
+    assert.equal(response.status, 200);
+    body = await response.json();
+    assert.deepEqual(body.quote, { open:false, state, decision:"accepted", seller_email:"hello@example.com" }, `${state} link shows only its state`);
+  }
+  ({ post } = setup({ data:{ open:"yes", customer_name:"Fictional Customer" }, error:null }));
+  assert.deepEqual((await (await post({ token, action:"view" })).json()).quote, { open:false, state:"closed" }, "anything not strictly open is treated as closed");
+});
+
+test("an unknown, used or reused link cannot be answered and reveals nothing", async () => {
+  let answered = false;
+  const { post } = setup(() => {
+    if (answered) return { data:null, error:{ message:"Invalid or expired link", code:"P0001" } };
+    answered = true; return { data:{ ok:true, decision:"accepted" }, error:null };
+  });
+  assert.equal((await post({ token, decision:"accepted" })).status, 200, "first answer is recorded");
+  const reuse = await post({ token, decision:"rejected" });
+  assert.equal(reuse.status, 409, "the same link cannot answer twice");
+  assert.doesNotMatch(await reuse.text(), /Fictional|FFQ|pence|P0001/);
+  const unknown = setup({ data:null, error:{ message:"Invalid or expired link", code:"P0001" } });
+  const view = await unknown.post({ token:"c".repeat(64), action:"view" });
+  assert.equal(view.status, 404);
+  assert.doesNotMatch(await view.text(), /Invalid or expired link|P0001/);
+});

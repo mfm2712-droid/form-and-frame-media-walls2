@@ -50,7 +50,19 @@ const call = async body => {
 };
 let quote = null;
 const contact = () => quote?.seller_email ? ` at <a href="mailto:${escapeHtml(quote.seller_email)}">${escapeHtml(quote.seller_email)}</a>${quote.seller_phone ? ` or ${escapeHtml(quote.seller_phone)}` : ""}` : "";
-const STATUS = { accepted:"You accepted this quotation.", rejected:"You declined this quotation.", changes_requested:"You asked for changes. Form & Frame will send you a revised quotation.", superseded:"This quotation has been replaced by a newer version. Please use the link in the latest email.", expired:"This quotation has expired." };
+// A closed link carries no quotation details, only why it is closed.
+const CLOSED = {
+  accepted:["Quotation accepted", "You have already accepted this quotation. Form &amp; Frame will be in touch about the next steps."],
+  rejected:["Quotation declined", "You have already declined this quotation."],
+  changes_requested:["Changes requested", "You asked for changes. Form &amp; Frame will send you a revised quotation with a new link."],
+  replaced:["This link has been replaced", "A newer link or version of this quotation has been sent. Please use the link in the most recent email from Form &amp; Frame."],
+  expired:["This link has expired", "This quotation link is no longer valid. Please contact Form &amp; Frame for an up-to-date quotation."],
+  closed:["This quotation is closed", "This quotation can no longer be answered online."]
+};
+function closedMessage(q) {
+  const [title, body] = CLOSED[q.state === "answered" ? q.decision : q.state] || CLOSED.closed;
+  message(title, `${body}${quote.seller_email ? ` You can contact Form &amp; Frame${contact()}.` : ""}`);
+}
 
 function message(title, body, tick = false) {
   app.innerHTML = `<section class="card done">${tick ? `<div class="tick" aria-hidden="true">✓</div>` : ""}<h1>${title}</h1><p>${body}</p></section>`;
@@ -58,14 +70,15 @@ function message(title, body, tick = false) {
 
 function render() {
   const q = quote;
-  const closed = !q.open;
+  if (q.open !== true) return closedMessage(q);
+  const closed = false;
   app.innerHTML = `<section class="card"><p class="muted">Quotation for ${escapeHtml(q.customer_name)}</p><h1>${escapeHtml(q.quote_number)}</h1><p class="muted">Version ${escapeHtml(q.version)} · project ${escapeHtml(q.reference)}</p>
 <div class="facts"><div><span>Issued</span><b>${dateLabel(q.issued_at)}</b></div><div><span>Valid until</span><b>${dateLabel(q.valid_until)}</b></div><div><span>Total</span><b>${pounds(q.total_pence)}</b></div><div><span>From</span><b>${escapeHtml(q.seller_name || "Form & Frame")}</b></div></div></section>
 <section class="card"><h2>Scope of work</h2><p class="scope">${escapeHtml(q.scope || "")}</p></section>
 <section class="card"><h2>Itemised pricing</h2>${quoteLinesHtml(q).replace('class="items"', "")}${quoteTotalsHtml(q, { vatRegistered:Boolean(q.vat_number) })}</section>
 ${q.exclusions ? `<section class="card"><h2>Not included</h2><p class="scope">${escapeHtml(q.exclusions)}</p></section>` : ""}
 ${q.terms ? `<section class="card"><h2>Terms</h2><p class="scope">${escapeHtml(q.terms)}</p></section>` : ""}
-<section class="card" id="respond"><h2>Your decision</h2>${closed ? `<p>${STATUS[q.decision] || STATUS[q.status] || "This link can no longer be used to respond."} If you have a question, contact Form &amp; Frame${contact()}.</p>` : `<p>Accepting confirms you would like to go ahead. No payment is taken on this page; Form &amp; Frame will contact you to arrange the next steps.</p><div class="actions"><button class="accept" data-choice="accepted">Accept quotation</button><button data-choice="changes_requested">Request changes or ask a question</button><button class="decline" data-choice="rejected">Decline quotation</button></div><div id="step"></div>`}</section>`;
+<section class="card" id="respond"><h2>Your decision</h2>${closed ? "" : `<p>Accepting confirms you would like to go ahead. No payment is taken on this page; Form &amp; Frame will contact you to arrange the next steps.</p><div class="actions"><button class="accept" data-choice="accepted">Accept quotation</button><button data-choice="changes_requested">Request changes or ask a question</button><button class="decline" data-choice="rejected">Decline quotation</button></div><div id="step"></div>`}</section>`;
 }
 
 function confirmStep(choice) {

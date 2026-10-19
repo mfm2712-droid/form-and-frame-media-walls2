@@ -207,6 +207,7 @@ export function createDemoClient({ now = new Date(), missing = [], missingColumn
       if (name === "issue_quote_response_link") {
         const quote = client.db.quotes.find(item => item.id === args.p_quote_id);
         if (!quote || !["draft", "sent"].includes(quote.status)) return fail("Quotation not eligible");
+        if (quote.valid_until && quote.valid_until < new Date().toISOString().slice(0, 10)) return fail("This quotation has passed its validity date. Create a revision instead.");
         if (quote.status === "draft") {
           const before = clone(quote);
           for (const older of client.db.quotes) if (older.request_id === quote.request_id && older.id !== quote.id && older.status === "sent") older.status = "superseded";
@@ -216,6 +217,28 @@ export function createDemoClient({ now = new Date(), missing = [], missingColumn
         client.db.quote_response_links.forEach(link => { if (link.quote_id === quote.id && !link.used_at) link.used_at = new Date().toISOString(); });
         client.db.quote_response_links.push({ id:uuid(), quote_id:quote.id, token_hash:args.p_token_hash, expires_at:new Date(Date.now() + 30 * 86_400_000).toISOString(), used_at:null, viewed_at:null, decision:null, created_at:new Date().toISOString() });
         return { data:null, error:null };
+      }
+      // Customer portal functions, mirroring get_quote_for_response and
+      // record_customer_quote_decision in the migration (tested there in PostgreSQL).
+      if (name === "get_quote_for_response" || name === "record_customer_quote_decision") {
+        const link = client.db.quote_response_links.find(item => item.token_hash === args.p_token_hash);
+        if (!link) return fail("Invalid or expired link", "P0001");
+        const quote = client.db.quotes.find(item => item.id === link.quote_id);
+        const today = new Date().toISOString().slice(0, 10);
+        const state = link.decision ? "answered" : quote.status === "superseded" || link.used_at ? "replaced"
+          : new Date(link.expires_at) <= new Date() ? "expired" : quote.status !== "sent" ? "closed"
+          : quote.valid_until && quote.valid_until < today ? "expired" : null;
+        if (name === "record_customer_quote_decision") {
+          if (!["accepted", "rejected", "changes_requested"].includes(args.p_decision)) return fail("Invalid decision", "P0001");
+          if (state) return fail(state === "expired" && link.expires_at > new Date().toISOString() ? "Quotation has expired" : "Invalid or expired link", "P0001");
+          client.customerResponds(quote.id, args.p_decision, String(args.p_message || "").slice(0, 2000));
+          return { data:{ ok:true, decision:args.p_decision }, error:null };
+        }
+        const seller = client.db.business_settings[0] || {};
+        if (state) return { data:Object.fromEntries(Object.entries({ open:false, state, decision:link.decision, seller_name:seller.legal_name, seller_email:seller.contact_email, seller_phone:seller.contact_phone || null }).filter(([, value]) => value != null)), error:null };
+        if (!link.viewed_at) link.viewed_at = new Date().toISOString();
+        const lead = client.db.consultation_requests.find(item => item.id === quote.request_id);
+        return { data:{ open:true, state:"open", link_expires_at:link.expires_at, quote_number:quote.quote_number, version:quote.version, status:quote.status, issued_at:quote.sent_at, valid_until:quote.valid_until, customer_name:lead.customer_name, reference:lead.reference, scope:quote.scope, exclusions:quote.exclusions, terms:quote.terms, line_items:quote.line_items, items_subtotal_pence:quote.items_subtotal_pence, discount_type:quote.discount_type, discount_basis_points:quote.discount_basis_points, discount_pence:quote.discount_pence, subtotal_pence:quote.subtotal_pence, tax_rate_basis_points:quote.tax_rate_basis_points, tax_pence:quote.tax_pence, total_pence:quote.subtotal_pence + quote.tax_pence, seller_name:seller.legal_name, seller_email:seller.contact_email, seller_phone:seller.contact_phone, vat_number:seller.vat_number }, error:null };
       }
       return fail(`Unknown function ${name}`, "PGRST202");
     },

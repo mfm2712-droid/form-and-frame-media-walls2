@@ -22,6 +22,9 @@ begin
   if exists (select 1 from public.quotes where status = 'accepted' group by request_id having count(*) > 1) then
     raise exception 'Pre-flight failed: an enquiry has more than one accepted quotation. Resolve it with the owner before applying.';
   end if;
+  if exists (select 1 from public.quotes where status = 'draft' group by request_id having count(*) > 1) then
+    raise exception 'Pre-flight failed: an enquiry has more than one draft quotation. Discard the extra drafts with the owner before applying.';
+  end if;
 end;
 $$;
 
@@ -178,6 +181,8 @@ on conflict (name) do nothing;
 -- 3. Revisions --------------------------------------------------------------------
 create unique index if not exists quotes_one_accepted_per_request
   on public.quotes(request_id) where status = 'accepted';
+create unique index if not exists quotes_one_draft_per_request
+  on public.quotes(request_id) where status = 'draft';
 
 -- Serialise version changes per enquiry. Only the newest issued version can be
 -- accepted, an older version cannot be re-sent, and one draft is open at a time.
@@ -296,6 +301,9 @@ begin
   if p_token_hash is null or p_token_hash !~ '^[a-f0-9]{64}$' then raise exception 'Invalid token hash'; end if;
   select status into current_status from public.quotes where id = p_quote_id for update;
   if not found or current_status not in ('draft', 'sent') then raise exception 'Quotation not eligible'; end if;
+  if exists (select 1 from public.quotes where id = p_quote_id and valid_until is not null and valid_until < current_date) then
+    raise exception 'This quotation has passed its validity date. Create a revision instead.' using errcode = '23514';
+  end if;
   if current_status = 'draft' then
     update public.quotes set status = 'sent', sent_at = now() where id = p_quote_id;
   end if;
@@ -308,6 +316,9 @@ revoke all on function public.issue_quote_response_link(uuid, text) from public,
 grant execute on function public.issue_quote_response_link(uuid, text) to authenticated;
 
 -- What the customer sees. Server role only: the edge function hashes the token.
+-- Only an open link (unused, unexpired, newest sent version, still within its
+-- validity date) returns the quotation. Every other link returns a closed state
+-- with no customer details, prices or terms; an unknown link raises.
 create or replace function public.get_quote_for_response(p_token_hash text)
 returns jsonb language plpgsql security definer set search_path = '' as $$
 declare
@@ -315,20 +326,42 @@ declare
   quote_row public.quotes%rowtype;
   request_row public.consultation_requests%rowtype;
   seller public.business_settings%rowtype;
+  closed_state text;
 begin
   if current_setting('role', true) <> 'service_role' then raise exception 'Not authorised'; end if;
+  if p_token_hash is null or p_token_hash !~ '^[a-f0-9]{64}$' then raise exception 'Invalid or expired link'; end if;
   select * into link_row from public.quote_response_links where token_hash = p_token_hash;
   if not found then raise exception 'Invalid or expired link'; end if;
   select * into quote_row from public.quotes where id = link_row.quote_id;
-  select * into request_row from public.consultation_requests where id = quote_row.request_id;
   select * into seller from public.business_settings where singleton;
-  if link_row.viewed_at is null and link_row.used_at is null and link_row.expires_at > now() then
+
+  closed_state := case
+    when link_row.decision is not null then 'answered'
+    when quote_row.status = 'superseded' then 'replaced'
+    when link_row.used_at is not null then 'replaced'
+    when link_row.expires_at <= now() then 'expired'
+    when quote_row.status <> 'sent' then 'closed'
+    when quote_row.valid_until is not null and quote_row.valid_until < current_date then 'expired'
+    else null end;
+
+  if closed_state is not null then
+    return jsonb_strip_nulls(jsonb_build_object(
+      'open', false,
+      'state', closed_state,
+      'decision', link_row.decision,
+      'seller_name', seller.legal_name,
+      'seller_email', seller.contact_email,
+      'seller_phone', nullif(seller.contact_phone, '')
+    ));
+  end if;
+
+  select * into request_row from public.consultation_requests where id = quote_row.request_id;
+  if link_row.viewed_at is null then
     update public.quote_response_links set viewed_at = now() where id = link_row.id;
   end if;
   return jsonb_build_object(
-    'open', link_row.used_at is null and link_row.expires_at > now() and quote_row.status = 'sent'
-      and (quote_row.valid_until is null or quote_row.valid_until >= current_date),
-    'decision', link_row.decision,
+    'open', true,
+    'state', 'open',
     'link_expires_at', link_row.expires_at,
     'quote_number', quote_row.quote_number,
     'version', quote_row.version,
@@ -337,7 +370,6 @@ begin
     'valid_until', quote_row.valid_until,
     'customer_name', request_row.customer_name,
     'reference', request_row.reference,
-    'postcode', request_row.postcode,
     'scope', quote_row.scope,
     'exclusions', quote_row.exclusions,
     'terms', quote_row.terms,
@@ -421,6 +453,10 @@ alter table public.consultation_requests
 create or replace function public.guard_enquiry_soft_delete()
 returns trigger language plpgsql security definer set search_path = '' as $$
 begin
+  if tg_op = 'INSERT' then
+    new.deleted_at := null; new.deleted_by := null;
+    return new;
+  end if;
   if new.deleted_at is not null and old.deleted_at is null then
     if exists (select 1 from public.quotes where request_id = new.id and status <> 'draft' and not (status = 'superseded' and sent_at is null))
       or exists (select 1 from public.work_orders where request_id = new.id) then
@@ -430,7 +466,8 @@ begin
     new.deleted_by := auth.uid();
   elsif new.deleted_at is null then
     new.deleted_by := null;
-  elsif new.deleted_at is distinct from old.deleted_at then
+  else
+    -- Already deleted: the original time and person cannot be rewritten.
     new.deleted_at := old.deleted_at;
     new.deleted_by := old.deleted_by;
   end if;
@@ -439,7 +476,7 @@ end;
 $$;
 
 drop trigger if exists consultation_requests_guard_soft_delete on public.consultation_requests;
-create trigger consultation_requests_guard_soft_delete before update of deleted_at on public.consultation_requests
+create trigger consultation_requests_guard_soft_delete before insert or update of deleted_at, deleted_by on public.consultation_requests
 for each row execute function public.guard_enquiry_soft_delete();
 
 -- 7. Customer address and default quotation wording ------------------------------
