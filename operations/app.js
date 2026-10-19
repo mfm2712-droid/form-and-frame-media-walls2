@@ -14,6 +14,7 @@ import { enquiryTargetFromSearch, operationsViewFromSearch } from "./push-target
 import { assignmentLabel, assignmentOptionsHtml, assignmentUnavailableOptionsHtml } from "./assignment.mjs";
 import { blockListHtml } from "./availability-list.mjs";
 import { invoiceSettingsReady, renderInvoiceDocument } from "./invoice-document.mjs";
+import { quotationEmail, renderQuotationDocument } from "./quote-document.mjs";
 import { clearPaymentRecordingKey, getPaymentRecordingKey, paymentMatchesIntent } from "./payment-idempotency.mjs";
 import { checkStaffAccess, staffAccessMessage } from "./staff-access.mjs";
 import { calendarWindow, loadCalendarRecords } from "./calendar-records.mjs";
@@ -180,7 +181,7 @@ function renderWorkflows(data) {
 
   $("quoteList").innerHTML = data.quotes.length ? data.quotes.map(quote => {
     const enquiry = requestFor(quote.request_id);
-    return `<article class="business-card"><div><b>${esc(quote.quote_number)}</b><span>${esc(enquiry?.customer_name || "Enquiry")}${enquiry ? ` · ${esc(enquiry.reference)}` : ""}</span></div><strong>${moneyPence(quote.total_pence)}</strong><label>Status<select data-record-status="quote" data-id="${esc(quote.id)}">${optionList(nextRecordStates("quote", quote.status), quote.status)}</select></label><small>Version ${quote.version} · ${quote.valid_until ? `valid to ${esc(quote.valid_until)}` : "no expiry set"} · status records external communication</small><p>${esc(quote.scope)}</p>${quote.status === "accepted" && !liveWorkOrders.some(job => job.accepted_quote_id === quote.id) ? `<button class="outline" data-make-order="${esc(quote.id)}">Create build job</button>` : ""}</article>`;
+    return `<article class="business-card"><div><b>${esc(quote.quote_number)}</b><span>${esc(enquiry?.customer_name || "Enquiry")}${enquiry ? ` · ${esc(enquiry.reference)}` : ""}</span></div><strong>${moneyPence(quote.total_pence)}</strong><label>Status<select data-record-status="quote" data-id="${esc(quote.id)}">${optionList(nextRecordStates("quote", quote.status), quote.status)}</select></label><small>Version ${quote.version} · ${quote.valid_until ? `valid to ${esc(quote.valid_until)}` : "no expiry set"} · status records external communication</small><p>${esc(quote.scope)}</p><button type="button" class="outline" data-print-quote="${esc(quote.id)}">Print / save quotation PDF</button> <button type="button" class="outline" data-email-quote="${esc(quote.id)}" ${enquiry?.email ? "" : "disabled"}>Prepare customer email</button> <button type="button" class="outline" data-schedule-quote="${esc(quote.id)}">Schedule installation</button>${quote.status === "accepted" && !liveWorkOrders.some(job => job.accepted_quote_id === quote.id) ? `<button class="outline" data-make-order="${esc(quote.id)}">Create build job</button>` : ""}</article>`;
   }).join("") : `<p class="today-empty">No formal quotes recorded yet.</p>`;
 
   $("workOrderList").innerHTML = data.workOrders.length ? data.workOrders.map(job => {
@@ -970,6 +971,7 @@ $("workspace").addEventListener("click", async event => {
   if (action === "back") return closeWorkspace();
   if (action === "open-now") return openWorkspace(wsOpenId);
   if (action === "quote-editor") return reveal($("wsQuoteEditor"), "[name=subtotal]");
+  if (action === "prepare-quote") { closeWorkspace(); setMobileView("work"); document.querySelector(`[data-print-quote="${CSS.escape(id)}"]`)?.scrollIntoView({behavior:"smooth",block:"center"}); return showNotice("Use Print / save quotation PDF, then Prepare customer email. Attach the saved PDF before sending.","warning"); }
   if (action === "invoice-form") return reveal($("wsInvoiceEditor"), "[name=billAddress]");
   if (action === "appointment-form") { const more = document.querySelector(".ws-more"); if (more) more.open = true; return reveal($("wsAppointment"), "[name=startsAt]"); }
   if (action === "payment-form") { const form = document.querySelector(".ws-pay"); form?.scrollIntoView({ behavior:"smooth", block:"center" }); form?.querySelector("input")?.focus({ preventScroll:true }); return; }
@@ -1246,6 +1248,31 @@ $("business").addEventListener("change", async event => {
 });
 
 businessBus.addEventListener("click", async event => {
+  const quoteButton = event.target.closest("button[data-print-quote], button[data-email-quote], button[data-schedule-quote]");
+  if (quoteButton) {
+    const quoteId = quoteButton.dataset.printQuote || quoteButton.dataset.emailQuote || quoteButton.dataset.scheduleQuote;
+    const quote = liveQuotes.find(item => item.id === quoteId);
+    const customer = quote && requestFor(quote.request_id);
+    if (!quote || !customer) return showNotice("Refresh the quotation and customer details first.");
+    if (quoteButton.hasAttribute("data-schedule-quote")) {
+      setMobileView("work");
+      await openWorkspace(quote.request_id);
+      const more = document.querySelector(".ws-more"); if (more) more.open = true;
+      const editor = $("wsAppointment"); if (editor) { editor.open = true; editor.querySelector('[name="kind"]')?.setAttribute("data-install", "true"); const kind = editor.querySelector('[name="kind"]'); if (kind) kind.value = "installation"; editor.scrollIntoView({behavior:"smooth",block:"start"}); }
+      return;
+    }
+    if (quoteButton.hasAttribute("data-email-quote")) {
+      const email = quotationEmail(quote, customer);
+      if (!email) return showNotice("Add a valid customer email address first.");
+      showNotice("Save the quotation PDF first and attach it to the email draft. The email has NOT been sent.", "warning");
+      window.location.href = email; return;
+    }
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return showNotice("Allow pop-ups to print or save the quotation PDF.");
+    printWindow.document.open(); printWindow.document.write(renderQuotationDocument({quote,customer})); printWindow.document.close();
+    printWindow.setTimeout(() => {printWindow.focus(); printWindow.print();},300);
+    return;
+  }
   const printInvoice = event.target.closest("button[data-print-invoice]");
   if (printInvoice) {
     const balance = liveInvoices.find(invoice => invoice.id === printInvoice.dataset.printInvoice);

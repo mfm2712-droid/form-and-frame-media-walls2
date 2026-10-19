@@ -22,7 +22,7 @@ function primaryButton(action, rel, esc, job) {
     case "create-quote": return `<button type="button" class="ws-primary" data-ws-action="quote-editor">${esc(action.label)}</button>`;
     case "book-survey":
     case "schedule": return `<button type="button" class="ws-primary" data-ws-action="appointment-form">${esc(action.label)}</button>`;
-    case "send-quote": return `<button type="button" class="ws-primary" data-ws-action="quote-status" data-id="${esc(quote.id)}" data-value="sent">${esc(action.label)}</button>`;
+    case "send-quote": return `<button type="button" class="ws-primary" data-ws-action="prepare-quote" data-id="${esc(quote.id)}">Prepare quotation PDF &amp; email</button>`;
     case "accept-quote": return `<button type="button" class="ws-primary" data-ws-action="quote-status" data-id="${esc(quote.id)}" data-value="accepted">${esc(action.label)}</button><button type="button" class="outline" data-ws-action="quote-status" data-id="${esc(quote.id)}" data-value="rejected">Customer declined</button>`;
     case "create-job": return `<button type="button" class="ws-primary" data-make-order="${esc(quote.id)}">${esc(action.label)}</button>`;
     case "create-invoice": return `<button type="button" class="ws-primary" data-ws-action="invoice-form">${esc(action.label)}</button>`;
