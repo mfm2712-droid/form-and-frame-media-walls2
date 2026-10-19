@@ -7,7 +7,7 @@ const root = resolve("dist/public");
 const rootEntries = new Set(await readdir(root));
 assert.deepEqual(
   [...rootEntries].sort(),
-  ["assets", "index.html", "operations", "public-config.js"],
+  ["assets", "index.html", "operations", "public-config.js", "quote-response.html"],
   "The public build root must contain only the public website, authenticated staff app shell, public config, and assets."
 );
 
@@ -18,7 +18,8 @@ assert.equal((await stat(resolve(root, "assets"))).isDirectory(), true, "assets 
 assert.equal((await stat(resolve(root, "operations/index.html"))).isFile(), true, "The staff app shell must be deployed at /operations/.");
 assert.equal((await stat(resolve(root, "operations/config.js"))).isFile(), true, "The staff app must receive its browser-safe runtime config.");
 assert.equal((await stat(resolve(root, "operations/push-support.mjs"))).isFile(), true, "The staff app must deploy its push capability and install guidance module.");
-assert.equal((await stat(resolve(root, "operations/activity-label.mjs"))).isFile(), true, "The staff app must deploy its private activity-log renderer.");
+assert.equal((await stat(resolve(root, "operations/desk-model.mjs"))).isFile(), true, "The staff app must deploy its workflow model.");
+assert.equal((await stat(resolve(root, "quote-response.html"))).isFile(), true, "Customers need the quotation response page.");
 assert.equal((await stat(resolve(root, "operations/push-target.mjs"))).isFile(), true, "Push notification links must resolve to the requested enquiry in the staff app.");
 assert.equal((await stat(resolve(root, "operations/invoice-document.mjs"))).isFile(), true, "The mobile Operations app must be able to render safe printable invoices.");
 assert.equal((await stat(resolve(root, "operations/payment-idempotency.mjs"))).isFile(), true, "Manual payment retries must retain their idempotency key across reloads.");
@@ -76,7 +77,12 @@ for (const entry of ["app.js", ...(await readdir(resolve(root, "operations"))).f
     assert.equal((await stat(resolve(root, "operations", match[1]))).isFile(), true, `operations/${entry} imports ${match[1]}, which must be deployed.`);
   }
 }
-assert.match(operationsHtml, /id="workspace"/, "The enquiry workspace container must be deployed.");
+assert.match(operationsHtml, /id="page"/, "The Owner Desk page container must be deployed.");
+assert.match(operationsHtml, /<dialog id="dialog"/, "The editing dialog must be deployed.");
+assert.match(operationsHtml, /<dialog id="preview"/, "The document preview must be deployed.");
+for (const [, lazyModule] of operationsAppSource.matchAll(/import\("\.\/([A-Za-z0-9._-]+\.mjs)"\)/g)) {
+  assert.ok(operationsFiles.includes(lazyModule), `The lazily loaded module ${lazyModule} must be deployed.`);
+}
 
 
 // Android status-bar icon: the manifest and the service worker must point at files that were

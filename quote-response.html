@@ -1,1 +1,101 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Quotation response · Form & Frame</title><style>body{font:17px/1.6 system-ui;background:#f7f4ed;color:#123c30;display:grid;place-items:center;min-height:100vh;margin:0}main{max-width:490px;padding:35px;background:white;border:1px solid #c99b55;border-radius:16px}button{padding:14px 22px;background:#123c30;color:white;border:0;border-radius:7px;margin:6px;cursor:pointer}button:last-of-type{background:#735b52}</style></head><body><main><h1>FORM & FRAME</h1><h2>Respond to your quotation</h2><p>Review the PDF quotation attached to your email before making a decision.</p><button id="accept">Accept quotation</button><button id="decline">Decline quotation</button><p id="status" role="status"></p></main><script type="module">const token=new URLSearchParams(location.search).get('token');history.replaceState({},'',location.pathname);const status=document.getElementById('status');for(const [id,decision] of [['accept','accepted'],['decline','rejected']])document.getElementById(id).onclick=async()=>{if(!token||!confirm('Confirm your quotation response?'))return;document.querySelectorAll('button').forEach(b=>b.disabled=true);status.textContent='Recording your response…';try{const response=await fetch('https://otqzhocismdjbvvsjnpe.supabase.co/functions/v1/quote-response',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,decision})});if(!response.ok)throw Error();status.textContent=decision==='accepted'?'Thank you. Your quotation has been accepted.':'Your response has been recorded. Thank you.';}catch{status.textContent='Unable to record this response. Please contact Form & Frame.';document.querySelectorAll('button').forEach(b=>b.disabled=false)}};</script></body></html>
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Your quotation · Form &amp; Frame</title>
+<link rel="icon" href="/operations/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@500&family=DM+Sans:wght@400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{--green:#0e342c;--gold:#c99b55;--paper:#f6f2e9;--card:#fffdf8;--line:#e3dccb;--muted:#6b665c;--red:#a84137}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:#1d211c;font:16px/1.55 "DM Sans",system-ui,sans-serif}
+header.band{display:flex;align-items:center;gap:14px;padding:22px 20px;background:var(--green);color:#f1ecdf}header.band img{width:46px;height:46px;border-radius:11px;outline:1px solid rgba(201,155,85,.6)}
+header.band b{display:block;font:700 22px "Playfair Display",Georgia,serif;letter-spacing:.04em}header.band b i{font-style:normal;color:var(--gold)}header.band small{color:#d8c596;font:500 10px "DM Mono",monospace;letter-spacing:.2em}
+.rule{height:4px;background:linear-gradient(90deg,#c99b55,#e6d1a5 60%,#c99b55)}
+main{max-width:760px;margin:0 auto;padding:22px 16px 60px}
+.card{margin-bottom:16px;padding:20px;background:var(--card);border:1px solid var(--line);border-radius:14px}
+h1{margin:0 0 4px;font:700 28px/1.15 "Playfair Display",Georgia,serif;color:var(--green)}h2{margin:0 0 8px;font:700 19px "Playfair Display",Georgia,serif;color:var(--green)}
+.muted{color:var(--muted)}.facts{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px}.facts span{display:block;color:var(--muted);font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:15px}th{padding:8px 6px;text-align:left;font:500 11px "DM Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:2px solid var(--green)}td{padding:9px 6px;border-bottom:1px solid var(--line);vertical-align:top}.num{text-align:right;white-space:nowrap}
+.totals{margin-top:10px}.totals div{display:flex;justify-content:space-between;padding:6px 6px;border-bottom:1px solid var(--line)}.totals .grand{margin-top:6px;padding:12px;border:0;border-radius:10px;background:var(--green);color:#fff;font-size:19px;font-weight:700}
+.scope{white-space:pre-wrap;margin:0}
+.actions{display:grid;gap:10px}button,.btn{min-height:52px;padding:12px 18px;border:2px solid var(--green);border-radius:12px;background:#fff;color:var(--green);font:700 17px "DM Sans",system-ui,sans-serif;cursor:pointer;text-align:center}
+button.accept{background:var(--green);color:#fff}button.decline{border-color:var(--red);color:var(--red)}button:disabled{opacity:.5;cursor:wait}
+textarea{width:100%;min-height:110px;padding:12px;border:1px solid #cfc5ad;border-radius:10px;font:inherit}label{display:grid;gap:6px;font-weight:600}
+.confirm{padding:16px;border:2px solid var(--gold);border-radius:12px;background:#fbf3e3}.error{padding:12px 14px;border-radius:10px;background:#f7e3df;color:var(--red);font-weight:600}
+.done{text-align:center}.done .tick{display:inline-grid;place-items:center;width:64px;height:64px;margin-bottom:8px;border-radius:50%;background:var(--green);color:#fff;font-size:34px}
+@media(min-width:620px){.actions{grid-template-columns:1fr 1fr 1fr}.facts{grid-template-columns:repeat(4,1fr)}main{padding-top:32px}}
+</style>
+</head>
+<body>
+<header class="band"><img src="/operations/icon.svg" alt=""><span><b>FORM <i>&amp;</i> FRAME</b><small>BESPOKE MEDIA WALLS</small></span></header><div class="rule"></div>
+<main id="app" aria-live="polite"><div class="card"><p>Loading your quotation…</p></div></main>
+<script src="/public-config.js"></script>
+<script type="module">
+import { quoteLinesHtml, quoteTotalsHtml } from "/operations/quote-document.mjs";
+import { escapeHtml, dateLabel, pounds } from "/operations/document-style.mjs";
+
+const app = document.getElementById("app");
+const token = new URLSearchParams(location.search).get("token") || "";
+history.replaceState(null, "", location.pathname); // keep the private token out of history and screenshots
+const base = (window.FF_PUBLIC_CONFIG?.supabaseUrl || "https://otqzhocismdjbvvsjnpe.supabase.co").replace(/\/+$/, "");
+const call = async body => {
+  const response = await fetch(`${base}/functions/v1/quote-response`, { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify({ token, ...body }) });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.error || "We could not reach Form & Frame. Please try again shortly.");
+  return result;
+};
+let quote = null;
+const contact = () => quote?.seller_email ? ` at <a href="mailto:${escapeHtml(quote.seller_email)}">${escapeHtml(quote.seller_email)}</a>${quote.seller_phone ? ` or ${escapeHtml(quote.seller_phone)}` : ""}` : "";
+const STATUS = { accepted:"You accepted this quotation.", rejected:"You declined this quotation.", changes_requested:"You asked for changes. Form & Frame will send you a revised quotation.", superseded:"This quotation has been replaced by a newer version. Please use the link in the latest email.", expired:"This quotation has expired." };
+
+function message(title, body, tick = false) {
+  app.innerHTML = `<section class="card done">${tick ? `<div class="tick" aria-hidden="true">✓</div>` : ""}<h1>${title}</h1><p>${body}</p></section>`;
+}
+
+function render() {
+  const q = quote;
+  const closed = !q.open;
+  app.innerHTML = `<section class="card"><p class="muted">Quotation for ${escapeHtml(q.customer_name)}</p><h1>${escapeHtml(q.quote_number)}</h1><p class="muted">Version ${escapeHtml(q.version)} · project ${escapeHtml(q.reference)}</p>
+<div class="facts"><div><span>Issued</span><b>${dateLabel(q.issued_at)}</b></div><div><span>Valid until</span><b>${dateLabel(q.valid_until)}</b></div><div><span>Total</span><b>${pounds(q.total_pence)}</b></div><div><span>From</span><b>${escapeHtml(q.seller_name || "Form & Frame")}</b></div></div></section>
+<section class="card"><h2>Scope of work</h2><p class="scope">${escapeHtml(q.scope || "")}</p></section>
+<section class="card"><h2>Itemised pricing</h2>${quoteLinesHtml(q).replace('class="items"', "")}${quoteTotalsHtml(q, { vatRegistered:Boolean(q.vat_number) })}</section>
+${q.exclusions ? `<section class="card"><h2>Not included</h2><p class="scope">${escapeHtml(q.exclusions)}</p></section>` : ""}
+${q.terms ? `<section class="card"><h2>Terms</h2><p class="scope">${escapeHtml(q.terms)}</p></section>` : ""}
+<section class="card" id="respond"><h2>Your decision</h2>${closed ? `<p>${STATUS[q.decision] || STATUS[q.status] || "This link can no longer be used to respond."} If you have a question, contact Form &amp; Frame${contact()}.</p>` : `<p>Accepting confirms you would like to go ahead. No payment is taken on this page; Form &amp; Frame will contact you to arrange the next steps.</p><div class="actions"><button class="accept" data-choice="accepted">Accept quotation</button><button data-choice="changes_requested">Request changes or ask a question</button><button class="decline" data-choice="rejected">Decline quotation</button></div><div id="step"></div>`}</section>`;
+}
+
+function confirmStep(choice) {
+  const step = document.getElementById("step");
+  const wording = { accepted:["Accept this quotation?", `You are accepting ${escapeHtml(quote.quote_number)} for <b>${pounds(quote.total_pence)}</b>.`, "Yes, accept quotation"], rejected:["Decline this quotation?", "Form &amp; Frame will be told you do not wish to go ahead.", "Yes, decline quotation"], changes_requested:["What would you like to change or ask?", "Your message goes to the Form &amp; Frame team, who will reply or send a revised quotation.", "Send my request"] }[choice];
+  step.innerHTML = `<form class="confirm" style="margin-top:14px"><h2>${wording[0]}</h2><p>${wording[1]}</p>${choice === "changes_requested" ? `<label>Your message<textarea name="message" required minlength="3" maxlength="2000"></textarea></label>` : `<label>Message to Form &amp; Frame (optional)<textarea name="message" maxlength="2000"></textarea></label>`}<p id="err" class="error" hidden></p><div class="actions" style="margin-top:12px"><button type="submit" class="${choice === "rejected" ? "decline" : "accept"}">${wording[2]}</button><button type="button" data-cancel>Go back</button></div></form>`;
+  const form = step.querySelector("form");
+  form.querySelector("[data-cancel]").onclick = () => { step.innerHTML = ""; };
+  form.onsubmit = async event => {
+    event.preventDefault();
+    const text = form.message.value.trim();
+    if (choice === "changes_requested" && text.length < 3) { form.querySelector("#err").textContent = "Please describe the changes you would like."; form.querySelector("#err").hidden = false; return; }
+    form.querySelectorAll("button").forEach(button => { button.disabled = true; });
+    try {
+      await call({ action:"respond", decision:choice, message:text });
+      if (choice === "accepted") message("Thank you — quotation accepted", `We have recorded your acceptance of ${escapeHtml(quote.quote_number)} at ${new Date().toLocaleString("en-GB")}. Form &amp; Frame will contact you to arrange the next steps. No payment has been taken.`, true);
+      else if (choice === "rejected") message("Your response has been recorded", `Thank you for letting us know. If you change your mind, contact Form &amp; Frame${contact()}.`);
+      else message("Request sent", "Thank you. The Form &amp; Frame team has your message and will reply or send you a revised quotation.", true);
+    } catch (error) {
+      form.querySelector("#err").textContent = error.message; form.querySelector("#err").hidden = false;
+      form.querySelectorAll("button").forEach(button => { button.disabled = false; });
+    }
+  };
+  step.querySelector("textarea").focus();
+}
+
+app.addEventListener("click", event => { const choice = event.target.closest("[data-choice]")?.dataset.choice; if (choice) confirmStep(choice); });
+
+if (!/^[a-f0-9]{64}$/.test(token)) message("This link is not complete", "Please open the full link from your Form &amp; Frame email, or contact us for a new one.");
+else call({ action:"view" }).then(result => { quote = result.quote; render(); }).catch(error => message("We could not open this quotation", escapeHtml(error.message)));
+</script>
+</body>
+</html>

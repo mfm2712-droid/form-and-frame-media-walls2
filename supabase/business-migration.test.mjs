@@ -1,13 +1,16 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import test from "node:test";
 import { allowedNextStatuses } from "../operations/workflow.mjs";
 
-const sql = await readFile(new URL("./migrations/20261005130000_business_management_backend.sql", import.meta.url), "utf8");
+// Every migration in apply order, so a later "create or replace" is the definition under test.
+const migrationDir = new URL("./migrations/", import.meta.url);
+const migrationFiles = (await readdir(migrationDir)).filter(name => name.endsWith(".sql")).sort();
+const sql = (await Promise.all(migrationFiles.map(name => readFile(new URL(name, migrationDir), "utf8")))).join("\n");
 const operationsApp = await readFile(new URL("../operations/app.js", import.meta.url), "utf8");
 
 function functionBody(name) {
-  const start = sql.indexOf(`create or replace function public.${name}()`);
+  const start = sql.lastIndexOf(`create or replace function public.${name}()`);
   assert.notEqual(start, -1, `Expected migration function ${name} to exist.`);
   const end = sql.indexOf("$$;", start);
   assert.notEqual(end, -1, `Expected migration function ${name} to terminate.`);
@@ -94,9 +97,12 @@ test("meaningful workflow changes queue private teammate push alerts without fin
 
 test("staff policies cannot hard-delete enquiries or financial workflow records", () => {
   const protectedTables = ["consultation_requests", "quotes", "work_orders", "appointments", "follow_up_tasks", "invoices", "invoice_payments"];
-  const deletingPolicies = [...sql.matchAll(/create policy[^;]+?on public\.([a-z_]+)\s+for\s+(all|delete)\b/gi)]
-    .map(match => ({ table:match[1], command:match[2].toLowerCase() }))
-    .filter(policy => protectedTables.includes(policy.table));
+  // A policy dropped by a later migration is no longer in force.
+  const droppedLater = (name, table, position) => sql.slice(position).toLowerCase().includes(`drop policy if exists "${name.toLowerCase()}" on public.${table}`);
+  const deletingPolicies = [...sql.matchAll(/create policy "([^"]+)"[^;]+?on public\.([a-z_]+)\s+for\s+(all|delete)\b/gi)]
+    .map(match => ({ name:match[1], table:match[2], command:match[3].toLowerCase(), position:match.index }))
+    .filter(policy => protectedTables.includes(policy.table) && !droppedLater(policy.name, policy.table, policy.position))
+    .map(({ table, command }) => ({ table, command }));
 
   assert.deepEqual(deletingPolicies, []);
   assert.match(sql, /drop policy if exists "staff manage requests" on public\.consultation_requests/i);
@@ -127,7 +133,9 @@ test("invoice setup starts empty, protects edits to owners and publishes changes
   assert.match(settings, /alter publication supabase_realtime add table public\.business_settings/i);
   assert.doesNotMatch(settings, /insert into public\.business_settings/i, "Unknown legal and tax data must never be seeded.");
   assert.match(invoiceDocument, /DRAFT · NOT SENT/);
-  assert.match(invoiceDocument, /replace\(\/\[&<>"'\]/, "Customer and seller text must be escaped for printable HTML.");
+  const documentStyle = await readFile(new URL("../operations/document-style.mjs", import.meta.url), "utf8");
+  assert.match(invoiceDocument, /import \{[^}]*escapeHtml[^}]*\} from "\.\/document-style\.mjs"/);
+  assert.match(documentStyle, /replace\(\/\[&<>"'\]/, "Customer and seller text must be escaped for printable HTML.");
 });
 
 test("public enquiry rate limiting stores only short-lived HMAC fingerprints and is server-only", async () => {
@@ -159,4 +167,37 @@ test("public enquiry rate limiting stores only short-lived HMAC fingerprints and
   assert.match(handler, /p_idempotency_key:idempotencyKey,[\s\S]*?p_fingerprint:fingerprint,[\s\S]*?p_limit:10,[\s\S]*?p_window_seconds:3600/);
   assert.match(handler, /"Retry-After"/);
   assert.doesNotMatch(limiter, /client_ip|raw_ip|ip_address/i);
+});
+
+test("the Owner Desk migration validates quotation money, locks issued versions and keeps one accepted quote", async () => {
+  const desk = await readFile(new URL("./migrations/20261020100000_owner_desk_workflow.sql", import.meta.url), "utf8");
+  assert.match(desk, /create unique index if not exists quotes_one_accepted_per_request\s+on public\.quotes\(request_id\) where status = 'accepted'/);
+  assert.match(desk, /raise exception 'Pre-flight failed: an enquiry has more than one accepted quotation/);
+  const lines = functionBody("validate_quote_lines");
+  assert.match(lines, /line_total <> round\(quantity \* unit_price\)::bigint/);
+  assert.match(lines, /new\.subtotal_pence <> computed - expected_discount/);
+  assert.match(functionBody("protect_issued_quote_details"), /old\.status <> 'draft'[\s\S]*new\.line_items is distinct from old\.line_items[\s\S]*new\.terms is distinct from old\.terms/);
+  const versions = functionBody("guard_quote_versions");
+  assert.match(versions, /for update/, "version changes for one enquiry are serialised");
+  assert.match(versions, /q\.version > new\.version and q\.status in \('sent', 'accepted'\)/);
+  assert.match(functionBody("supersede_older_quote_versions"), /status = 'superseded'/);
+  for (const name of ["guard_quote_versions", "supersede_older_quote_versions", "guard_enquiry_soft_delete"]) {
+    assert.match(desk, new RegExp(`create or replace function public\\.${name}\\(\\)[\\s\\S]*?security definer set search_path = ''`, "i"));
+  }
+});
+
+test("customer responses run only through server-role functions and never auto-send a draft", async () => {
+  const desk = await readFile(new URL("./migrations/20261020100000_owner_desk_workflow.sql", import.meta.url), "utf8");
+  for (const signature of ["get_quote_for_response\\(text\\)", "record_customer_quote_decision\\(text, text, text\\)", "record_customer_quote_response\\(text, text\\)"]) {
+    assert.match(desk, new RegExp(`revoke all on function public\\.${signature} from public, anon, authenticated;\\s*grant execute on function public\\.${signature} to service_role;`));
+  }
+  const decision = desk.slice(desk.indexOf("create or replace function public.record_customer_quote_decision"), desk.indexOf("$$;", desk.indexOf("create or replace function public.record_customer_quote_decision")));
+  assert.match(decision, /if quote_row\.status <> 'sent' then raise exception 'Quotation no longer open'/);
+  assert.doesNotMatch(decision, /set status = 'sent'/, "a customer can never answer an unsent draft");
+  assert.match(decision, /used_at = now\(\), decision = p_decision/, "each link is single-use");
+  assert.match(decision, /'title', 'Changes requested'/, "staff are notified of change requests");
+  const softDelete = desk.slice(desk.indexOf("create or replace function public.guard_enquiry_soft_delete"));
+  assert.match(softDelete, /must be archived instead of deleted/);
+  assert.doesNotMatch(desk, /insert into public\.business_settings/i, "no company, VAT or bank details are seeded");
+  assert.doesNotMatch(desk.slice(desk.indexOf("insert into public.quote_catalogue_items")), /default_unit_price_pence\) values/i, "catalogue seed has no prices");
 });
