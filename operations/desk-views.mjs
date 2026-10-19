@@ -281,6 +281,22 @@ ${field("Terms", `<textarea name="terms" rows="3" maxlength="8000">${esc(terms)}
 <div class="dialog-actions sticky"><button type="button" class="btn" data-act="close-dialog">Cancel</button>${quote ? `<button type="button" class="btn" data-act="save-and-preview">Save &amp; preview PDF</button>` : ""}<button class="btn primary"${ready ? "" : " disabled"}>${quote ? "Save changes" : "Save quotation draft"}</button></div></form>`;
 }
 
+export function quoteChoiceHtml({ lead, originalQuote = null, suggestedSubtotal = null }) {
+  const hasOriginal = Boolean(originalQuote);
+  const originalAmount = hasOriginal ? money(originalQuote.total_pence) : suggestedSubtotal == null ? "Not available" : money(suggestedSubtotal * 100);
+  const originalLabel = hasOriginal
+    ? `${esc(originalQuote.quote_number)} · version ${esc(originalQuote.version)} · ${originalAmount}`
+    : suggestedSubtotal == null ? "No website guide total was saved for this enquiry." : `Website guide quotation · ${originalAmount}`;
+  const actionId = hasOriginal ? originalQuote.id : lead.id;
+  return `<div class="form quote-choice"><header class="dialog-head"><div><p>PREPARE QUOTATION</p><h2>${esc(lead.customer_name)}</h2></div><button type="button" class="icon-btn" data-act="close-dialog" aria-label="Close">×</button></header>
+<p class="hint">Choose the fastest route. The original keeps the saved quotation intact. The editable version copies its starting information so you can change anything before saving a new draft.</p>
+<div class="choice-grid">
+  <article class="choice-card"><span class="choice-kicker">OPTION 1</span><h3>Send original quotation</h3><p>${originalLabel}</p><small>${hasOriginal ? "Opens the normal send flow. Nothing is emailed automatically." : "Creates a simple quotation from the website guide total, then opens the normal send flow."}</small><button type="button" class="btn primary" data-act="send-original-quote" data-id="${esc(actionId)}"${!hasOriginal && suggestedSubtotal == null ? " disabled" : ""}>Send original quotation</button></article>
+  <article class="choice-card"><span class="choice-kicker">OPTION 2</span><h3>Edit quotation</h3><p>${hasOriginal ? "Copy the original lines, prices, scope, discount and VAT into a new editable version." : "Start with the website guide total and enquiry details, then edit the lines, prices, scope, discount and VAT."}</p><small>The original quotation is never changed.</small><button type="button" class="btn" data-act="edit-quote-copy" data-id="${esc(actionId)}">Edit quotation</button></article>
+</div>
+<div class="dialog-actions"><button type="button" class="btn" data-act="close-dialog">Cancel</button></div></div>`;
+}
+
 export function quoteTotalsHtml(result) {
   return `<h3>Totals</h3><dl><div><dt>Items subtotal</dt><dd>${money(result.itemsSubtotalPence)}</dd></div><div class="${result.discountPence ? "discount" : ""}"><dt>Discount${result.discountType === "percent" && result.discountBasisPoints ? ` (${basisPointsText(result.discountBasisPoints)})` : ""}</dt><dd>${result.discountPence ? `−${money(result.discountPence)}` : "—"}</dd></div><div><dt>Subtotal after discount</dt><dd>${money(result.subtotalPence)}</dd></div><div><dt>VAT${result.taxBasisPoints ? ` (${basisPointsText(result.taxBasisPoints)})` : ""}</dt><dd>${money(result.taxPence)}</dd></div><div class="grand"><dt>Grand total</dt><dd>${money(result.totalPence)}</dd></div></dl>`;
 }

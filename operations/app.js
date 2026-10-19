@@ -7,7 +7,7 @@ import { requirePersistedRow } from "./mutation-result.mjs";
 import { taxRateForAmount } from "./workflow.mjs";
 import { calculateQuote, parsePounds, penceToInput, formatPence } from "./desk-money.mjs";
 import { BOARD_COLUMNS, ENQUIRY_FILTERS, boardColumn, calendarEvents, dashboardQueues, documentRows, enquiryStage, filterDocuments, filterEnquiries, isDiscarded, isoDay, relatedRecords } from "./desk-model.mjs";
-import { NAV, navIcon, esc, dashboardHtml, enquiriesHtml, jobsHtml, calendarHtml, financeHtml, settingsHtml, workspaceHtml, quoteEditorHtml, quoteLineHtml, quoteTotalsHtml, appointmentFormHtml, customerFormHtml, sendQuoteHtml, confirmHtml, invoiceFormHtml, paymentFormHtml, followUpFormHtml, jobFormHtml, catalogueFormHtml, blockFormHtml, decisionFormHtml } from "./desk-views.mjs";
+import { NAV, navIcon, esc, dashboardHtml, enquiriesHtml, jobsHtml, calendarHtml, financeHtml, settingsHtml, workspaceHtml, quoteEditorHtml, quoteChoiceHtml, quoteLineHtml, quoteTotalsHtml, appointmentFormHtml, customerFormHtml, sendQuoteHtml, confirmHtml, invoiceFormHtml, paymentFormHtml, followUpFormHtml, jobFormHtml, catalogueFormHtml, blockFormHtml, decisionFormHtml } from "./desk-views.mjs";
 import { quotePrefill } from "./enquiry-workspace.mjs";
 import { quotationEmail, renderQuotationDocument } from "./quote-document.mjs";
 import { invoiceSettingsReady, renderInvoiceDocument } from "./invoice-document.mjs";
@@ -302,10 +302,10 @@ function catalogueForEditor() { const active = catalogue.filter(item => item.act
 
 function openQuoteEditor(lead, { quote = null, revisionOf = null } = {}) {
   const source = quote || revisionOf;
+  const prefill = quotePrefill(lead);
   const rows = Array.isArray(source?.line_items) && source.line_items.length
     ? source.line_items.map(line => ({ description:line.description, quantity:line.quantity, unit:line.unit || "item", unitPrice:penceToInput(line.unit_price_pence) }))
-    : [{ description:"", quantity:"1", unit:"item", unitPrice:"" }];
-  const prefill = quotePrefill(lead);
+    : [{ description:"Media wall works as described above", quantity:"1", unit:"project", unitPrice:prefill.suggestedSubtotal == null ? "" : String(prefill.suggestedSubtotal) }];
   const until = new Date(); until.setDate(until.getDate() + 30);
   const discount = source && source.discount_type && source.discount_type !== "none"
     ? { type:source.discount_type, percent:source.discount_type === "percent" ? String(source.discount_basis_points / 100) : "", amount:source.discount_type === "fixed" ? penceToInput(source.discount_pence) : "" }
@@ -317,6 +317,36 @@ function openQuoteEditor(lead, { quote = null, revisionOf = null } = {}) {
     validUntil:quote?.valid_until || isoDay(until), ready:schema.quoteLines
   }), { wide:true });
   updateQuoteTotals();
+}
+
+function openQuoteChoice(lead) {
+  const rel = relFor(lead);
+  if (rel.draft) return openQuoteEditor(lead, { quote:rel.draft });
+  const originalQuote = rel.quotes.find(item => !isDiscarded(item)) || null;
+  const prefill = quotePrefill(lead);
+  openDialog(quoteChoiceHtml({ lead, originalQuote, suggestedSubtotal:prefill.suggestedSubtotal }));
+}
+
+async function createOriginalQuote(lead) {
+  const prefill = quotePrefill(lead);
+  if (prefill.suggestedSubtotal == null) return toast("This enquiry has no saved website guide total. Choose Edit quotation and enter the price.", "error");
+  const result = calculateQuote({ lines:[{ description:"Media wall works as described above", quantity:"1", unit:"project", unitPrice:String(prefill.suggestedSubtotal) }], taxPercent:settings?.vat_number ? "20" : "0" });
+  if (!result.ok) return toast(result.errors.join(" "), "error");
+  const until = new Date(); until.setDate(until.getDate() + 30);
+  const versions = data.quotes.filter(item => item.request_id === lead.id).map(item => Number(item.version));
+  const version = versions.length ? Math.max(...versions) + 1 : 1;
+  const base = `FFQ-${isoDay(new Date()).replaceAll("-", "")}-${crypto.randomUUID().slice(0, 4).toUpperCase()}`;
+  const fields = {
+    line_items:result.items, items_subtotal_pence:result.itemsSubtotalPence, discount_type:result.discountType, discount_basis_points:result.discountBasisPoints, discount_pence:result.discountPence,
+    subtotal_pence:result.subtotalPence, tax_rate_basis_points:result.taxBasisPoints, tax_pence:result.taxPence,
+    scope:prefill.scope, exclusions:settings?.default_quote_exclusions || "", terms:settings?.default_quote_terms || "", valid_until:isoDay(until)
+  };
+  const payload = { ...fields, request_id:lead.id, version, quote_number:version > 1 ? `${base}-R${version}` : base, created_by:userId };
+  const outcome = await mutate(() => db.from("quotes").insert(payload).select("*").single());
+  if (!outcome.ok) return toast(outcome.message, "error");
+  closeDialog();
+  const saved = quoteById(outcome.result.data?.id) || outcome.result.data;
+  if (saved) openSendQuote(saved);
 }
 
 function readQuoteForm(form) {
@@ -432,7 +462,9 @@ const ACTIONS = {
   "edit-customer":() => openDialog(customerFormHtml({ lead:currentLead(), schema })),
   "new-follow-up":() => openDialog(followUpFormHtml({ lead:currentLead() })),
   "follow-up-done":async (_, id) => { const r = await mutate(() => db.from("follow_up_tasks").update({ completed_at:stamp() }).eq("id", id).is("completed_at", null).select("id").maybeSingle(), "Follow-up marked done."); if (!r.ok) toast(r.message, "error"); },
-  "new-quote":() => { const lead = currentLead(); const rel = relFor(lead); if (rel.draft) return openQuoteEditor(lead, { quote:rel.draft }); const earlier = rel.quotes.find(item => !isDiscarded(item)); openQuoteEditor(lead, earlier ? { revisionOf:earlier } : {}); },
+  "new-quote":() => { const lead = currentLead(); if (lead) openQuoteChoice(lead); },
+  "send-original-quote":(_, id) => { const quote = quoteById(id); if (quote) return openSendQuote(quote); const lead = leadById(id); if (lead) void createOriginalQuote(lead); },
+  "edit-quote-copy":(_, id) => { const quote = quoteById(id); if (quote) return openQuoteEditor(leadById(quote.request_id), { revisionOf:quote }); const lead = leadById(id); if (lead) openQuoteEditor(lead); },
   "edit-quote":(_, id) => { const quote = quoteById(id); if (!quote || quote.status !== "draft") return toast("Only drafts can be edited. Create a revision instead.", "error"); openQuoteEditor(leadById(quote.request_id), { quote }); },
   "revise-quote":(_, id) => { const quote = quoteById(id); const lead = leadById(quote.request_id); const rel = relFor(lead); if (rel.draft) return openQuoteEditor(lead, { quote:rel.draft }); openQuoteEditor(lead, { revisionOf:quote }); },
   "preview-quote":(_, id) => showQuotePdf(id),
