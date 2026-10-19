@@ -1,4 +1,4 @@
--- Behaviour tests for 20261020100000_owner_desk_workflow.sql, run by
+-- Behaviour tests for 20261019211600_owner_desk_workflow.sql, run by
 -- scripts/test-migrations.sh on a throwaway local database. Fictional data only.
 \set ON_ERROR_STOP 1
 \set QUIET 1

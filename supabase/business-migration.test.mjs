@@ -170,7 +170,7 @@ test("public enquiry rate limiting stores only short-lived HMAC fingerprints and
 });
 
 test("the Owner Desk migration validates quotation money, locks issued versions and keeps one accepted quote", async () => {
-  const desk = await readFile(new URL("./migrations/20261020100000_owner_desk_workflow.sql", import.meta.url), "utf8");
+  const desk = await readFile(new URL("./migrations/20261019211600_owner_desk_workflow.sql", import.meta.url), "utf8");
   assert.match(desk, /create unique index if not exists quotes_one_accepted_per_request\s+on public\.quotes\(request_id\) where status = 'accepted'/);
   assert.match(desk, /raise exception 'Pre-flight failed: an enquiry has more than one accepted quotation/);
   const lines = functionBody("validate_quote_lines");
@@ -187,7 +187,7 @@ test("the Owner Desk migration validates quotation money, locks issued versions 
 });
 
 test("customer responses run only through server-role functions and never auto-send a draft", async () => {
-  const desk = await readFile(new URL("./migrations/20261020100000_owner_desk_workflow.sql", import.meta.url), "utf8");
+  const desk = await readFile(new URL("./migrations/20261019211600_owner_desk_workflow.sql", import.meta.url), "utf8");
   for (const signature of ["get_quote_for_response\\(text\\)", "record_customer_quote_decision\\(text, text, text\\)", "record_customer_quote_response\\(text, text\\)"]) {
     assert.match(desk, new RegExp(`revoke all on function public\\.${signature} from public, anon, authenticated;\\s*grant execute on function public\\.${signature} to service_role;`));
   }

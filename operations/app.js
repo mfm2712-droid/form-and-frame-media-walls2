@@ -350,7 +350,7 @@ async function saveQuote(form, { preview = false } = {}) {
   if (!scope) errors.push("Describe the scope of work.");
   if (!form.elements.validUntil.value) errors.push("Choose how long the quotation is valid.");
   if (errors.length) { formError(form, errors.join(" ")); return; }
-  if (!schema.quoteLines) { formError(form, "Saving needs the October database update. Ask Mark to apply migration 20261020100000."); return; }
+  if (!schema.quoteLines) { formError(form, "Saving needs the October database update. Ask Mark to apply migration 20261019211600."); return; }
   const lead = leadById(form.dataset.requestId);
   const fields = {
     line_items:result.items, items_subtotal_pence:result.itemsSubtotalPence, discount_type:result.discountType, discount_basis_points:result.discountBasisPoints, discount_pence:result.discountPence,
