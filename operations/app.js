@@ -181,7 +181,7 @@ function renderWorkflows(data) {
 
   $("quoteList").innerHTML = data.quotes.length ? data.quotes.map(quote => {
     const enquiry = requestFor(quote.request_id);
-    return `<article class="business-card"><div><b>${esc(quote.quote_number)}</b><span>${esc(enquiry?.customer_name || "Enquiry")}${enquiry ? ` · ${esc(enquiry.reference)}` : ""}</span></div><strong>${moneyPence(quote.total_pence)}</strong><label>Status<select data-record-status="quote" data-id="${esc(quote.id)}">${optionList(nextRecordStates("quote", quote.status), quote.status)}</select></label><small>Version ${quote.version} · ${quote.valid_until ? `valid to ${esc(quote.valid_until)}` : "no expiry set"} · status records external communication</small><p>${esc(quote.scope)}</p><button type="button" class="outline" data-print-quote="${esc(quote.id)}">Print / save quotation PDF</button> <button type="button" class="outline" data-email-quote="${esc(quote.id)}" ${enquiry?.email ? "" : "disabled"}>Prepare customer email</button> <button type="button" class="outline" data-schedule-quote="${esc(quote.id)}">Schedule installation</button>${quote.status === "accepted" && !liveWorkOrders.some(job => job.accepted_quote_id === quote.id) ? `<button class="outline" data-make-order="${esc(quote.id)}">Create build job</button>` : ""}</article>`;
+    return `<article class="business-card"><div><b>${esc(quote.quote_number)}</b><span>${esc(enquiry?.customer_name || "Enquiry")}${enquiry ? ` · ${esc(enquiry.reference)}` : ""}</span></div><strong>${moneyPence(quote.total_pence)}</strong><label>Status<select data-record-status="quote" data-id="${esc(quote.id)}">${optionList(nextRecordStates("quote", quote.status), quote.status)}</select></label><small>Version ${quote.version} · ${quote.valid_until ? `valid to ${esc(quote.valid_until)}` : "no expiry set"} · status records external communication</small><p>${esc(quote.scope)}</p><button type="button" class="outline" data-edit-quote="${esc(quote.id)}" ${quote.status === "draft" ? "" : "disabled"}>Edit quotation</button> <button type="button" class="outline" data-print-quote="${esc(quote.id)}">Generate quotation PDF</button> <button type="button" class="outline" data-email-quote="${esc(quote.id)}" ${enquiry?.email ? "" : "disabled"}>Send to customer (email draft)</button> <button type="button" class="outline" data-schedule-quote="${esc(quote.id)}">Schedule installation</button>${quote.status === "accepted" && !liveWorkOrders.some(job => job.accepted_quote_id === quote.id) ? `<button class="outline" data-make-order="${esc(quote.id)}">Create build job</button>` : ""}</article>`;
   }).join("") : `<p class="today-empty">No formal quotes recorded yet.</p>`;
 
   $("workOrderList").innerHTML = data.workOrders.length ? data.workOrders.map(job => {
@@ -1248,12 +1248,35 @@ $("business").addEventListener("change", async event => {
 });
 
 businessBus.addEventListener("click", async event => {
-  const quoteButton = event.target.closest("button[data-print-quote], button[data-email-quote], button[data-schedule-quote]");
+  const quoteButton = event.target.closest("button[data-print-quote], button[data-email-quote], button[data-schedule-quote], button[data-edit-quote], button[data-discard-quote]");
   if (quoteButton) {
-    const quoteId = quoteButton.dataset.printQuote || quoteButton.dataset.emailQuote || quoteButton.dataset.scheduleQuote;
+    const quoteId = quoteButton.dataset.printQuote || quoteButton.dataset.emailQuote || quoteButton.dataset.scheduleQuote || quoteButton.dataset.editQuote || quoteButton.dataset.discardQuote;
     const quote = liveQuotes.find(item => item.id === quoteId);
     const customer = quote && requestFor(quote.request_id);
     if (!quote || !customer) return showNotice("Refresh the quotation and customer details first.");
+    if (quoteButton.hasAttribute("data-discard-quote")) {
+      if (quote.status !== "draft") return showNotice("Only unsent drafts can be discarded.");
+      if (!window.confirm(`Discard draft ${quote.quote_number}? This cannot be undone.`)) return;
+      quoteButton.disabled = true;
+      await saveLive(() => db.from("quotes").update({status:"rejected"}).eq("id",quote.id).eq("status","draft").select("id").maybeSingle(), "Draft discarded. The record remains in the archive for audit history.");
+      return;
+    }
+    if (quoteButton.hasAttribute("data-edit-quote")) {
+      if (quote.status !== "draft") return showNotice("Only draft quotations can be edited. Create a revision for sent quotations.");
+      const scope = window.prompt("Edit scope of work", quote.scope || "");
+      if (scope === null) return;
+      if (!scope.trim() || scope.length > 12000) return showNotice("Scope must be between 1 and 12,000 characters.");
+      const subtotal = window.prompt("Subtotal in GBP (excluding tax)", (Number(quote.subtotal_pence)/100).toFixed(2));
+      if (subtotal === null) return;
+      const subtotalPence = poundsToPence(subtotal);
+      const rate = Number(quote.tax_rate_basis_points || 0)/100;
+      const tax = calculateTax(subtotalPence, rate);
+      if (subtotalPence === null || !tax) return showNotice("Enter a valid subtotal.");
+      if (!window.confirm(`Save changes to ${quote.quote_number}?`)) return;
+      quoteButton.disabled = true;
+      await saveLive(() => db.from("quotes").update({scope:scope.trim(),subtotal_pence:subtotalPence,tax_pence:tax.taxPence}).eq("id",quote.id).eq("status","draft").select("id").maybeSingle(), "Draft quotation updated.");
+      return;
+    }
     if (quoteButton.hasAttribute("data-schedule-quote")) {
       setMobileView("work");
       await openWorkspace(quote.request_id);
