@@ -30,8 +30,8 @@ test("quotation editor is prefilled and offered only when no quotation is in pro
   assert.match(html, /id="quoteDraft"/);
   assert.match(html, /name="subtotal"[^>]*value="5500"/);
   const withQuote = build({ quotes: [{ id: "q1", request_id: "r1", version: 1, status: "draft", quote_number: "FFQ-1", total_pence: 100, scope: "x" }] });
-  assert.equal(withQuote.includes('id="quoteDraft"'), false);
-  assert.match(withQuote, /already in progress/);
+  assert.equal(withQuote.includes('id="quoteDraft"'), true);
+  assert.match(withQuote, /Edit quotation/);
 });
 
 test("the editor is withheld when a site assessment is still required", () => {

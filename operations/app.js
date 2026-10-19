@@ -953,7 +953,10 @@ async function openWorkspace(id) {
   await loadLive();
 }
 
-$("workspace").addEventListener("input", event => { if (event.target.closest("#quoteDraft")) updateQuoteTotal(); });
+function recalcItems(){const form=document.querySelector("#workspace #quoteDraft");if(!form)return;const rows=[...form.querySelectorAll(".quote-item-row")].filter(r=>r.querySelector('[name="itemName"]').value);if(rows.length){const gross=rows.reduce((n,r)=>n+Number(r.querySelector('[name="itemQty"]').value)*Number(r.querySelector('[name="itemPrice"]').value),0);const discount=form.elements.applyDiscount.checked?Number(form.elements.customDiscount.value||form.elements.discountPercent.value):0;form.elements.subtotal.value=(gross*(1-discount/100)).toFixed(2)}updateQuoteTotal()}
+$("workspace").addEventListener("click",event=>{if(event.target.id==="addQuoteItem"){document.querySelector("#workspace #quoteItems").insertAdjacentHTML("beforeend",document.querySelector("#workspace #quoteItemTemplate").innerHTML)}if(event.target.matches("[data-remove-quote-item]")){event.target.closest(".quote-item-row").remove();recalcItems()}const b=event.target.closest("[data-ws-quote-business]");if(b){closeWorkspace();setMobileView("money");document.querySelector(`[data-customer-link="${CSS.escape(b.dataset.wsQuoteBusiness)}"]`)?.scrollIntoView({block:"center"})}});
+$("workspace").addEventListener("change",event=>{if(event.target.closest("#quoteDraft"))recalcItems()});
+$("workspace").addEventListener("input",event=>{if(event.target.closest("#quoteDraft")){if(event.target.name==="subtotal")updateQuoteTotal();else recalcItems()}});
 $("workspace").addEventListener("focusout", () => {
   if (!wsDeferred) return;
   setTimeout(() => { if (!(isTextField(document.activeElement) && $("workspace").contains(document.activeElement))) refreshWorkspace(); }, 0);
@@ -1131,7 +1134,16 @@ panelBus.addEventListener("submit", async event => {
     const version = existingVersions.length ? Math.max(...existingVersions) + 1 : 1;
     const quoteNo = `FFQ-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${crypto.randomUUID().slice(0, 4).toUpperCase()}`;
     const payload = { request_id:requestId, quote_number:quoteNo, version, subtotal_pence:subtotalPence, tax_rate_basis_points:tax.taxRateBasisPoints, tax_pence:tax.taxPence, scope:String(fields.get("scope") || "").trim(), valid_until:String(fields.get("validUntil") || "") || null, created_by:userId };
-    const result = await saveLive(() => db.from("quotes").insert(payload).select("id").single(), "Draft quote saved. It has not been sent to the customer.");
+    const rows=[...form.querySelectorAll(".quote-item-row")].map(r=>({name:r.querySelector('[name="itemName"]').value,qty:Number(r.querySelector('[name="itemQty"]').value),price:Number(r.querySelector('[name="itemPrice"]').value)})).filter(r=>r.name);
+    if(rows.some(r=>!Number.isInteger(r.qty)||r.qty<1||!Number.isFinite(r.price)||r.price<0)){showNotice("Invalid item quantity or price.");if(button)button.disabled=false;return}
+    const discount=fields.get("applyDiscount")?Number(fields.get("customDiscount")||fields.get("discountPercent")||0):0;
+    if(!Number.isFinite(discount)||discount<0||discount>100){showNotice("Invalid discount.");if(button)button.disabled=false;return}
+    const notes=String(fields.get("scope")||"").trim();
+    payload.scope=rows.length?`Items:\n${rows.map(r=>`${r.name} × ${r.qty} @ £${r.price.toFixed(2)} = £${(r.qty*r.price).toFixed(2)}`).join("\n")}\nNotes:\n${notes}`:notes;
+    payload.assumptions=discount?`Discount: ${discount}%`:"";
+    if(!payload.scope||payload.scope.length>12000){showNotice("Scope must be 1–12,000 characters.");if(button)button.disabled=false;return}
+    const editId=form.dataset.quoteId;
+    const result = await saveLive(() => editId?db.from("quotes").update({scope:payload.scope,assumptions:payload.assumptions,subtotal_pence:payload.subtotal_pence,tax_rate_basis_points:payload.tax_rate_basis_points,tax_pence:payload.tax_pence,valid_until:payload.valid_until}).eq("id",editId).eq("status","draft").select("id").maybeSingle():db.from("quotes").insert(payload).select("id").single(),editId?"Draft quotation updated.":"Draft quote saved. It has not been sent to the customer.");
     if (result.saved) form.reset();
   } else if (form.id === "enquiryEdit") {
     const customerName = String(fields.get("customerName") || "").trim();
