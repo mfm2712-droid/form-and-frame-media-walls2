@@ -271,7 +271,8 @@ function renderLeadList() {
   $("leadList").innerHTML = items.length ? items.map(lead => {
     const rel = relatedFor(lead), badge = statusBadge(lead, rel), action = recommendedAction(lead, rel);
     const fresh = badge.key === "new";
-    return `<article class="lead lead-${esc(badge.tone)} ${lead.id === selectedId ? "selected" : ""} ${fresh ? "unopened" : ""}" data-lead-id="${esc(lead.id)}"><div class="lead-top"><div><h3>${esc(lead.customer_name)} <small>· ${esc(lead.reference)}</small></h3><p>${esc(lead.postcode)} · ${esc(lead.email || lead.phone)} · ${esc(lead.wall_width)}</p></div><div class="lead-side">${badgeHtml(badge, esc)}<button type="button" class="ws-open ${fresh ? "ws-primary" : "outline"}" data-open-workspace="${esc(lead.id)}">${fresh ? "Open" : "View"}</button></div></div><p>${esc(lead.message || "No customer note.")}</p><small>${format(lead.created_at)} · ${esc(lead.source)} · guide ${money(lead.guide_low)}–${money(lead.guide_high)}</small><small class="lead-next">Next: ${esc(action.label)}</small></article>`;
+    const stageOptions = [["new","New enquiry"],["reviewing","Opened / preparing quotation"],["date_requested","Survey requested"],["confirmed","Survey confirmed"],["quoted","Quotation sent / awaiting reply"],["won","Customer accepted"],["lost","Customer declined"],["archived","Archived"]];
+    return `<article class="lead lead-${esc(badge.tone)} ${lead.id === selectedId ? "selected" : ""} ${fresh ? "unopened" : ""}" data-lead-id="${esc(lead.id)}"><div class="lead-top"><div><h3>${esc(lead.customer_name)} <small>· ${esc(lead.reference)}</small></h3><p>${esc(lead.postcode)} · ${esc(lead.email || lead.phone)} · ${esc(lead.wall_width)}</p></div><div class="lead-side">${badgeHtml(badge, esc)}<button type="button" class="ws-open ${fresh ? "ws-primary" : "outline"}" data-open-workspace="${esc(lead.id)}">${fresh ? "Open" : "View"}</button></div></div><p>${esc(lead.message || "No customer note.")}</p><small>${format(lead.created_at)} · ${esc(lead.source)} · guide ${money(lead.guide_low)}–${money(lead.guide_high)}</small><small class="lead-next">Next: ${esc(action.label)}</small><label>Change stage<select class="status" data-id="${esc(lead.id)}">${stageOptions.map(([value,label])=>`<option value="${value}" ${lead.status===value?"selected":""}>${label}</option>`).join("")}</select></label></article>`;
   }).join("") : `<p class="empty">No enquiries yet. New website, chat and booking requests will appear here.</p>`;
 }
 function render(items, blocks, statsItems = items) {
@@ -1020,7 +1021,7 @@ $("workspace").addEventListener("click", async event => {
 $("todayEnquiries").addEventListener("click", openTodayEnquiry);
 $("todayVisits").addEventListener("click", openTodayEnquiry);
 $("todayReplies").addEventListener("click", openTodayEnquiry);
-$("leadList").addEventListener("click", event => { const card = event.target.closest("[data-lead-id]"); if (!card) return; openWorkspace(card.dataset.leadId); });
+$("leadList").addEventListener("click", event => { if (event.target.closest("select,option,label")) return; const card = event.target.closest("[data-lead-id]"); if (!card) return; openWorkspace(card.dataset.leadId); });
 $("projectPanel").addEventListener("click", event => { const button = event.target.closest("[data-open-workspace]"); if (button) openWorkspace(button.dataset.openWorkspace); });
 document.addEventListener("change", async event => {
   if (!event.target.matches(".status")) return;
@@ -1033,6 +1034,7 @@ document.addEventListener("change", async event => {
   }
   const lead = liveLeads.find(item => item.id === id), next = select.value;
   if (!lead) return;
+  if (["new","reviewing","date_requested","confirmed"].includes(next) && liveQuotes.some(q=>q.request_id===id && ["sent","accepted"].includes(q.status))) {select.value=lead.status;return showNotice("This customer has an issued quotation. Record the customer response or create a revision; do not roll back an issued document.","warning");}
   select.disabled = true;
   const result = await saveLive(() => db.from("consultation_requests").update({ status:next }).eq("id", id).select("id").maybeSingle(), "Enquiry status updated.");
   if (!result.saved && select.isConnected) select.value = lead.status;
