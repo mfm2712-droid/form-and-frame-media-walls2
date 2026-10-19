@@ -1,0 +1,1 @@
+window.FF_PUBLIC_CONFIG = Object.freeze({"supabaseUrl":"https://otqzhocismdjbvvsjnpe.supabase.co","supabaseAnonKey":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90cXpob2Npc21kamJ2dnNqbnBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTExMjk3NjIsImV4cCI6MjEwNjcwNTc2Mn0.uAtuNyFN4YH_DW0J8_DRp27BMFpkpLfx2hq5qxFD8BY"});\n
