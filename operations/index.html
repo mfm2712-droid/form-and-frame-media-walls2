@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-GB">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0e342c">
-  <title>Form &amp; Frame — Staff Access</title>
+  <title>Form &amp; Frame — Owner Desk</title>
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./icon-180.png">
@@ -14,42 +14,51 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css">
 </head>
-<body data-mobile-view="today">
-  <main class="app">
-    <aside class="sidebar"><a class="brand" href="../index.html">FORM <b>&amp;</b><br>FRAME</a><span class="rule"></span><nav aria-label="Sections"><a class="active" href="#desk">▦ <span>Today</span></a><a href="#leads">◌ <span>Enquiries</span></a><a href="#availability">□ <span>Calendar</span></a><a href="#business">£ <span>Money</span></a></nav><div class="side-drawing"></div><a class="round" href="../index.html">F&amp;F</a></aside>
-<section id="setup" class="login"><p>STAFF ACCESS</p><h1>Form &amp; Frame<br>operations.</h1><span id="setupCopy">Enter your work email for a secure sign-in link.</span><form id="login"><input id="email" type="email" placeholder="name@company.co.uk" required><button>Send secure link</button></form><small id="loginMsg" role="status" aria-live="polite"></small><div id="accessActions" hidden><button id="retryAccess" type="button" class="outline">Retry access</button><button id="accessSignOut" type="button" class="outline">Sign out</button></div></section>
-    <section id="hub" class="desk" hidden>
-      <header><div><p>FORM &amp; FRAME · OWNER DESK <span id="demoTag" hidden>DEMO DATA</span></p><h1>Owner Desk</h1></div><div class="header-actions"><span id="liveDate"></span><button id="notifBell" class="outline bell" type="button" aria-haspopup="dialog" aria-controls="notifPanel" aria-label="Notifications, none unread"><span aria-hidden="true">🔔</span> <span class="bell-text">Alerts</span><b id="notifBadge" class="bell-badge" hidden>0</b></button><button id="enablePush" class="outline" type="button" aria-label="Enable notifications">Enable notifications</button><button id="refresh" class="outline">Refresh</button><button id="signOut" class="outline">Sign out</button></div></header>
-      <p id="pushHelp" class="push-help" role="status" aria-live="polite" hidden></p>
-      <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
-      <section id="todayMoney" class="today-money" aria-label="Recorded financial overview"></section>
-      <div class="metrics" id="stats"></div>
-      <section class="today-panel" aria-labelledby="todayTitle"><div class="section-head"><div><p>TODAY'S PLAN · BOOKINGS &amp; NEXT ACTIONS</p><h2 id="todayTitle">Today's plan</h2></div><span id="todayDateLabel">TODAY</span></div><div class="today-columns"><section><h3>Enquiries received today</h3><div id="todayEnquiries"></div></section><section><h3>Visit windows today</h3><div id="todayVisits"></div></section><section><h3>Appointments today</h3><div id="todayAppointments"></div></section><section><h3>Replies due today</h3><div id="todayReplies"></div></section><section><h3>Payment attention</h3><div id="todayPayments"></div></section><section><h3>Delivery blockers</h3><div id="todayBlockers"></div></section></div></section>
-      <div class="workgrid"><section class="inquiries" id="leads"><div class="section-head"><div><p>ENQUIRY PIPELINE</p><h2>Active enquiries</h2></div><span>SELECT A PROJECT</span></div><div id="leadList"></div></section><section class="availability" id="availability"><div class="section-head"><div><p>AVAILABILITY · CAPACITY · TIME OFF</p><h2>Plan the work</h2></div><button id="unblockAll" class="outline">Refresh</button></div><p class="calendar-guidance">Only confirmed appointments reserve the calendar. Enquiry visit preferences remain requests until scheduled.</p><form id="block" class="block-form"><input id="blockTitle" required value="Unavailable" aria-label="Block title"><select id="blockKind" aria-label="Block type"><option value="blocked">Block dates</option><option value="holiday">Holiday</option><option value="available">Add availability</option></select><input id="blockStart" type="datetime-local" required><input id="blockEnd" type="datetime-local" required><button>Apply</button></form><div class="calendar-nav"><div><button type="button" class="outline" id="calendarPrev" aria-label="Previous period">‹</button><button type="button" class="outline" id="calendarToday">Today</button><button type="button" class="outline" id="calendarNext" aria-label="Next period">›</button></div><b id="calendarPeriod" aria-live="polite"></b><div><button type="button" class="outline calendar-mode" data-calendar-mode="week">Week</button><button type="button" class="outline calendar-mode active" data-calendar-mode="month" aria-pressed="true">Month</button></div></div><p id="calendarLoadState" class="calendar-guidance" role="status" aria-live="polite">Calendar records load after verified staff sign-in.</p><button id="calendarRetry" class="outline" type="button" hidden>Retry calendar</button><div id="calendar" class="calendar"></div><div id="blockList" class="block-list-container" role="group" aria-label="Availability blocks in this period"></div><div class="legend"><span><i class="red"></i>Blocked / holiday</span><span><i class="green"></i>Booked appointments &amp; availability</span></div></section><aside class="project" id="projectPanel"></aside></div>
-      <section id="business" class="business-panel" aria-labelledby="businessTitle">
-        <div class="section-head"><div><p>BUSINESS SNAPSHOT</p><h2 id="businessTitle">Quotes, work &amp; money</h2></div><span id="businessState">Loading records…</span></div>
-        <div class="business-metrics"><div><span>Invoiced</span><b id="totalBilled">—</b></div><div><span>Received</span><b id="totalReceived">—</b></div><div><span>Outstanding</span><b id="totalOutstanding">—</b></div><div><span>Quote win rate</span><b id="quoteWinRate">—</b><small id="quoteWinCount">From sent quotes</small></div><div><span>Active builds</span><b id="activeBuilds">—</b></div></div>
-        <div class="business-grid"><section><h3>Formal quotes</h3><div id="quoteList"></div></section><section><h3>Build jobs</h3><div id="workOrderList"></div></section><section><h3>Booked appointments</h3><div id="appointmentList"></div></section><section><h3>Invoices &amp; payments</h3><details class="record-form invoice-create"><summary>＋ Create invoice draft</summary><form id="invoiceDraftFromMoney" class="invoiceDraft"><label>Build job<select id="invoiceWorkOrder" required><option value="">Choose a work order</option></select></label><label>Bill to<input name="billName" required maxlength="160"></label><label>Billing address<textarea name="billAddress" required minlength="5" maxlength="1200" rows="2"></textarea></label><label>Issue date<input name="issueDate" type="date" required></label><label>Due date<input name="dueDate" type="date" required></label><label>Subtotal (£)<input name="subtotal" type="number" min="0" step="0.01" required></label><label>Tax amount (£)<input name="tax" type="number" min="0" step="0.01" value="0" required></label><button>Create invoice draft</button><small>Saved as a draft only. Confirm the approved invoice figures and terms; this does not send or collect payment.</small></form></details><details id="invoiceSettings" class="record-form" hidden><summary>Invoice seller details</summary><form id="invoiceSettingsForm"><label>Legal company name<input name="legalName" required minlength="2" maxlength="160"></label><label>Billing address<textarea name="billingAddress" required minlength="5" maxlength="1200" rows="3"></textarea></label><label>Company contact email<input name="contactEmail" type="email" required maxlength="254"></label><label>Phone · optional<input name="contactPhone" maxlength="60"></label><label>Company number · optional<input name="companyNumber" maxlength="80"></label><label>VAT number · only if registered<input name="vatNumber" maxlength="80"></label><label>Payment instructions · optional<textarea name="paymentInstructions" maxlength="2000" rows="3"></textarea></label><label>Invoice footer · optional<textarea name="invoiceFooter" maxlength="1200" rows="2"></textarea></label><button>Save seller details</button><small id="invoiceSettingsHelp">Owners can update the legal details shown on printable invoices. No tax or payment information is assumed.</small></form></details><div id="invoiceSetupStatus" class="cost-note" role="status" aria-live="polite"></div><div id="invoiceList"></div></section></div>
-        <section class="activity-section"><h3>Master activity log</h3><p>Every new record, status change and payment is listed here.</p><div id="activityList"></div></section>
-      </section>
-    </section>
-  </main>
-  <section id="workspace" class="workspace" aria-label="Enquiry workspace" hidden><div id="workspaceBody" class="ws"></div></section>
+<body>
+  <a class="skip" href="#page">Skip to content</a>
+
+  <section id="setup" class="login" aria-labelledby="loginTitle">
+    <div class="login-card">
+      <div class="login-brand"><img src="./icon.svg" alt="" width="56" height="56"><span>FORM <b>&amp;</b> FRAME</span></div>
+      <h1 id="loginTitle">Owner Desk</h1>
+      <p id="setupCopy">Enter your work email and we will send you a secure sign-in link.</p>
+      <form id="login"><label for="email">Work email</label><input id="email" type="email" autocomplete="email" placeholder="name@company.co.uk" required><button class="btn primary">Send secure link</button></form>
+      <p id="loginMsg" role="status" aria-live="polite"></p>
+      <div id="accessActions" hidden><button id="retryAccess" type="button" class="btn">Try again</button><button id="accessSignOut" type="button" class="btn">Sign out</button></div>
+      <a class="login-site" href="../index.html">Go to the public website</a>
+    </div>
+  </section>
+
+  <div id="hub" class="shell" hidden>
+    <header class="topbar">
+      <a class="brand" href="#/dashboard" aria-label="Owner Desk dashboard"><img src="./icon.svg" alt="" width="34" height="34"><span><b>FORM &amp; FRAME</b><small>Owner Desk</small></span></a>
+      <form class="global-search" id="globalSearch" role="search"><label class="sr-only" for="globalSearchInput">Find a customer, quotation, invoice or job</label><input id="globalSearchInput" type="search" placeholder="Find a customer, quotation or invoice" autocomplete="off"></form>
+      <div class="top-actions">
+        <span id="demoTag" class="demo-tag" hidden>DEMO</span>
+        <button id="notifBell" class="icon-btn bell" type="button" aria-haspopup="dialog" aria-controls="notifPanel" aria-expanded="false" aria-label="Notifications, none unread"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4zM10 21h4"/></svg><b id="notifBadge" class="bell-badge" hidden>0</b></button>
+        <a class="icon-btn" href="#/settings" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 12l2-1-1-3-2 .3-1.5-1.5L17 5l-3-1-1 2h-2l-1-2-3 1 .5 2.3L6 8.8 4 8.5 3 11.5l2 1v2l-2 1 1 3 2-.3 1.5 1.5L7 21l3 1 1-2h2l1 2 3-1-.5-2.3 1.5-1.5 2 .3 1-3-2-1z"/></svg></a>
+        <button id="enablePush" type="button" hidden>Enable notifications</button>
+      </div>
+    </header>
+    <nav class="sidenav" id="sidenav" aria-label="Main sections"></nav>
+    <main id="page" class="page" tabindex="-1"></main>
+    <nav class="tabbar" id="tabbar" aria-label="Main sections"></nav>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <p id="pushHelp" class="sr-only" role="status" aria-live="polite" hidden></p>
+  <dialog id="dialog" class="dialog" aria-label="Form"><div id="dialogBody"></div></dialog>
+  <dialog id="preview" class="dialog preview" aria-label="Document preview"><header class="preview-bar"><b id="previewTitle">Preview</b><span><button type="button" class="btn primary" id="previewPrint">Print / Save as PDF</button><button type="button" class="btn" id="previewClose">Close</button></span></header><iframe id="previewFrame" title="Document preview"></iframe></dialog>
+
   <aside id="notifPanel" class="nc" role="dialog" aria-modal="false" aria-labelledby="ncTitle" hidden>
-    <header class="nc-head"><div><p>FORM &amp; FRAME · ALERTS</p><h2 id="ncTitle">Notifications</h2></div><button type="button" id="ncClose" class="outline" aria-label="Close notifications">Close</button></header>
+    <header class="nc-head"><div><p>FORM &amp; FRAME · ALERTS</p><h2 id="ncTitle">Notifications</h2></div><button type="button" id="ncClose" class="btn" aria-label="Close notifications">Close</button></header>
     <div class="nc-tabs" role="tablist"><button type="button" role="tab" data-nc-tab="inbox" aria-selected="true">Inbox <b id="ncTabCount" hidden></b></button><button type="button" role="tab" data-nc-tab="settings" aria-selected="false">Settings &amp; install</button></div>
-    <section id="ncInbox" class="nc-body"><div class="nc-toolbar"><button type="button" id="ncMarkAll" class="outline">Mark all read</button></div><p id="ncNote" class="nc-note" role="status" hidden></p><div id="ncList"></div></section>
+    <section id="ncInbox" class="nc-body"><div class="nc-toolbar"><button type="button" id="ncMarkAll" class="btn">Mark all read</button></div><p id="ncNote" class="nc-note" role="status" hidden></p><div id="ncList"></div></section>
     <section id="ncSettings" class="nc-body" hidden><div id="ncDevice"></div><div id="ncIcon"></div><div id="ncPrefs"></div><p id="ncPrefNote" class="nc-note" role="status" hidden></p></section>
   </aside>
-  <nav class="mobile-nav" aria-label="Main navigation" hidden>
-    <button type="button" data-mobile-view="today" aria-current="page"><span aria-hidden="true">⌂</span><span>Today</span></button>
-    <button type="button" data-mobile-view="work"><span aria-hidden="true">▤</span><span>Work</span></button>
-    <button type="button" data-mobile-view="calendar"><span aria-hidden="true">▦</span><span>Calendar</span></button>
-    <button type="button" data-mobile-view="money"><span aria-hidden="true">£</span><span>Money</span></button>
-  </nav>
   <script src="./config.js"></script><script type="module" src="./app.js"></script>
 </body>
 </html>

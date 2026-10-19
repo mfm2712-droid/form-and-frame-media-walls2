@@ -1,8 +1,10 @@
 const transitions = Object.freeze({
-  quote:{ draft:["sent"], sent:["accepted", "rejected", "expired", "superseded"] },
-  work_order:{ accepted:["ready_to_build", "in_progress", "cancelled"], ready_to_build:["in_progress", "cancelled"], in_progress:["quality_check", "cancelled"], quality_check:["in_progress", "ready_for_install", "cancelled"], ready_for_install:["installation_scheduled", "cancelled"], installation_scheduled:["installed", "cancelled"], installed:["completed"] },
+  // Mirrors enforce_workflow_status_transition in the latest migration, including
+  // the backward steps a real job needs (pause, reschedule).
+  quote:{ draft:["sent", "superseded"], sent:["accepted", "rejected", "expired", "superseded"] },
+  work_order:{ accepted:["ready_to_build", "in_progress", "cancelled"], ready_to_build:["accepted", "in_progress", "cancelled"], in_progress:["ready_to_build", "quality_check", "cancelled"], quality_check:["in_progress", "ready_for_install", "cancelled"], ready_for_install:["in_progress", "installation_scheduled", "cancelled"], installation_scheduled:["ready_for_install", "installed", "cancelled"], installed:["completed"] },
   appointment:{ scheduled:["confirmed", "cancelled", "completed"], confirmed:["cancelled", "completed"] },
-  invoice:{ draft:["sent"], sent:["void"] }
+  invoice:{ draft:["sent", "void"], sent:["void"] }
 });
 
 export function allowedNextStatuses(type, current) {

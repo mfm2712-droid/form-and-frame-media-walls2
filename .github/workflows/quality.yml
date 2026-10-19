@@ -2,9 +2,10 @@ name: Quality checks
 
 on:
   push:
-    branches: [main]
+    branches: [main, "claude/**"]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -29,37 +30,24 @@ jobs:
         run: TZ=Europe/London node --test
 
       - name: Check JavaScript and TypeScript syntax
+        # Globs, not a hand-kept list, so a removed or added module can never be missed.
         run: |
-          node --check operations/app.js
-          node --check operations/today-view.mjs
-          node --check operations/project-model.mjs
-          node --check operations/mutation-result.mjs
-          node --check operations/datetime-local.mjs
-          node --check operations/pipeline.mjs
-          node --check operations/workflow.mjs
-          node --check operations/push-support.mjs
-          node --check operations/assignment.mjs
-          node --check operations/activity-label.mjs
-          node --check operations/push-target.mjs
-          node --check operations/invoice-document.mjs
-          node --check operations/availability-list.mjs
-          node --check operations/quote-readiness.mjs
-          node --check operations/enquiry-workspace.mjs
-          node --check operations/enquiry-workspace-view.mjs
-          node --check operations/notification-centre.mjs
-          node --check operations/notification-view.mjs
-          node --check scripts/public-config.mjs
-          node --check scripts/build-public.mjs
-          node --check scripts/check-public-build.mjs
-          node --check scripts/check-inline-scripts.mjs
-          node --check supabase/config.test.mjs
-          node --check supabase/functions/submit-enquiry/handler.mjs
-          node --check supabase/functions/push-new-enquiry/handler.mjs
-          node --check supabase/functions/retry-notifications/handler.mjs
-          node --experimental-strip-types --check supabase/functions/submit-enquiry/index.ts
-          node --experimental-strip-types --check supabase/functions/push-new-enquiry/index.ts
-          node --experimental-strip-types --check supabase/functions/retry-notifications/index.ts
-          node scripts/check-inline-scripts.mjs
+          set -euo pipefail
+          shopt -s nullglob
+          count=0
+          for file in operations/*.js operations/*.mjs scripts/*.mjs supabase/*.mjs supabase/functions/*/*.mjs; do
+            node --check "$file"; count=$((count + 1))
+          done
+          for file in supabase/functions/*/index.ts; do
+            node --experimental-strip-types --check "$file"; count=$((count + 1))
+          done
+          test -f supabase/functions/quote-response/handler.mjs
+          test -f supabase/functions/quote-response/index.ts
+          echo "Syntax checked $count files"
+          node scripts/check-inline-scripts.mjs index.html operations/index.html quote-response.html docs/MASTER_DOCUMENTATION.html
+
+      - name: Apply every migration to a throwaway PostgreSQL and run the database tests
+        run: ./scripts/test-migrations.sh
 
       - name: Ensure production builds fail without Supabase configuration
         run: |
