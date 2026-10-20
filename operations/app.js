@@ -533,10 +533,20 @@ const CONFIRMED = {
 };
 
 async function moveJob(job, to) {
+  // The database enforces installation_scheduled -> installed -> completed.
+  // Keep one owner-facing "Installation complete" action while respecting both transitions.
+  if (to === "completed" && job.status === "installation_scheduled") {
+    const installed = await mutate(
+      () => db.from("work_orders").update({ status:"installed" }).eq("id", job.id).eq("status","installation_scheduled").select("id").maybeSingle(),
+      null
+    );
+    if (!installed.ok) { toast(installed.message, "error"); return installed; }
+    job = { ...job, status:"installed" };
+  }
   const patch = { status:to };
   if (to === "in_progress" && !job.actual_started_at) patch.actual_started_at = stamp();
   if (to === "completed") patch.completed_at = stamp();
-  const result = await mutate(() => db.from("work_orders").update(patch).eq("id", job.id).eq("status", job.status).select("id").maybeSingle(), "Job progress updated.");
+  const result = await mutate(() => db.from("work_orders").update(patch).eq("id", job.id).eq("status", job.status).select("id").maybeSingle(), to === "completed" ? "Installation complete. Project marked Completed." : "Job progress updated.");
   if (!result.ok) toast(result.message, "error");
   return result;
 }
