@@ -11,7 +11,7 @@ const response = (body, status, origin, allowed = false) => {
     headers["Access-Control-Allow-Headers"] = "authorization, apikey, x-client-info, content-type";
     headers["Access-Control-Max-Age"] = "86400";
   }
-  return new Response(JSON.stringify(body), { status, headers });
+  return new Response(status === 204 ? null : JSON.stringify(body), { status, headers });
 };
 
 const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, character => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[character]));
