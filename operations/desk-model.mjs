@@ -78,8 +78,8 @@ const JOB_MOVES = Object.freeze({
   in_progress:[["quality_check", "Move to quality check"], ["ready_to_build", "Pause · back to ready to build"]],
   quality_check:[["ready_for_install", "Passed · ready for installation"], ["in_progress", "Back to in progress"]],
   ready_for_install:[["installation_scheduled", "Mark installation scheduled"], ["in_progress", "Back to in progress"]],
-  installation_scheduled:[["installed", "Mark installed"], ["ready_for_install", "Reschedule · back to ready"]],
-  installed:[["completed", "Close the job as completed"]]
+  installation_scheduled:[["completed", "Installation complete"], ["ready_for_install", "Reschedule · back to ready"]],
+  installed:[["completed", "Installation complete"]]
 });
 export function jobMoves(job) {
   if (!job) return [];
@@ -160,7 +160,7 @@ export function nextAction(lead, rel, { today = new Date() } = {}) {
     if (!installBooked && !["installed"].includes(job.status)) return { id:"book-installation", label:"Schedule the installation", hint:"Choose the date, time, team and location. It appears in the calendar.", primary:true };
     if (!rel.invoices.some(item => item.status !== "void")) return { id:"create-invoice", label:"Create the invoice", hint:"Amounts come from the accepted quotation.", primary:true };
     if (rel.invoices.some(item => item.status === "draft")) return { id:"issue-invoice", label:"Issue the invoice", hint:"Print or save the PDF, send it to the customer, then record it as issued.", primary:true };
-    if (job.status === "installed") return { id:"advance-job", label:"Close the job as completed", hint:"Installation is done.", primary:true };
+    if (["installed", "installation_scheduled"].includes(job.status)) return { id:"advance-job", label:"Installation complete", hint:"Confirm the work is finished to mark the project Completed.", primary:true };
     return { id:"advance-job", label:"Update the job's progress", hint:"Move the job on as the work happens.", primary:true };
   }
   return { id:"none", label:"No action needed", hint:"", primary:false };
