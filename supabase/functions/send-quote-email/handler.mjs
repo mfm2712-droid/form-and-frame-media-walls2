@@ -1,6 +1,6 @@
 // Sends a saved quotation's secure response link to its customer. The caller
 // must be an authenticated staff member; the raw link token is never stored.
-const DEFAULT_ORIGINS = ["https://form-and-frame.vercel.app"];
+const DEFAULT_ORIGINS = ["https://form-frame.co.uk", "https://www.form-frame.co.uk", "https://form-and-frame.vercel.app"];
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const response = (body, status, origin, allowed = false) => {
@@ -49,9 +49,9 @@ export function createQuoteEmailHandler({ env, createAdmin, fetcher = fetch, log
     if (request.method !== "POST") return response({ error:"Method not allowed." }, 405, origin, true);
 
     const url = env("SUPABASE_URL"), serviceRoleKey = env("SUPABASE_SERVICE_ROLE_KEY");
-    const resendKey = String(env("RESEND_API_KEY") || "").trim();
-    const from = String(env("NOTIFICATION_FROM") || "").trim();
-    if (!url || !serviceRoleKey || !resendKey || !from) return response({ error:"Quote email is not configured." }, 503, origin, true);
+    const relayKey = String(env("QUOTE_RELAY_SECRET") || "").trim();
+    const relayUrl = String(env("QUOTE_RELAY_URL") || "").trim();
+    if (!url || !serviceRoleKey || !relayKey || !relayUrl) return response({ error:"Quote email is not configured." }, 503, origin, true);
 
     let body;
     try { body = await request.json(); } catch { return response({ error:"Invalid request." }, 400, origin, true); }
@@ -85,10 +85,10 @@ export function createQuoteEmailHandler({ env, createAdmin, fetcher = fetch, log
     const reference = escapeHtml(requestRow.reference || "");
     const html = `<div style="font-family:Arial,sans-serif;line-height:1.5;color:#1f2824"><h2>Your Form &amp; Frame quotation ${number}</h2><p>Hello ${name},</p><p>Your quotation${reference ? ` for enquiry ${reference}` : ""} is ready. The secure page shows the full scope, pricing, terms and your options to accept, decline or request changes.</p><p><a href="${escapeHtml(responseUrl)}" style="display:inline-block;background:#65b2a1;color:#10231e;padding:12px 18px;text-decoration:none;font-weight:bold">View quotation</a></p><p>Total: <b>${pounds(quote.total_pence)}</b></p><p>This personal link expires in 30 days. No payment is taken when you accept a quotation.</p><p>Kind regards,<br>Form &amp; Frame</p></div>`;
     try {
-      const sent = await fetcher("https://api.resend.com/emails", {
+      const sent = await fetcher(relayUrl, {
         method:"POST",
-        headers:{ Authorization:`Bearer ${resendKey}`, "Content-Type":"application/json", "Idempotency-Key":`form-frame-quote-email/${quote.id}/${tokenHash}` },
-        body:JSON.stringify({ from, to:[requestRow.email], subject:`Your Form & Frame quotation ${quote.quote_number}`, html }),
+        headers:{ Authorization:`Bearer ${relayKey}`, "Content-Type":"application/json" },
+        body:JSON.stringify({ to:requestRow.email, subject:`Your Form & Frame quotation ${quote.quote_number}`, html }),
         signal:AbortSignal.timeout(10_000)
       });
       if (!sent.ok) {
